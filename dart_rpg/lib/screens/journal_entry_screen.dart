@@ -1987,38 +1987,47 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         // This is a move or oracle reference
         final content = match.group(1)!;
         
-        // Check if it's a move or oracle by looking at the current rolls
-        bool isMove = _moveRoll != null && content == _moveRoll!.moveName;
-        bool isOracle = _oracleRoll != null && content == _oracleRoll!.result;
+        // Check if it matches a move or oracle roll
         
-        if (isMove || isOracle) {
-          spans.add(
-            TextSpan(
-              text: match.group(0),
-              style: TextStyle(
-                color: isMove 
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.secondary,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-              recognizer: TapGestureRecognizer()
-                ..onTap = () {
-                  if (isMove && _moveRoll != null) {
-                    _showMoveRollDetailsDialog(context, _moveRoll!);
-                  } else if (isOracle && _oracleRoll != null) {
-                    _showOracleRollDetailsDialog(context, _oracleRoll!);
-                  }
-                },
-            ),
-          );
-        } else {
-          // If not a recognized move or oracle, just add as plain text
-          spans.add(TextSpan(
+        // Check if it's a move or oracle by looking at the current rolls
+        // Use more flexible comparison by trimming and ignoring case
+        bool isMove = _moveRoll != null && 
+                      content.trim().toLowerCase() == _moveRoll!.moveName.trim().toLowerCase();
+        bool isOracle = _oracleRoll != null && 
+                        content.trim().toLowerCase() == _oracleRoll!.result.trim().toLowerCase();
+        
+        // Always make bracketed text clickable
+        spans.add(
+          TextSpan(
             text: match.group(0),
-            style: const TextStyle(fontSize: 16),
-          ));
-        }
+            style: TextStyle(
+              color: isMove 
+                  ? Theme.of(context).colorScheme.primary
+                  : isOracle
+                      ? Theme.of(context).colorScheme.secondary
+                      : Theme.of(context).colorScheme.tertiary, // Different color for unrecognized brackets
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              decoration: TextDecoration.underline, // Add underline to make it look like a link
+            ),
+            recognizer: TapGestureRecognizer()
+              ..onTap = () {
+                if (isMove && _moveRoll != null) {
+                  _showMoveRollDetailsDialog(context, _moveRoll!);
+                } else if (isOracle && _oracleRoll != null) {
+                  _showOracleRollDetailsDialog(context, _oracleRoll!);
+                } else {
+                  // Show a message for unrecognized bracketed text
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('No details available for "$content"'),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+          ),
+        );
       }
       
       // Update current position

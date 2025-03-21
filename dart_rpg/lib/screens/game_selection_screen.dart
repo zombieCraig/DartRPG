@@ -4,6 +4,7 @@ import '../providers/game_provider.dart';
 import '../providers/datasworn_provider.dart';
 import 'game_screen.dart';
 import 'new_game_screen.dart';
+import 'settings_screen.dart';
 
 class GameSelectionScreen extends StatelessWidget {
   const GameSelectionScreen({super.key});
@@ -14,6 +15,20 @@ class GameSelectionScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Select Game'),
         automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreen(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Consumer<GameProvider>(
         builder: (context, gameProvider, _) {

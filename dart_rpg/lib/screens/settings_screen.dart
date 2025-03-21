@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
+import '../utils/logging_service.dart';
+import 'log_viewer_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -86,6 +88,58 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+              
+              const Divider(),
+              
+              // Developer options
+              const Text(
+                'Developer Options',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                title: const Text('Log Level'),
+                subtitle: Text('Current: ${settings.getLogLevelName(settings.logLevel)}'),
+                trailing: DropdownButton<int>(
+                  value: settings.logLevel,
+                  onChanged: (int? newValue) {
+                    if (newValue != null) {
+                      settings.setLogLevel(newValue);
+                    }
+                  },
+                  items: [
+                    DropdownMenuItem(
+                      value: LoggingService.LEVEL_DEBUG,
+                      child: const Text('Debug'),
+                    ),
+                    DropdownMenuItem(
+                      value: LoggingService.LEVEL_INFO,
+                      child: const Text('Info'),
+                    ),
+                    DropdownMenuItem(
+                      value: LoggingService.LEVEL_WARNING,
+                      child: const Text('Warning'),
+                    ),
+                    DropdownMenuItem(
+                      value: LoggingService.LEVEL_ERROR,
+                      child: const Text('Error'),
+                    ),
+                  ],
+                ),
+              ),
+              ListTile(
+                title: const Text('View Logs'),
+                subtitle: const Text('View and manage application logs'),
+                leading: const Icon(Icons.list_alt),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LogViewerScreen(),
+                    ),
+                  );
+                },
               ),
               
               const Divider(),

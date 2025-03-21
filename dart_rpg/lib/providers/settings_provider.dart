@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/logging_service.dart';
 
 class SettingsProvider extends ChangeNotifier {
   bool _isDarkMode = false;
   double _fontSize = 16.0;
   String _fontFamily = 'Roboto';
+  int _logLevel = 1; // Default to INFO level
   
   bool get isDarkMode => _isDarkMode;
   double get fontSize => _fontSize;
   String get fontFamily => _fontFamily;
+  int get logLevel => _logLevel;
   
   ThemeMode get themeMode => _isDarkMode ? ThemeMode.dark : ThemeMode.light;
   
@@ -21,6 +24,11 @@ class SettingsProvider extends ChangeNotifier {
     _isDarkMode = prefs.getBool('isDarkMode') ?? false;
     _fontSize = prefs.getDouble('fontSize') ?? 16.0;
     _fontFamily = prefs.getString('fontFamily') ?? 'Roboto';
+    _logLevel = prefs.getInt('logLevel') ?? 1; // Default to INFO level
+    
+    // Apply log level to the logging service
+    LoggingService().setLogLevel(_logLevel);
+    
     notifyListeners();
   }
   
@@ -49,6 +57,35 @@ class SettingsProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('fontFamily', value);
     notifyListeners();
+  }
+  
+  Future<void> setLogLevel(int value) async {
+    if (_logLevel == value) return;
+    
+    _logLevel = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('logLevel', value);
+    
+    // Apply the new log level to the logging service
+    LoggingService().setLogLevel(value);
+    
+    notifyListeners();
+  }
+  
+  // Get the log level name for display
+  String getLogLevelName(int level) {
+    switch (level) {
+      case 0:
+        return 'Debug';
+      case 1:
+        return 'Info';
+      case 2:
+        return 'Warning';
+      case 3:
+        return 'Error';
+      default:
+        return 'Unknown';
+    }
   }
   
   ThemeData getTheme(bool isDark) {

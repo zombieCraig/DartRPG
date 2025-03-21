@@ -8,6 +8,7 @@ import 'location_screen.dart';
 import 'moves_screen.dart';
 import 'oracles_screen.dart';
 import 'assets_screen.dart';
+import 'settings_screen.dart';
 
 class GameScreen extends StatefulWidget {
   final String gameId;
@@ -38,6 +39,18 @@ class _GameScreenState extends State<GameScreen> {
                 icon: const Icon(Icons.save_alt),
                 tooltip: 'Export Game',
                 onPressed: () => _exportGame(context, gameProvider, game),
+              ),
+              IconButton(
+                icon: const Icon(Icons.settings),
+                tooltip: 'Settings',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsScreen(),
+                    ),
+                  );
+                },
               ),
             ],
           ),

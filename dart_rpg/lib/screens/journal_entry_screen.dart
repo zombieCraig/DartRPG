@@ -11,6 +11,7 @@ import '../models/location.dart';
 import '../models/move.dart';
 import '../models/oracle.dart';
 import '../utils/dice_roller.dart';
+import '../utils/logging_service.dart';
 
 class JournalEntryScreen extends StatefulWidget {
   final String? entryId;
@@ -189,10 +190,8 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     // Make sure the context is still valid before inserting the overlay
     if (mounted) {
       final overlay = Overlay.of(context);
-      if (overlay != null) {
-        overlay.insert(_overlayEntry!);
-      }
-    }
+      overlay.insert(_overlayEntry!);
+        }
   }
   
   void _removeOverlay() {
@@ -292,7 +291,6 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         // Save the changes
         await gameProvider.updateJournalEntry(widget.entryId!, _contentController.text);
         
-        print('Auto-saved existing journal entry: ${widget.entryId}');
       } else if (_contentController.text.isNotEmpty) {
         if (_createdEntryId == null) {
           // Create new entry if there's content and we haven't created one yet
@@ -300,16 +298,19 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
           setState(() {
             _createdEntryId = entry.id; // Store the ID of the created entry
           });
-          print('Auto-saved new journal entry: ${entry.id}');
         } else {
           // Update the entry we already created
           await gameProvider.updateJournalEntry(_createdEntryId!, _contentController.text);
-          print('Auto-saved updated journal entry: $_createdEntryId');
         }
       }
     } catch (e) {
-      // Silently handle errors during auto-save
-      print('Auto-save failed: ${e.toString()}');
+      // Log errors during auto-save
+      LoggingService().error(
+        'Error during auto-save',
+        tag: 'JournalEntryScreen',
+        error: e,
+        stackTrace: StackTrace.current
+      );
     } finally {
       _isAutoSaving = false;
     }
@@ -476,7 +477,12 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         _createdEntryId = entry.id;
       }
     } catch (e) {
-      print('Error saving journal entry: ${e.toString()}');
+      LoggingService().error(
+        'Error saving entry without navigation',
+        tag: 'JournalEntryScreen',
+        error: e,
+        stackTrace: StackTrace.current
+      );
     }
   }
 

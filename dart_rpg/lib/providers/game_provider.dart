@@ -8,6 +8,7 @@ import '../models/character.dart';
 import '../models/location.dart';
 import '../models/session.dart';
 import '../models/journal_entry.dart';
+import '../utils/logging_service.dart';
 
 class GameProvider extends ChangeNotifier {
   
@@ -45,7 +46,6 @@ class GameProvider extends ChangeNotifier {
       // Get game IDs
       final gameIds = prefs.getStringList('gameIds') ?? [];
       
-      print('Loading games from SharedPreferences: Found ${gameIds.length} game IDs');
       
       _games = [];
       for (final id in gameIds) {
@@ -54,12 +54,19 @@ class GameProvider extends ChangeNotifier {
           try {
             final game = Game.fromJsonString(gameJson);
             _games.add(game);
-            print('Loaded game from SharedPreferences: ${game.name} (ID: ${game.id})');
           } catch (e) {
-            print('Error loading game $id from SharedPreferences: $e');
+            LoggingService().error(
+              'Failed to parse game JSON',
+              tag: 'GameProvider',
+              error: e,
+              stackTrace: StackTrace.current
+            );
           }
         } else {
-          print('Game JSON not found in SharedPreferences for ID: $id');
+          LoggingService().warning(
+            'Game data not found for ID: $id',
+            tag: 'GameProvider'
+          );
         }
       }
       
@@ -100,6 +107,12 @@ class GameProvider extends ChangeNotifier {
     } catch (e) {
       _isLoading = false;
       _error = 'Failed to load games: ${e.toString()}';
+      LoggingService().error(
+        'Failed to load games',
+        tag: 'GameProvider',
+        error: e,
+        stackTrace: StackTrace.current
+      );
       notifyListeners();
     }
   }
@@ -113,27 +126,42 @@ class GameProvider extends ChangeNotifier {
       // Save game IDs
       final gameIds = _games.map((game) => game.id).toList();
       await prefs.setStringList('gameIds', gameIds);
-      print('Saving games to SharedPreferences: ${gameIds.length} game IDs');
+      LoggingService().info('Saving games to SharedPreferences: ${gameIds.length} game IDs', tag: 'GameProvider');
       
       // Save each game
       for (final game in _games) {
         final jsonString = game.toJsonString();
         await prefs.setString('game_${game.id}', jsonString);
-        print('Saved game to SharedPreferences: ${game.name} (ID: ${game.id}) - JSON length: ${jsonString.length}');
+        LoggingService().debug(
+          'Saved game to SharedPreferences: ${game.name} (ID: ${game.id}) - JSON length: ${jsonString.length}',
+          tag: 'GameProvider'
+        );
       }
       
       // Save last played game and session
       if (_currentGame != null) {
         await prefs.setString('lastPlayedGameId', _currentGame!.id);
-        print('Saved last played game ID to SharedPreferences: ${_currentGame!.id}');
+        LoggingService().debug(
+          'Saved last played game ID to SharedPreferences: ${_currentGame!.id}',
+          tag: 'GameProvider'
+        );
         
         if (_currentSession != null) {
           await prefs.setString('lastSessionId_${_currentGame!.id}', _currentSession!.id);
-          print('Saved last session ID to SharedPreferences: ${_currentSession!.id}');
+          LoggingService().debug(
+            'Saved last session ID to SharedPreferences: ${_currentSession!.id}',
+            tag: 'GameProvider'
+          );
         }
       }
     } catch (e) {
       _error = 'Failed to save games: ${e.toString()}';
+      LoggingService().error(
+        'Failed to save games',
+        tag: 'GameProvider',
+        error: e,
+        stackTrace: StackTrace.current
+      );
       notifyListeners();
     }
   }
@@ -206,7 +234,14 @@ class GameProvider extends ChangeNotifier {
   }
 
   // Create a new location
-  Future<Location> createLocation(String name, {String? description}) async {
+  Future<Location> createLocation(
+    String name, {
+    String? description,
+    LocationSegment segment = LocationSegment.core,
+    String? connectToLocationId,
+    double? x,
+    double? y,
+  }) async {
     if (_currentGame == null) {
       throw Exception('No game selected');
     }
@@ -214,14 +249,180 @@ class GameProvider extends ChangeNotifier {
     final location = Location(
       name: name,
       description: description,
+      segment: segment,
+      x: x,
+      y: y,
     );
     
     _currentGame!.addLocation(location);
+    
+    // If connectToLocationId is provided, create a connection
+    if (connectToLocationId != null) {
+      try {
+        _currentGame!.connectLocations(connectToLocationId, location.id);
+      } catch (e) {
+        LoggingService().warning(
+          'Failed to connect locations: ${e.toString()}',
+          tag: 'GameProvider'
+        );
+      }
+    }
     
     await _saveGames();
     notifyListeners();
     
     return location;
+  }
+  
+  // Connect two locations
+  Future<void> connectLocations(String sourceId, String targetId) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    try {
+      _currentGame!.connectLocations(sourceId, targetId);
+      await _saveGames();
+      notifyListeners();
+    } catch (e) {
+      LoggingService().error(
+        'Failed to connect locations',
+        tag: 'GameProvider',
+        error: e,
+        stackTrace: StackTrace.current
+      );
+      rethrow;
+    }
+  }
+  
+  // Disconnect two locations
+  Future<void> disconnectLocations(String sourceId, String targetId) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    try {
+      _currentGame!.disconnectLocations(sourceId, targetId);
+      await _saveGames();
+      notifyListeners();
+    } catch (e) {
+      LoggingService().error(
+        'Failed to disconnect locations',
+        tag: 'GameProvider',
+        error: e,
+        stackTrace: StackTrace.current
+      );
+      rethrow;
+    }
+  }
+  
+  // Update location segment
+  Future<void> updateLocationSegment(String locationId, LocationSegment segment) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    try {
+      final location = _currentGame!.locations.firstWhere(
+        (loc) => loc.id == locationId,
+        orElse: () => throw Exception('Location not found'),
+      );
+      
+      // Check if changing segment would violate connection rules
+      for (final connectedId in location.connectedLocationIds) {
+        final connectedLocation = _currentGame!.locations.firstWhere(
+          (loc) => loc.id == connectedId,
+          orElse: () => throw Exception('Connected location not found'),
+        );
+        
+        if (!_currentGame!.areSegmentsAdjacent(segment, connectedLocation.segment)) {
+          throw Exception('Cannot change segment: would violate connection rules with ${connectedLocation.name}');
+        }
+      }
+      
+      location.segment = segment;
+      await _saveGames();
+      notifyListeners();
+    } catch (e) {
+      LoggingService().error(
+        'Failed to update location segment',
+        tag: 'GameProvider',
+        error: e,
+        stackTrace: StackTrace.current
+      );
+      rethrow;
+    }
+  }
+  
+  // Update location position
+  Future<void> updateLocationPosition(String locationId, double x, double y) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    try {
+      final location = _currentGame!.locations.firstWhere(
+        (loc) => loc.id == locationId,
+        orElse: () => throw Exception('Location not found'),
+      );
+      
+      location.updatePosition(x, y);
+      await _saveGames();
+      notifyListeners();
+    } catch (e) {
+      LoggingService().error(
+        'Failed to update location position',
+        tag: 'GameProvider',
+        error: e,
+        stackTrace: StackTrace.current
+      );
+      rethrow;
+    }
+  }
+  
+  // Update location scale
+  Future<void> updateLocationScale(String locationId, double scale) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    try {
+      final location = _currentGame!.locations.firstWhere(
+        (loc) => loc.id == locationId,
+        orElse: () => throw Exception('Location not found'),
+      );
+      
+      location.updateScale(scale);
+      await _saveGames();
+      notifyListeners();
+    } catch (e) {
+      LoggingService().error(
+        'Failed to update location scale',
+        tag: 'GameProvider',
+        error: e,
+        stackTrace: StackTrace.current
+      );
+      rethrow;
+    }
+  }
+  
+  // Get valid connections for a location
+  List<Location> getValidConnectionsForLocation(String locationId) {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    try {
+      return _currentGame!.getValidConnectionsForLocation(locationId);
+    } catch (e) {
+      LoggingService().error(
+        'Failed to get valid connections',
+        tag: 'GameProvider',
+        error: e,
+        stackTrace: StackTrace.current
+      );
+      return [];
+    }
   }
 
   // Create a new session
@@ -306,6 +507,12 @@ class GameProvider extends ChangeNotifier {
       return null;
     } catch (e) {
       _error = 'Failed to export game: ${e.toString()}';
+      LoggingService().error(
+        'Failed to export game',
+        tag: 'GameProvider',
+        error: e,
+        stackTrace: StackTrace.current
+      );
       notifyListeners();
       return null;
     }
@@ -382,6 +589,12 @@ class GameProvider extends ChangeNotifier {
       return _currentGame;
     } catch (e) {
       _error = 'Failed to import game: ${e.toString()}';
+      LoggingService().error(
+        'Failed to import game',
+        tag: 'GameProvider',
+        error: e,
+        stackTrace: StackTrace.current
+      );
       notifyListeners();
       return null;
     }

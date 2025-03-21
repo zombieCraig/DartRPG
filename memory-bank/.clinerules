@@ -1,0 +1,157 @@
+# Cline Rules for DartRPG Project
+
+## Project Patterns
+
+### Naming Conventions
+- **Files**: snake_case for file names (e.g., `game_provider.dart`, `logging_service.dart`)
+- **Classes**: PascalCase for class names (e.g., `GameProvider`, `LoggingService`)
+- **Variables/Methods**: camelCase for variables and methods (e.g., `currentGame`, `saveGame()`)
+- **Constants**: SCREAMING_SNAKE_CASE for constants (e.g., `LEVEL_DEBUG`, `LEVEL_INFO`)
+- **Private Members**: Prefix with underscore (e.g., `_games`, `_loadGames()`)
+
+### Code Organization
+- **Model Classes**: Located in `lib/models/` directory
+- **Provider Classes**: Located in `lib/providers/` directory
+- **Screen Widgets**: Located in `lib/screens/` directory
+- **Utility Classes**: Located in `lib/utils/` directory
+- **Reusable Widgets**: Located in `lib/widgets/` directory
+
+### Design Patterns
+- **Provider Pattern**: Used for state management throughout the app
+- **Singleton Pattern**: Used for services like `LoggingService`
+- **Factory Pattern**: Used in model classes for JSON serialization/deserialization
+- **Observer Pattern**: Implemented via `ChangeNotifier` and `Consumer` widgets
+
+### Error Handling
+- Use try-catch blocks for operations that might fail
+- Log errors using the `LoggingService` with appropriate level and context
+- Show user-friendly error messages for user-facing errors
+- Include stack traces for debugging purposes
+
+## Implementation Paths
+
+### Adding a New Screen
+1. Create a new file in `lib/screens/` directory
+2. Implement a StatefulWidget or StatelessWidget as appropriate
+3. Use `Consumer` widgets to access provider state
+4. Add navigation to the new screen from appropriate places
+
+### Adding a New Model
+1. Create a new file in `lib/models/` directory
+2. Implement the model class with appropriate properties
+3. Add JSON serialization/deserialization methods
+4. Update relevant providers to use the new model
+
+### Adding a New Feature
+1. Identify which layers need to be modified (UI, state, data)
+2. Update or create model classes as needed
+3. Update or create provider methods as needed
+4. Implement UI components to expose the feature
+5. Add appropriate error handling and logging
+
+### Logging Best Practices
+1. Use appropriate log levels based on message importance
+2. Include contextual information (tag, method name)
+3. Log exceptions with stack traces
+4. Keep log messages clear and informative
+5. Avoid logging sensitive information
+
+## User Preferences
+
+### UI/UX Preferences
+- Clean, minimalist design
+- Intuitive navigation with minimal depth
+- Consistent visual language across screens
+- Dark mode support is important
+- Accessibility considerations (font size, contrast)
+
+### Functionality Preferences
+- Offline-first approach
+- Data persistence and reliability
+- Quick access to frequently used features
+- Comprehensive error handling
+- Performance optimization for mobile devices
+
+## Known Challenges
+
+### Technical Challenges
+- **Data Size**: SharedPreferences has limitations for large datasets
+- **Performance**: JSON serialization/deserialization can be CPU-intensive
+- **Memory Usage**: In-memory logging can consume significant memory
+- **Error Handling**: Balancing comprehensive logging with performance
+
+### UX Challenges
+- **Navigation Complexity**: Many screens and features to navigate
+- **Information Density**: Balancing detail with clarity
+- **Accessibility**: Supporting various user needs
+- **Error Messaging**: Providing helpful error messages without technical jargon
+
+## Project Evolution
+
+### Recent Focus
+- Implementing comprehensive logging system
+- Improving error handling
+- Enhancing settings access throughout the app
+
+### Current Direction
+- Testing and refining the logging system
+- Documenting the logging service
+- Reviewing and improving error handling throughout the app
+
+### Future Considerations
+- Moving to a database solution for larger datasets
+- Implementing more robust error handling
+- Adding more advanced features (multimedia, cloud sync)
+- Enhancing the user experience with UI refinements
+
+## Tool Usage Patterns
+
+### Flutter/Dart Tools
+- Use `flutter run` for development testing
+- Use `flutter build` for release builds
+- Use `flutter pub get` to update dependencies
+- Use `flutter clean` to resolve build issues
+
+### Version Control
+- Use feature branches for new features
+- Use descriptive commit messages
+- Review code before merging
+
+### Testing
+- Manual testing for UI components
+- Unit tests for utility functions
+- Widget tests for complex UI components
+
+## Documentation Standards
+
+### Code Documentation
+- Use Dartdoc comments for classes and public methods
+- Document parameters and return values
+- Explain complex logic with inline comments
+- Keep comments up-to-date with code changes
+
+### User Documentation
+- Clear, concise language
+- Step-by-step instructions for complex tasks
+- Visual aids where appropriate
+- Regular updates to reflect new features
+
+## Memory Bank Maintenance
+
+### When to Update
+- After implementing significant features
+- When changing architectural patterns
+- When discovering new project patterns
+- When changing project direction
+
+### What to Update
+- `activeContext.md` for current focus and recent changes
+- `progress.md` for status updates
+- `systemPatterns.md` for architectural changes
+- Other files as needed based on changes
+
+### How to Update
+- Be specific and detailed
+- Include rationale for changes
+- Update related files for consistency
+- Keep a historical perspective

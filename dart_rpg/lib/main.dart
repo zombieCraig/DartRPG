@@ -4,8 +4,13 @@ import 'providers/settings_provider.dart';
 import 'providers/game_provider.dart';
 import 'providers/datasworn_provider.dart';
 import 'screens/game_selection_screen.dart';
+import 'utils/logging_service.dart';
 
 void main() {
+  // Initialize logging service
+  final logger = LoggingService();
+  logger.info('Starting Fe-Runners Journal app', tag: 'Main');
+  
   runApp(const MyApp());
 }
 

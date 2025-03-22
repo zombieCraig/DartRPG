@@ -30,7 +30,23 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedIndex = widget.initialTabIndex;
+    
+    // Delay to ensure the game provider is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final gameProvider = Provider.of<GameProvider>(context, listen: false);
+      final game = gameProvider.games.firstWhere(
+        (g) => g.id == widget.gameId,
+        orElse: () => throw Exception('Game not found'),
+      );
+      
+      // Check if there's a main character
+      final hasMainCharacter = game.mainCharacter != null;
+      
+      // If there's a main character, go to Journal tab, otherwise go to Character tab
+      setState(() {
+        _selectedIndex = hasMainCharacter ? 0 : 1;
+      });
+    });
   }
 
   @override

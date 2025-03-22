@@ -74,6 +74,7 @@ class Asset {
 class Character {
   final String id;
   String name;
+  String? handle; // Short name or nickname for the character
   String? bio;
   String? imageUrl;
   List<CharacterStat> stats;
@@ -111,6 +112,7 @@ class Character {
   Character({
     String? id,
     required this.name,
+    this.handle,
     this.bio,
     this.imageUrl,
     List<CharacterStat>? stats,
@@ -171,10 +173,33 @@ class Character {
     return impacts;
   }
 
+  // Generate a handle from the name if not provided
+  String getHandle() {
+    if (handle != null && handle!.isNotEmpty) {
+      return handle!;
+    }
+    
+    // Extract first name and remove special characters
+    final firstName = name.split(' ').first;
+    return firstName.replaceAll(RegExp(r'[@#\[\]\(\)]'), '');
+  }
+  
+  // Validate and set handle
+  void setHandle(String? newHandle) {
+    if (newHandle == null || newHandle.isEmpty) {
+      handle = null;
+      return;
+    }
+    
+    // Remove spaces and special characters
+    handle = newHandle.replaceAll(RegExp(r'[\s@#\[\]\(\)]'), '');
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'name': name,
+      'handle': handle,
       'bio': bio,
       'imageUrl': imageUrl,
       'stats': stats.map((s) => s.toJson()).toList(),
@@ -207,6 +232,7 @@ class Character {
     return Character(
       id: json['id'],
       name: json['name'],
+      handle: json['handle'],
       bio: json['bio'],
       imageUrl: json['imageUrl'],
       stats: (json['stats'] as List?)
@@ -277,9 +303,10 @@ class Character {
   }
 
   // Create a main character with default IronSworn stats
-  factory Character.createMainCharacter(String name) {
+  factory Character.createMainCharacter(String name, {String? handle}) {
     final character = Character(
       name: name,
+      handle: handle,
       isMainCharacter: true,
       stats: [
         CharacterStat(name: 'Edge', value: 1),
@@ -289,6 +316,11 @@ class Character {
         CharacterStat(name: 'Wits', value: 1),
       ],
     );
+    
+    // If handle is not provided, generate one from the name
+    if (handle == null || handle.isEmpty) {
+      character.setHandle(character.getHandle());
+    }
     
     // Add Base Rig asset
     character.assets.add(Asset.baseRig());

@@ -2,133 +2,138 @@
 
 ## Current Work Focus
 
-The current development focus is on implementing a network graph visualization for locations in the Fe-Runners game. This includes:
+The current development focus is on improving the journal entry screen and character handling in the Fe-Runners game. This includes:
 
-1. Creating a graph-based visualization for locations (nodes)
-2. Implementing connections between locations with visual representation
-3. Organizing locations into four segments (Core, CorpNet, GovNet, DarkNet) with distinct colors
-4. Adding connection management functionality (creating, editing, removing connections)
-5. Supporting position persistence and auto-layout for the graph
+1. Enhancing the journal entry screen with rich text editing capabilities
+2. Adding character handle/short name support for easier referencing
+3. Implementing autocompletion for character and location references
+4. Creating a linked items summary for journal entries
+5. Improving navigation flow based on character creation status
 
-This work enhances the location management system to better represent the network-based structure of the Fe-Runners hacking-themed game, providing a more intuitive and visually appealing way for players to navigate and understand the game world.
+This work enhances the journaling system to provide a more intuitive and feature-rich experience for players, making it easier to document their game progress and reference characters and locations.
 
 ## Recent Changes
 
-### Location Model Enhancements
-- Updated the `Location` model to include segment information (Core, CorpNet, GovNet, DarkNet)
-- Added connection management with bidirectional links between locations
-- Implemented position persistence for graph layout
-- Added color coding for different segments
+### Journal Entry Screen Enhancements
+- Implemented a rich text editor with markdown-style formatting
+- Added toolbar with formatting options (bold, italic, headings, lists)
+- Created character and location reference system with @ and # syntax
+- Implemented autocompletion for character and location references
+- Added image embedding support
+- Implemented keyboard shortcuts for common actions (Ctrl+M for Move, Ctrl+O for Oracle)
 
-### Graph Visualization
-- Created a new `LocationGraphWidget` for visualizing the location network
-- Implemented interactive features (dragging, zooming, tapping)
-- Added gradient lines between nodes in different segments
-- Implemented auto-layout functionality for decluttering the graph
+### Character Model Improvements
+- Added handle/short name property to Character model
+- Implemented automatic handle generation from first name if not provided
+- Added validation to prevent spaces and special characters in handles
+- Updated character creation and editing UI to include handle field
+- Modified character reference system to use handles for better readability
 
-### Connection Management
-- Added methods to `Game` and `GameProvider` for managing connections between locations
-- Implemented segment adjacency rules to enforce the progression (Core→CorpNet→GovNet→DarkNet)
-- Added validation to prevent invalid connections between non-adjacent segments
-- Created UI for adding, viewing, and removing connections
+### Navigation Flow Improvements
+- Updated game screen to check for main character existence
+- Modified navigation to go to journal screen if main character exists
+- Improved character creation workflow with better validation
+- Enhanced journal entry linking with characters and locations
 
-### Location Screen Improvements
-- Updated `LocationScreen` to support both list and graph views
-- Added toggle buttons to switch between views
-- Enhanced location creation dialog with segment selection
-- Improved location details dialog with connection management
-- Added support for creating connected locations
+### Linked Items Summary
+- Created a collapsible summary of linked items in journal entries
+- Implemented sections for characters, locations, move rolls, and oracle rolls
+- Added interactive elements to view details of linked items
+- Improved visual presentation of move outcomes with color coding
 
 ### User Experience Enhancements
-- Added color coding for segments in both list and graph views
-- Implemented visual feedback for connections and segments
-- Added context-sensitive segment selection based on adjacency rules
-- Improved navigation between connected locations
+- Added tooltips to all toolbar buttons
+- Implemented tab-completion for character and location references
+- Added visual feedback for autocompletion suggestions
+- Improved error handling and validation in forms
+- Enhanced the overall journal writing experience with modern text editor features
 
 ## Next Steps
 
 ### Short-term Tasks
-1. **Testing the Location Graph**
-   - Test connection creation and removal
-   - Verify segment validation rules
-   - Check position persistence across app restarts
-   - Test auto-layout functionality
+1. **Testing Journal Entry Features**
+   - Test character and location autocompletion
+   - Verify tab-completion functionality
+   - Check image embedding and display
+   - Test keyboard shortcuts for moves and oracles
 
 2. **UI Refinements**
-   - Improve the visual design of the graph
-   - Optimize layout algorithm for better node distribution
+   - Improve the visual design of the rich text editor
+   - Enhance the linked items summary with better organization
    - Add animations for smoother transitions
-   - Enhance node appearance with more information
+   - Optimize mobile experience for the journal entry screen
 
 3. **Performance Optimization**
-   - Optimize graph rendering for large networks
-   - Implement efficient position calculation
-   - Add pagination or virtualization for large location lists
+   - Optimize autocompletion for large character/location lists
+   - Improve rendering of complex journal entries
+   - Enhance image handling and caching
+   - Optimize saving and loading of rich text content
 
 ### Medium-term Goals
-1. **Enhanced Graph Features**
-   - Add minimap for navigation in large graphs
-   - Implement node grouping by segment
-   - Add search functionality for finding locations in the graph
-   - Support for filtering nodes by segment or other criteria
+1. **Enhanced Journal Features**
+   - Add support for more advanced formatting options
+   - Implement full-text search across journal entries
+   - Add tagging system for better organization
+   - Support for templates and presets for common entry types
 
 2. **Gameplay Integration**
-   - Link location graph to game mechanics
-   - Add status indicators for locations (e.g., explored, locked)
-   - Implement progression tracking through the network
-   - Add special node types for key locations
+   - Link journal entries to game mechanics and progress
+   - Add automatic journaling for key game events
+   - Implement timeline view for chronological entry browsing
+   - Create relationship mapping between characters and locations
 
 3. **Export/Import Functionality**
-   - Add ability to export the location graph as an image
-   - Support for sharing location networks between players
-   - Implement templates for common network structures
+   - Add ability to export journal entries as markdown or PDF
+   - Support for sharing journal content between players
+   - Implement backup and restore functionality
+   - Add printing support for physical copies
 
 ## Active Decisions and Considerations
 
-### Graph Visualization Approach
-- **Current Approach**: Custom implementation using the `graphview` package
+### Rich Text Editor Approach
+- **Current Approach**: Custom implementation with markdown-style formatting
 - **Considerations**:
   - Custom implementation provides more control over appearance and behavior
-  - Using a package reduces development time but may limit customization
-  - Need to balance visual appeal with performance
-- **Decision**: Use the `graphview` package as a foundation with custom rendering for connections
+  - Using a third-party package would reduce development time but limit customization
+  - Need to balance feature richness with simplicity
+- **Decision**: Implement a custom editor with focused features specific to journaling needs
 
-### Segment Progression Rules
-- **Current Approach**: Enforce adjacency rules between segments
+### Character Reference System
+- **Current Approach**: @ syntax with handle-based references
 - **Considerations**:
-  - Strict rules ensure logical progression through the network
-  - Rules should be clear to users to avoid confusion
-  - Need to balance restrictions with player freedom
-- **Decision**: Enforce adjacency rules (Core↔CorpNet↔GovNet↔DarkNet) with clear UI feedback
+  - Handle-based references are more concise and readable
+  - Automatic handle generation simplifies the user experience
+  - Need to balance brevity with clarity
+- **Decision**: Use handles for references with automatic generation from first name if not provided
 
-### Position Persistence Strategy
-- **Current Approach**: Store x/y coordinates in the Location model
+### Autocompletion Strategy
+- **Current Approach**: Show suggestions after typing @ or # plus one character
 - **Considerations**:
-  - Persistent positions provide a consistent experience across sessions
-  - Manual positioning gives users control over the graph layout
-  - Auto-layout provides a good starting point but may disrupt user arrangements
-- **Decision**: Support both manual positioning and auto-layout with user control
+  - Immediate suggestions could be distracting
+  - Delayed suggestions might be missed
+  - Tab completion provides efficient input
+- **Decision**: Show suggestions after one character is typed, with tab completion for efficiency
 
-### Connection Management UI
-- **Current Approach**: Primary management through node detail dialog with optional context menu
+### Linked Items Summary
+- **Current Approach**: Collapsible summary below journal entry
 - **Considerations**:
-  - Dialog-based approach provides clear structure and validation
-  - Direct graph interaction would be more intuitive but more complex to implement
-  - Need to balance ease of use with functionality
-- **Decision**: Use dialog-based approach with potential for direct interaction in future updates
+  - Summary provides quick access to referenced items
+  - Collapsible UI saves space when not needed
+  - Need to balance information density with clarity
+- **Decision**: Use a collapsible card-based UI with sections for different item types
 
 ## Open Questions
 
-1. **Graph Scaling**: How should the graph scale for very large networks with many nodes?
-2. **Visual Differentiation**: What additional visual cues could help distinguish different types of nodes?
-3. **Performance Limits**: What is the practical limit for the number of nodes before performance issues arise?
-4. **User Guidance**: How can we guide users to create well-organized graphs?
-5. **Mobile Experience**: How can we optimize the graph interaction for smaller touch screens?
+1. **Rich Text Persistence**: What's the most efficient way to store and retrieve rich text content?
+2. **Autocompletion UX**: How can we make the autocompletion experience more intuitive without being intrusive?
+3. **Image Handling**: What's the best approach for handling and storing embedded images?
+4. **Performance Limits**: How can we ensure good performance with large journal entries and many references?
+5. **Mobile Experience**: How can we optimize the rich text editor for smaller touch screens?
 
 ## Current Challenges
 
-1. **Layout Algorithm**: Finding the right balance between automatic and manual layout
-2. **Visual Clarity**: Ensuring the graph remains clear and understandable as it grows
-3. **Performance**: Maintaining smooth performance with large graphs
-4. **Intuitive Interaction**: Making the graph interaction intuitive for users
-5. **Cross-platform Consistency**: Ensuring consistent behavior across different platforms
+1. **Text Editor Complexity**: Balancing feature richness with simplicity and usability
+2. **Reference Management**: Ensuring references remain valid even when characters or locations are renamed
+3. **Performance**: Maintaining smooth performance with complex journal entries and many references
+4. **Intuitive Interaction**: Making the editor interaction intuitive for users of all experience levels
+5. **Cross-platform Consistency**: Ensuring consistent behavior across different platforms and screen sizes

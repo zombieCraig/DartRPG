@@ -2,9 +2,9 @@
 
 ## Current Status
 
-The DartRPG application is in active development with core functionality implemented and working. The application provides a digital companion for Ironsworn-based RPG systems, with a focus on the Fe-Runners hacking-themed game. Recent work has focused on implementing a network graph visualization for locations to better represent the hacking-themed world of Fe-Runners.
+The DartRPG application is in active development with core functionality implemented and working. The application provides a digital companion for Ironsworn-based RPG systems, with a focus on the Fe-Runners hacking-themed game. Recent work has focused on enhancing the journal entry system with rich text editing capabilities and improving character referencing with the addition of character handles.
 
-**Overall Progress**: ~80% complete towards initial release
+**Overall Progress**: ~85% complete towards initial release
 
 ## What Works
 
@@ -37,33 +37,35 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Comprehensive logging system and log viewer
 
 ### Recently Completed
-- ✅ Location network graph visualization
-- ✅ Segment-based organization for locations (Core, CorpNet, GovNet, DarkNet)
-- ✅ Connection management between locations
-- ✅ Color coding for different location segments
-- ✅ Position persistence for graph layout
-- ✅ Interactive graph with zooming and dragging
-- ✅ Auto-layout functionality for graph organization
+- ✅ Enhanced journal entry screen with rich text editing
+- ✅ Character handle/short name support for easier referencing
+- ✅ Autocompletion for character and location references
+- ✅ Linked items summary for journal entries
+- ✅ Improved navigation flow based on character creation status
+- ✅ Keyboard shortcuts for common actions
+- ✅ Image embedding support in journal entries
 
 ## What's Left to Build
 
 ### High Priority
-- ⬜ Comprehensive testing of the location graph system
-- ⬜ Performance optimization for large location networks
-- ⬜ UI refinements for the graph visualization
-- ⬜ Mobile-friendly interaction improvements
+- ⬜ Comprehensive testing of the journal entry features
+- ⬜ Performance optimization for complex journal entries
+- ⬜ UI refinements for the rich text editor
+- ⬜ Mobile-friendly interaction improvements for text editing
 
 ### Medium Priority
 - ⬜ Enhanced character progression tracking
 - ⬜ Improved asset management
-- ⬜ More detailed move outcomes and oracle results
+- ⬜ Full-text search across journal entries
 - ⬜ Better linking between journal entries and game elements
+- ⬜ Relationship mapping between characters and locations
 
 ### Low Priority
 - ⬜ In-app help and tutorials
 - ⬜ Customizable themes beyond light/dark mode
 - ⬜ Data backup and cloud sync options
-- ⬜ Multimedia support in journal entries (images, audio)
+- ⬜ Advanced multimedia support in journal entries (audio, video)
+- ⬜ Journal entry templates and presets
 
 ## Known Issues
 
@@ -74,18 +76,29 @@ The DartRPG application is in active development with core functionality impleme
 - **Graph Performance**: Large networks may experience performance issues
 - **Position Persistence**: Position saving may not work perfectly in all scenarios
 - **Data Size Limitations**: SharedPreferences may have issues with very large game datasets
+- **Rich Text Persistence**: Complex formatting may not be perfectly preserved in all cases
 
 ### Medium Priority
 - **UI Responsiveness**: Some screens may become sluggish with large amounts of data
 - **Graph Layout**: Auto-layout algorithm may not produce optimal results in all cases
 - **Navigation Flow**: Some screens could benefit from improved navigation patterns
+- **Autocompletion Accuracy**: Character/location matching could be improved for partial names
+- **Image Handling**: Embedded images may have display issues on some devices
 
 ### Low Priority
 - **Visual Polish**: Some UI elements could use refinement
 - **Accessibility**: Additional accessibility features needed
 - **Tablet Support**: UI not fully optimized for tablet screens
+- **Keyboard Shortcuts**: More comprehensive keyboard shortcut support needed
 
 ## Recent Milestones
+
+### Milestone: Journal Entry Improvements (March 2025)
+- ✅ Implemented rich text editor with formatting toolbar
+- ✅ Added character handle property and automatic generation
+- ✅ Created character and location reference system with autocompletion
+- ✅ Implemented linked items summary for journal entries
+- ✅ Updated navigation flow based on character creation status
 
 ### Milestone: Location Graph Implementation (March 2025)
 - ✅ Updated Location model with segment and connection support
@@ -108,6 +121,12 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Integrated moves and oracles
 
 ## Upcoming Milestones
+
+### Milestone: Journal System Enhancements (April 2025)
+- ⬜ Rich text editor improvements and bug fixes
+- ⬜ Enhanced autocompletion for character and location references
+- ⬜ Improved image handling and embedding
+- ⬜ Better performance with large journal entries
 
 ### Milestone: Graph Enhancements and Stability (April 2025)
 - ⬜ Performance optimization for large graphs
@@ -158,9 +177,9 @@ The DartRPG application is in active development with core functionality impleme
 
 The immediate focus will be on:
 
-1. **Testing the Location Graph**: Ensuring it works correctly in all scenarios
-2. **Performance Optimization**: Addressing potential performance issues with large graphs
-3. **UI Refinements**: Improving the visual design and interaction of the graph
+1. **Testing Journal Entry Features**: Ensuring autocompletion, tab-completion, and image embedding work correctly
+2. **Rich Text Editor Refinements**: Improving the visual design and interaction of the editor
+3. **Performance Optimization**: Addressing potential performance issues with complex journal entries
 4. **Mobile Experience**: Enhancing the touch interaction for mobile devices
 
-Following this, the focus will shift to enhancing the user experience and adding more advanced features.
+Following this, the focus will shift to enhancing the user experience and adding more advanced features such as full-text search across journal entries and relationship mapping between characters and locations.

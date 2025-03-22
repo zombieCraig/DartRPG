@@ -26,10 +26,23 @@ class DiceRoller {
     return rollDice(count, sides);
   }
 
-  // Roll for a move (1d6 + stat vs 2d10)
-  static Map<String, dynamic> rollMove({int? statValue}) {
+  // Roll for a move (1d6 + stat + modifier vs 2d10)
+  // Now with momentum and modifier support
+  static Map<String, dynamic> rollMove({
+    int? statValue,
+    int momentum = 2,
+    int modifier = 0, // New parameter for one-time adjustments
+  }) {
     final actionDie = rollDie(6);
-    final actionValue = actionDie + (statValue ?? 0);
+    
+    // Check if negative momentum cancels the action die
+    final bool actionDieCanceled = momentum < 0 && actionDie == -momentum;
+    
+    // Include the modifier in the action value calculation
+    final actionValue = actionDieCanceled 
+        ? (statValue ?? 0) + modifier 
+        : actionDie + (statValue ?? 0) + modifier;
+    
     final challengeDice = rollDice(2, 10);
     
     // Determine outcome
@@ -38,16 +51,24 @@ class DiceRoller {
                     (actionValue <= challengeDice[0] && actionValue > challengeDice[1]);
     
     String outcome;
-    if (strongHit) outcome = 'strong hit';
-    else if (weakHit) outcome = 'weak hit';
-    else outcome = 'miss';
+    if (strongHit) {
+      outcome = 'strong hit';
+    } else if (weakHit) {
+      outcome = 'weak hit';
+    } else {
+      outcome = 'miss';
+    }
     
     return {
       'actionDie': actionDie,
+      'actionDieCanceled': actionDieCanceled,
       'statValue': statValue,
+      'modifier': modifier,
       'actionValue': actionValue,
       'challengeDice': challengeDice,
       'outcome': outcome,
+      'momentum': momentum,
+      'couldBurnMomentum': momentum > 0 && momentum > actionValue,
     };
   }
 
@@ -61,9 +82,13 @@ class DiceRoller {
                     (progressValue <= challengeDice[0] && progressValue > challengeDice[1]);
     
     String outcome;
-    if (strongHit) outcome = 'strong hit';
-    else if (weakHit) outcome = 'weak hit';
-    else outcome = 'miss';
+    if (strongHit) {
+      outcome = 'strong hit';
+    } else if (weakHit) {
+      outcome = 'weak hit';
+    } else {
+      outcome = 'miss';
+    }
     
     return {
       'progressValue': progressValue,

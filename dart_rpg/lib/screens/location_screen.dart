@@ -884,12 +884,12 @@ class _LocationScreenState extends State<LocationScreen> {
                       // Force a rebuild of the parent widget
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         if (context.mounted) {
-                          this.setState(() {});
+                          setState(() {});
                         }
                       });
                     },
                   );
-                }).toList(),
+                }),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   icon: const Icon(Icons.add),

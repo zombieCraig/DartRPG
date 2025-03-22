@@ -53,7 +53,7 @@ class SettingsScreen extends StatelessWidget {
                   },
                 ),
                 trailing: Text(
-                  '${settings.fontSize.toStringAsFixed(1)}',
+                  settings.fontSize.toStringAsFixed(1),
                   style: TextStyle(fontSize: settings.fontSize),
                 ),
               ),

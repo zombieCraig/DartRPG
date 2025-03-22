@@ -15,7 +15,7 @@ class LocationGraphWidget extends StatefulWidget {
   final Game? game;
 
   const LocationGraphWidget({
-    Key? key,
+    super.key,
     required this.locations,
     required this.onLocationTap,
     required this.onLocationMoved,
@@ -23,7 +23,7 @@ class LocationGraphWidget extends StatefulWidget {
     this.searchQuery,
     this.focusLocationId,
     this.game,
-  }) : super(key: key);
+  });
 
   @override
   _LocationGraphWidgetState createState() => _LocationGraphWidgetState();
@@ -37,7 +37,7 @@ class _LocationGraphWidgetState extends State<LocationGraphWidget> with SingleTi
   final TransformationController _transformationController = TransformationController();
   final GlobalKey _graphKey = GlobalKey();
   Map<String, Node> _nodeMap = {};
-  Map<Node, Offset> _nodePositions = {};
+  final Map<Node, Offset> _nodePositions = {};
   
   // For rig node pulsing effect
   late AnimationController _pulseController;

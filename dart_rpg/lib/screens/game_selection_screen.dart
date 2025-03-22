@@ -83,10 +83,16 @@ class GameSelectionScreen extends StatelessWidget {
                     onPressed: () async {
                       final game = await gameProvider.importGame();
                       if (game != null && context.mounted) {
+                        // Always start with the Characters tab
+                        const initialTabIndex = 1; // 1 = Characters tab
+                        
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => GameScreen(gameId: game.id),
+                            builder: (context) => GameScreen(
+                              gameId: game.id,
+                              initialTabIndex: initialTabIndex,
+                            ),
                           ),
                         );
                       }
@@ -194,10 +200,16 @@ class GameSelectionScreen extends StatelessWidget {
                                 }
                                 
                                 if (context.mounted) {
+                                  // Always start with the Characters tab
+                                  const initialTabIndex = 1; // 1 = Characters tab
+                                  
                                   Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => GameScreen(gameId: game.id),
+                                      builder: (context) => GameScreen(
+                                        gameId: game.id,
+                                        initialTabIndex: initialTabIndex,
+                                      ),
                                     ),
                                   );
                                 }
@@ -215,10 +227,16 @@ class GameSelectionScreen extends StatelessWidget {
                           }
                           
                           if (context.mounted) {
+                            // Always start with the Characters tab
+                            const initialTabIndex = 1; // 1 = Characters tab
+                            
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => GameScreen(gameId: game.id),
+                                builder: (context) => GameScreen(
+                                  gameId: game.id,
+                                  initialTabIndex: initialTabIndex,
+                                ),
                               ),
                             );
                           }

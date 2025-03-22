@@ -12,15 +12,26 @@ import 'settings_screen.dart';
 
 class GameScreen extends StatefulWidget {
   final String gameId;
+  final int initialTabIndex;
 
-  const GameScreen({super.key, required this.gameId});
+  const GameScreen({
+    super.key, 
+    required this.gameId, 
+    this.initialTabIndex = 1, // Default to Character tab
+  });
 
   @override
   State<GameScreen> createState() => _GameScreenState();
 }
 
 class _GameScreenState extends State<GameScreen> {
-  int _selectedIndex = 0;
+  late int _selectedIndex;
+  
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialTabIndex;
+  }
 
   @override
   Widget build(BuildContext context) {

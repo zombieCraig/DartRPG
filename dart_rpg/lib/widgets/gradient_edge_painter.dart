@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/location.dart';
 
 class GradientEdgePainter extends CustomPainter {
   final Offset start;

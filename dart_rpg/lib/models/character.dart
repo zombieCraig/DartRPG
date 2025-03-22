@@ -59,6 +59,16 @@ class Asset {
       enabled: json['enabled'] ?? false,
     );
   }
+  
+  // Factory method for creating a Base Rig asset
+  factory Asset.baseRig() {
+    return Asset(
+      name: 'Base Rig',
+      category: 'Base Rig',
+      description: 'Your personal computer system and starting point in the network.',
+      enabled: true,
+    );
+  }
 }
 
 class Character {
@@ -70,6 +80,33 @@ class Character {
   List<Asset> assets;
   List<String> notes;
   bool isMainCharacter;
+  
+  // New properties for Fe-Runners
+  int momentum;
+  int momentumReset;
+  int health;
+  int spirit;
+  int supply;
+  
+  // Impacts as boolean flags
+  bool impactWounded;
+  bool impactShaken;
+  bool impactUnregulated;
+  bool impactPermanentlyHarmed;
+  bool impactTraumatized;
+  bool impactDoomed;
+  bool impactTormented;
+  bool impactIndebted;
+  bool impactOverheated;
+  bool impactInfected;
+  
+  // Legacies as progress tracks (0-10)
+  int legacyQuests;
+  int legacyBonds;
+  int legacyDiscoveries;
+  
+  // Additional notes separate from bio
+  String? gameNotes;
 
   Character({
     String? id,
@@ -80,10 +117,59 @@ class Character {
     List<Asset>? assets,
     List<String>? notes,
     this.isMainCharacter = false,
+    this.momentum = 2,
+    this.momentumReset = 2,
+    this.health = 5,
+    this.spirit = 5,
+    this.supply = 5,
+    this.impactWounded = false,
+    this.impactShaken = false,
+    this.impactUnregulated = false,
+    this.impactPermanentlyHarmed = false,
+    this.impactTraumatized = false,
+    this.impactDoomed = false,
+    this.impactTormented = false,
+    this.impactIndebted = false,
+    this.impactOverheated = false,
+    this.impactInfected = false,
+    this.legacyQuests = 0,
+    this.legacyBonds = 0,
+    this.legacyDiscoveries = 0,
+    this.gameNotes,
   })  : id = id ?? const Uuid().v4(),
         stats = stats ?? [],
         assets = assets ?? [],
         notes = notes ?? [];
+
+  // Helper methods for impacts and momentum
+  int get totalImpacts => [
+    impactWounded, impactShaken, impactUnregulated,
+    impactPermanentlyHarmed, impactTraumatized,
+    impactDoomed, impactTormented, impactIndebted,
+    impactOverheated, impactInfected
+  ].where((impact) => impact).length;
+  
+  int get maxMomentum => 10 - totalImpacts;
+  
+  void burnMomentum() {
+    momentumReset = momentum > 0 ? 2 : momentumReset;
+    momentum = momentumReset;
+  }
+  
+  List<String> get activeImpacts {
+    final impacts = <String>[];
+    if (impactWounded) impacts.add('Wounded');
+    if (impactShaken) impacts.add('Shaken');
+    if (impactUnregulated) impacts.add('Unregulated');
+    if (impactPermanentlyHarmed) impacts.add('Permanently Harmed');
+    if (impactTraumatized) impacts.add('Traumatized');
+    if (impactDoomed) impacts.add('Doomed');
+    if (impactTormented) impacts.add('Tormented');
+    if (impactIndebted) impacts.add('Indebted');
+    if (impactOverheated) impacts.add('Overheated');
+    if (impactInfected) impacts.add('Infected');
+    return impacts;
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -95,6 +181,25 @@ class Character {
       'assets': assets.map((a) => a.toJson()).toList(),
       'notes': notes,
       'isMainCharacter': isMainCharacter,
+      'momentum': momentum,
+      'momentumReset': momentumReset,
+      'health': health,
+      'spirit': spirit,
+      'supply': supply,
+      'impactWounded': impactWounded,
+      'impactShaken': impactShaken,
+      'impactUnregulated': impactUnregulated,
+      'impactPermanentlyHarmed': impactPermanentlyHarmed,
+      'impactTraumatized': impactTraumatized,
+      'impactDoomed': impactDoomed,
+      'impactTormented': impactTormented,
+      'impactIndebted': impactIndebted,
+      'impactOverheated': impactOverheated,
+      'impactInfected': impactInfected,
+      'legacyQuests': legacyQuests,
+      'legacyBonds': legacyBonds,
+      'legacyDiscoveries': legacyDiscoveries,
+      'gameNotes': gameNotes,
     };
   }
 
@@ -112,6 +217,25 @@ class Character {
           .toList() ?? [],
       notes: (json['notes'] as List?)?.cast<String>() ?? [],
       isMainCharacter: json['isMainCharacter'] ?? false,
+      momentum: json['momentum'] ?? 2,
+      momentumReset: json['momentumReset'] ?? 2,
+      health: json['health'] ?? 5,
+      spirit: json['spirit'] ?? 5,
+      supply: json['supply'] ?? 5,
+      impactWounded: json['impactWounded'] ?? false,
+      impactShaken: json['impactShaken'] ?? false,
+      impactUnregulated: json['impactUnregulated'] ?? false,
+      impactPermanentlyHarmed: json['impactPermanentlyHarmed'] ?? false,
+      impactTraumatized: json['impactTraumatized'] ?? false,
+      impactDoomed: json['impactDoomed'] ?? false,
+      impactTormented: json['impactTormented'] ?? false,
+      impactIndebted: json['impactIndebted'] ?? false,
+      impactOverheated: json['impactOverheated'] ?? false,
+      impactInfected: json['impactInfected'] ?? false,
+      legacyQuests: json['legacyQuests'] ?? 0,
+      legacyBonds: json['legacyBonds'] ?? 0,
+      legacyDiscoveries: json['legacyDiscoveries'] ?? 0,
+      gameNotes: json['gameNotes'],
     );
   }
 
@@ -154,7 +278,7 @@ class Character {
 
   // Create a main character with default IronSworn stats
   factory Character.createMainCharacter(String name) {
-    return Character(
+    final character = Character(
       name: name,
       isMainCharacter: true,
       stats: [
@@ -165,5 +289,10 @@ class Character {
         CharacterStat(name: 'Wits', value: 1),
       ],
     );
+    
+    // Add Base Rig asset
+    character.assets.add(Asset.baseRig());
+    
+    return character;
   }
 }

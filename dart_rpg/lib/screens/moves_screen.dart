@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../providers/game_provider.dart';
 import '../models/move.dart';
+import '../models/character.dart';
 import '../utils/dice_roller.dart';
 
 class MovesScreen extends StatefulWidget {
@@ -15,6 +16,13 @@ class MovesScreen extends StatefulWidget {
 class _MovesScreenState extends State<MovesScreen> {
   String? _selectedCategory;
   Move? _selectedMove;
+  final TextEditingController _modifierController = TextEditingController();
+  
+  @override
+  void dispose() {
+    _modifierController.dispose();
+    super.dispose();
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -194,6 +202,22 @@ class _MovesScreenState extends State<MovesScreen> {
             const SizedBox(height: 16),
           ],
           
+          // Optional modifier field for action moves
+          if (move.stat != null && !move.isProgressMove) ...[
+            const SizedBox(height: 16),
+            TextField(
+              controller: _modifierController,
+              decoration: const InputDecoration(
+                labelText: 'Optional Modifier',
+                hintText: 'e.g., +2, -1',
+                helperText: 'One-time adjustment to Action Score',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: const TextInputType.numberWithOptions(signed: true),
+            ),
+            const SizedBox(height: 16),
+          ],
+          
           // Roll button
           if (move.stat != null || move.isProgressMove)
             ElevatedButton.icon(
@@ -201,6 +225,8 @@ class _MovesScreenState extends State<MovesScreen> {
               label: Text('Roll ${move.isProgressMove ? "Progress" : "Action"} Move'),
               onPressed: () {
                 _rollForMove(context, move);
+                // Clear the modifier after rolling
+                _modifierController.clear();
               },
             ),
         ],
@@ -209,6 +235,9 @@ class _MovesScreenState extends State<MovesScreen> {
   }
   
   void _rollForMove(BuildContext context, Move move) {
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final character = gameProvider.currentGame?.mainCharacter;
+    
     // Determine which dice to roll based on the move type
     Map<String, dynamic> rollResult;
     
@@ -218,78 +247,198 @@ class _MovesScreenState extends State<MovesScreen> {
       rollResult = DiceRoller.rollProgressMove(progressValue: 3);
     } else {
       // For action moves, we'll use the character's stat if available
-      // In a real app, this would come from the character's stats
-      final statValue = 2; // Default stat value
-      rollResult = DiceRoller.rollMove(statValue: statValue);
+      int? statValue;
+      
+      // Get the stat value from the character if possible
+      if (character != null && move.stat != null) {
+        final stat = character.stats.firstWhere(
+          (s) => s.name.toLowerCase() == move.stat!.toLowerCase(),
+          orElse: () => CharacterStat(name: move.stat!, value: 2),
+        );
+        statValue = stat.value;
+      } else {
+        statValue = 2; // Default stat value
+      }
+      
+      // Get the character's momentum
+      final momentum = character?.momentum ?? 2;
+      
+      // Parse the optional modifier
+      int modifier = 0;
+      if (_modifierController.text.isNotEmpty) {
+        modifier = int.tryParse(_modifierController.text) ?? 0;
+      }
+      
+      // Roll with momentum and modifier
+      rollResult = DiceRoller.rollMove(
+        statValue: statValue,
+        momentum: momentum,
+        modifier: modifier,
+      );
     }
     
     // Show the roll result
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text('${move.name} Roll'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (rollResult.containsKey('actionDie')) ...[
-                Text('Action Die: ${rollResult['actionDie']}'),
-                const SizedBox(height: 4),
-              ],
-              
-              if (rollResult.containsKey('statValue') && rollResult['statValue'] != null) ...[
-                Text('Stat Value: ${rollResult['statValue']}'),
-                const SizedBox(height: 4),
-              ],
-              
-              if (rollResult.containsKey('actionValue')) ...[
-                Text('Total Action Value: ${rollResult['actionValue']}'),
-                const SizedBox(height: 8),
-              ],
-              
-              if (rollResult.containsKey('progressValue')) ...[
-                Text('Progress Value: ${rollResult['progressValue']}'),
-                const SizedBox(height: 8),
-              ],
-              
-              if (rollResult.containsKey('challengeDice')) ...[
-                Text('Challenge Dice: ${rollResult['challengeDice'][0]} and ${rollResult['challengeDice'][1]}'),
-                const SizedBox(height: 16),
-              ],
-              
-              // Outcome
-              if (rollResult.containsKey('outcome')) ...[
-                Text(
-                  'Outcome: ${rollResult['outcome'].toUpperCase()}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('${move.name} Roll'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (rollResult.containsKey('actionDie')) ...[
+                    Row(
+                      children: [
+                        Text(
+                          'Action Die: ${rollResult['actionDie']}',
+                          style: rollResult['actionDieCanceled'] == true
+                              ? const TextStyle(
+                                  color: Colors.red,
+                                  decoration: TextDecoration.lineThrough,
+                                )
+                              : null,
+                        ),
+                        if (rollResult['actionDieCanceled'] == true) ...[
+                          const SizedBox(width: 8),
+                          const Text(
+                            '(Canceled by negative momentum)',
+                            style: TextStyle(color: Colors.red, fontSize: 12),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                  ],
+                  
+                  if (rollResult.containsKey('statValue') && rollResult['statValue'] != null) ...[
+                    Text('Stat Value: ${rollResult['statValue']}'),
+                    const SizedBox(height: 4),
+                  ],
+                  
+                  if (rollResult.containsKey('modifier') && rollResult['modifier'] != 0) ...[
+                    Text('Modifier: ${rollResult['modifier'] > 0 ? '+' : ''}${rollResult['modifier']}'),
+                    const SizedBox(height: 4),
+                  ],
+                  
+                  if (rollResult.containsKey('actionValue')) ...[
+                    Text('Total Action Value: ${rollResult['actionValue']}'),
+                    const SizedBox(height: 8),
+                  ],
+                  
+                  if (rollResult.containsKey('progressValue')) ...[
+                    Text('Progress Value: ${rollResult['progressValue']}'),
+                    const SizedBox(height: 8),
+                  ],
+                  
+                  if (rollResult.containsKey('challengeDice')) ...[
+                    Text('Challenge Dice: ${rollResult['challengeDice'][0]} and ${rollResult['challengeDice'][1]}'),
+                    const SizedBox(height: 16),
+                  ],
+                  
+                  // Momentum information
+                  if (rollResult.containsKey('momentum') && !move.isProgressMove) ...[
+                    Text('Current Momentum: ${rollResult['momentum']}'),
+                    const SizedBox(height: 8),
+                  ],
+                  
+                  // Outcome
+                  if (rollResult.containsKey('outcome')) ...[
+                    Text(
+                      'Outcome: ${rollResult['outcome'].toUpperCase()}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  
+                  // Find the matching outcome description
+                  if (rollResult.containsKey('outcome')) ...[
+                    for (final outcome in move.outcomes)
+                      if (outcome.type == rollResult['outcome'])
+                        Text(outcome.description),
+                  ],
+                  
+                  // Burn Momentum button
+                  if (rollResult['couldBurnMomentum'] == true && 
+                      character != null && 
+                      !move.isProgressMove) ...[
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 8),
+                    Center(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.local_fire_department),
+                        label: Text('Burn Momentum (${character.momentum})'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                        ),
+                        onPressed: () {
+                          // Calculate new result with burned momentum
+                          final newActionValue = character.momentum;
+                          
+                          // Determine new outcome
+                          final challengeDice = rollResult['challengeDice'] as List<int>;
+                          final strongHit = newActionValue > challengeDice[0] && newActionValue > challengeDice[1];
+                          final weakHit = (newActionValue > challengeDice[0] && newActionValue <= challengeDice[1]) ||
+                                          (newActionValue <= challengeDice[0] && newActionValue > challengeDice[1]);
+                          
+                          String newOutcome;
+                          if (strongHit) newOutcome = 'strong hit';
+                          else if (weakHit) newOutcome = 'weak hit';
+                          else newOutcome = 'miss';
+                          
+                          // Burn momentum
+                          character.burnMomentum();
+                          
+                          // Update the UI
+                          setState(() {
+                            rollResult['actionValue'] = newActionValue;
+                            rollResult['outcome'] = newOutcome;
+                            rollResult['momentumBurned'] = true;
+                            rollResult['couldBurnMomentum'] = false;
+                            rollResult['momentum'] = character.momentum;
+                          });
+                          
+                          // Save the game
+                          gameProvider.saveGame();
+                        },
+                      ),
+                    ),
+                  ],
+                  
+                  // Momentum burned indicator
+                  if (rollResult['momentumBurned'] == true) ...[
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Momentum has been burned!',
+                      style: TextStyle(
+                        color: Colors.orange,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text('New Momentum: ${rollResult['momentum']}'),
+                  ],
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Close'),
                 ),
-                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _rollForMove(context, move);
+                  },
+                  child: const Text('Roll Again'),
+                ),
               ],
-              
-              // Find the matching outcome description
-              if (rollResult.containsKey('outcome')) ...[
-                for (final outcome in move.outcomes)
-                  if (outcome.type == rollResult['outcome'])
-                    Text(outcome.description),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Close'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _rollForMove(context, move);
-              },
-              child: const Text('Roll Again'),
-            ),
-          ],
+            );
+          },
         );
       },
     );

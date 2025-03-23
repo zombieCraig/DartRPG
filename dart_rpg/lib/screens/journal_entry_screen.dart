@@ -243,6 +243,39 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
             backgroundColor: Colors.green,
           ),
         );
+      } else if (_createdEntryId != null) {
+        // Update the entry that was already created by autosave
+        final entry = gameProvider.currentSession!.entries.firstWhere(
+          (e) => e.id == _createdEntryId,
+        );
+        
+        // Update content
+        entry.update(_content);
+        entry.richContent = _richContent;
+        
+        // Update linked entities
+        entry.linkedCharacterIds = _linkedCharacterIds;
+        entry.linkedLocationIds = _linkedLocationIds;
+        
+        // Update rolls
+        entry.moveRolls = _moveRolls;
+        entry.oracleRolls = _oracleRolls;
+        
+        // Update embedded images
+        entry.embeddedImages = _embeddedImages;
+        
+        // Save the changes
+        await gameProvider.updateJournalEntry(_createdEntryId!, _content);
+        await gameProvider.saveGame();
+        
+        setState(() {
+          _isEditing = false;
+        });
+        
+        // Navigate back to journal screen
+        if (context.mounted) {
+          Navigator.pop(context);
+        }
       } else {
         // Create new entry
         final entry = await gameProvider.createJournalEntry(_content);

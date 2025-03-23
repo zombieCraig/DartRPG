@@ -99,6 +99,10 @@ class _RichTextEditorState extends State<RichTextEditor> {
     return KeyEventResult.ignored;
   }
   
+  // For inline suggestion
+  String? _inlineSuggestion;
+  int? _suggestionStartPosition;
+  
   // Check for @ and # characters to trigger autocomplete
   void _checkForMentions() {
     if (widget.readOnly) return;
@@ -108,28 +112,40 @@ class _RichTextEditorState extends State<RichTextEditor> {
     
     if (cursorPosition <= 0 || cursorPosition > text.length) {
       _removeOverlay();
+      _clearInlineSuggestion();
       return;
     }
     
     // Find the word being typed (from the last space or newline to the cursor)
     final textBeforeCursor = text.substring(0, cursorPosition);
     final lastSpaceOrNewline = textBeforeCursor.lastIndexOf(RegExp(r'[\s\n]'));
-    final currentWord = textBeforeCursor.substring(lastSpaceOrNewline + 1);
+    final wordStart = lastSpaceOrNewline + 1;
+    final currentWord = textBeforeCursor.substring(wordStart);
     
     // Check if we're typing @ or # followed by at least one character
     if (currentWord.startsWith('@') && currentWord.length > 1) {
       _currentSearchText = currentWord.substring(1).toLowerCase();
       _showCharacterSuggestions = true;
       _showLocationSuggestions = false;
+      _suggestionStartPosition = wordStart;
       _updateSuggestions();
     } else if (currentWord.startsWith('#') && currentWord.length > 1) {
       _currentSearchText = currentWord.substring(1).toLowerCase();
       _showCharacterSuggestions = false;
       _showLocationSuggestions = true;
+      _suggestionStartPosition = wordStart;
       _updateSuggestions();
     } else {
       _removeOverlay();
+      _clearInlineSuggestion();
     }
+  }
+  
+  void _clearInlineSuggestion() {
+    setState(() {
+      _inlineSuggestion = null;
+      _suggestionStartPosition = null;
+    });
   }
   
   void _updateSuggestions() {
@@ -157,7 +173,26 @@ class _RichTextEditorState extends State<RichTextEditor> {
     
     if (_filteredSuggestions.isEmpty) {
       _removeOverlay();
+      _clearInlineSuggestion();
       return;
+    }
+    
+    // Update inline suggestion
+    if (_filteredSuggestions.isNotEmpty && _suggestionStartPosition != null) {
+      final suggestion = _filteredSuggestions.first;
+      String completionText;
+      
+      if (_showCharacterSuggestions) {
+        final character = suggestion as Character;
+        final handle = character.handle ?? character.getHandle();
+        completionText = handle;
+      } else {
+        completionText = suggestion.name;
+      }
+      
+      setState(() {
+        _inlineSuggestion = completionText;
+      });
     }
     
     _showSuggestions();
@@ -246,14 +281,13 @@ class _RichTextEditorState extends State<RichTextEditor> {
     
     // Create the mention text
     String mentionText;
-    if (_showCharacterSuggestions) {
-      final character = entity as Character;
-      final handle = character.handle ?? character.getHandle();
+    if (entity is Character) {
+      final handle = entity.handle ?? entity.getHandle();
       mentionText = '@$handle';
       
       // Notify parent about linked character
       if (widget.onCharacterLinked != null) {
-        widget.onCharacterLinked!(character.id);
+        widget.onCharacterLinked!(entity.id);
       }
     } else {
       mentionText = '#${entity.name}';
@@ -474,23 +508,59 @@ class _RichTextEditorState extends State<RichTextEditor> {
                 ),
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: TextField(
-                controller: _controller,
-                focusNode: _focusNode,
-                readOnly: widget.readOnly,
-                maxLines: null,
-                expands: true,
-                textAlignVertical: TextAlignVertical.top,
-                decoration: const InputDecoration(
-                  contentPadding: EdgeInsets.all(8),
-                  border: InputBorder.none,
-                  hintText: 'Write your journal entry here...',
-                ),
-                onChanged: (value) {
-                  widget.onChanged(value, value);
-                  _checkForMentions();
-                },
-                onTap: _checkForMentions,
+              child: Stack(
+                children: [
+                  // Main text field
+                  TextField(
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    readOnly: widget.readOnly,
+                    maxLines: null,
+                    expands: true,
+                    textAlignVertical: TextAlignVertical.top,
+                    decoration: const InputDecoration(
+                      contentPadding: EdgeInsets.all(8),
+                      border: InputBorder.none,
+                      hintText: 'Write your journal entry here...',
+                    ),
+                    onChanged: (value) {
+                      widget.onChanged(value, value);
+                      _checkForMentions();
+                    },
+                    onTap: _checkForMentions,
+                  ),
+                  
+                  // Inline suggestion overlay
+                  if (_inlineSuggestion != null && _suggestionStartPosition != null)
+                    Positioned(
+                      left: 8, // Same as contentPadding
+                      top: 8,   // Same as contentPadding
+                      child: IgnorePointer(
+                        child: RichText(
+                          text: TextSpan(
+                            children: [
+                              // Invisible text to match the user's input
+                              TextSpan(
+                                text: _controller.text.substring(0, _suggestionStartPosition! + _currentSearchText.length + 1),
+                                style: TextStyle(
+                                  color: Colors.transparent,
+                                  fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
+                                ),
+                              ),
+                              // Grey suggestion text
+                              TextSpan(
+                                text: _inlineSuggestion!.substring(_currentSearchText.length),
+                                style: TextStyle(
+                                  color: Colors.grey.withOpacity(0.7),
+                                  fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ),

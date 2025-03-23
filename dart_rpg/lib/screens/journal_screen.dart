@@ -150,6 +150,7 @@ class JournalScreen extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       child: InkWell(
         onTap: () {
+          // Pass the entry ID to open the existing entry
           Navigator.push(
             context,
             MaterialPageRoute(

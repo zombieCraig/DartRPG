@@ -17,10 +17,23 @@ class _MovesScreenState extends State<MovesScreen> {
   String? _selectedCategory;
   Move? _selectedMove;
   final TextEditingController _modifierController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
+  }
   
   @override
   void dispose() {
     _modifierController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
   
@@ -47,41 +60,79 @@ class _MovesScreenState extends State<MovesScreen> {
         
         final sortedCategories = categories.toList()..sort();
         
+        // Filter moves by search query if provided
+        List<Move> filteredMoves = [];
+        if (_searchQuery.isNotEmpty) {
+          for (final category in movesByCategory.keys) {
+            filteredMoves.addAll(
+              movesByCategory[category]!.where((move) => 
+                move.name.toLowerCase().contains(_searchQuery) ||
+                (move.description?.toLowerCase().contains(_searchQuery) ?? false)
+              )
+            );
+          }
+        }
+        
         return Column(
           children: [
-            // Category selector
+            // Search bar
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: 'Move Category',
-                  border: OutlineInputBorder(),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  labelText: 'Search Moves',
+                  hintText: 'Enter move name or description',
+                  prefixIcon: const Icon(Icons.search),
+                  border: const OutlineInputBorder(),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                          },
+                        )
+                      : null,
                 ),
-                value: _selectedCategory,
-                items: sortedCategories.map((category) {
-                  return DropdownMenuItem<String>(
-                    value: category,
-                    child: Text(category),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedCategory = value;
-                    _selectedMove = null;
-                  });
-                },
               ),
             ),
+            
+            // Category selector (only shown when not searching)
+            if (_searchQuery.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(
+                    labelText: 'Move Category',
+                    border: OutlineInputBorder(),
+                  ),
+                  value: _selectedCategory,
+                  items: sortedCategories.map((category) {
+                    return DropdownMenuItem<String>(
+                      value: category,
+                      child: Text(category),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedCategory = value;
+                      _selectedMove = null;
+                    });
+                  },
+                ),
+              ),
             
             // Move list or details
             Expanded(
               child: _selectedMove != null
                   ? _buildMoveDetails(_selectedMove!)
-                  : _selectedCategory != null && movesByCategory.containsKey(_selectedCategory)
-                      ? _buildMoveList(movesByCategory[_selectedCategory]!)
-                      : const Center(
-                          child: Text('Select a move category to begin'),
-                        ),
+                  : _searchQuery.isNotEmpty
+                      ? _buildMoveList(filteredMoves)
+                      : _selectedCategory != null && movesByCategory.containsKey(_selectedCategory)
+                          ? _buildMoveList(movesByCategory[_selectedCategory]!)
+                          : const Center(
+                              child: Text('Select a move category or search for moves'),
+                            ),
             ),
           ],
         );

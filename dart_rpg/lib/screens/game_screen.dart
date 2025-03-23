@@ -30,6 +30,7 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialTabIndex;
     
     // Delay to ensure the game provider is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {

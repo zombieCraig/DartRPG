@@ -14,17 +14,19 @@ class AssetCardWidget extends StatelessWidget {
   }) : super(key: key);
 
   Color _getAssetColor(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     switch (asset.category.toLowerCase()) {
       case 'base rig':
-        return Colors.black;
+        return isDarkMode ? Colors.white : Colors.black;
       case 'module':
-        return Colors.blue;
+        return Colors.blue.shade500;
       case 'path':
-        return Colors.orange;
+        return Colors.orange.shade500;
       case 'companion':
-        return Colors.yellow;
+        return isDarkMode ? Colors.amber.shade300 : Colors.amber.shade700;
       default:
-        return Colors.purple;
+        return Colors.purple.shade500;
     }
   }
 

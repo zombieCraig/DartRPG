@@ -15,6 +15,24 @@ class OraclesScreen extends StatefulWidget {
 class _OraclesScreenState extends State<OraclesScreen> {
   String? _selectedCategoryId;
   OracleTable? _selectedTable;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
+  }
+  
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -28,29 +46,40 @@ class _OraclesScreenState extends State<OraclesScreen> {
           );
         }
         
+        // Filter oracles by search query if provided
+        List<OracleTable> filteredTables = [];
+        if (_searchQuery.isNotEmpty) {
+          for (final category in categories) {
+            filteredTables.addAll(
+              category.tables.where((table) => 
+                table.name.toLowerCase().contains(_searchQuery) ||
+                (table.description?.toLowerCase().contains(_searchQuery) ?? false)
+              )
+            );
+          }
+        }
+        
         return Column(
           children: [
-            // Category selector
+            // Search bar
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: 'Oracle Category',
-                  border: OutlineInputBorder(),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  labelText: 'Search Oracles',
+                  hintText: 'Enter oracle name or description',
+                  prefixIcon: const Icon(Icons.search),
+                  border: const OutlineInputBorder(),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                          },
+                        )
+                      : null,
                 ),
-                value: _selectedCategoryId,
-                items: categories.map((category) {
-                  return DropdownMenuItem<String>(
-                    value: category.id,
-                    child: Text(category.name),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedCategoryId = value;
-                    _selectedTable = null;
-                  });
-                },
               ),
             ),
             
@@ -58,13 +87,52 @@ class _OraclesScreenState extends State<OraclesScreen> {
             Expanded(
               child: _selectedTable != null
                   ? _buildOracleDetails(_selectedTable!)
-                  : _selectedCategoryId != null
-                      ? _buildOracleList(_getSelectedCategory(categories))
-                      : const Center(
-                          child: Text('Select an oracle category to begin'),
-                        ),
+                  : _searchQuery.isNotEmpty
+                      ? _buildOracleTableList(filteredTables)
+                      : _buildExpandableCategoryList(categories),
             ),
           ],
+        );
+      },
+    );
+  }
+  
+  Widget _buildExpandableCategoryList(List<OracleCategory> categories) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: categories.length,
+      itemBuilder: (context, index) {
+        final category = categories[index];
+        
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ExpansionTile(
+            title: Text(category.name),
+            children: category.tables.map((table) {
+              return ListTile(
+                title: Text(table.name),
+                subtitle: table.description != null
+                    ? Text(
+                        table.description!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      )
+                    : null,
+                trailing: IconButton(
+                  icon: const Icon(Icons.casino),
+                  tooltip: 'Roll on this oracle',
+                  onPressed: () {
+                    _rollOnOracle(context, table);
+                  },
+                ),
+                onTap: () {
+                  setState(() {
+                    _selectedTable = table;
+                  });
+                },
+              );
+            }).toList(),
+          ),
         );
       },
     );
@@ -77,6 +145,48 @@ class _OraclesScreenState extends State<OraclesScreen> {
     } catch (e) {
       return null;
     }
+  }
+  
+  Widget _buildOracleTableList(List<OracleTable> tables) {
+    if (tables.isEmpty) {
+      return const Center(
+        child: Text('No matching oracle tables found'),
+      );
+    }
+    
+    final sortedTables = List<OracleTable>.from(tables)..sort((a, b) => a.name.compareTo(b.name));
+    
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: sortedTables.length,
+      itemBuilder: (context, index) {
+        final table = sortedTables[index];
+        
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            title: Text(table.name),
+            subtitle: Text(
+              table.description ?? 'No description available',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.casino),
+              tooltip: 'Roll on this oracle',
+              onPressed: () {
+                _rollOnOracle(context, table);
+              },
+            ),
+            onTap: () {
+              setState(() {
+                _selectedTable = table;
+              });
+            },
+          ),
+        );
+      },
+    );
   }
   
   Widget _buildOracleList(OracleCategory? category) {

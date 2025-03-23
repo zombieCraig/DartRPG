@@ -786,15 +786,20 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                                     color: _getRollTypeColor(move.rollType),
                                   ),
                                   onTap: () {
+                                    // Close the move selection dialog
                                     Navigator.pop(context);
-                                    // Handle the move based on its roll type
-                                    if (move.rollType == 'action_roll') {
-                                      _showActionRollDialog(context, move);
-                                    } else if (move.rollType == 'progress_roll') {
-                                      _showProgressRollDialog(context, move);
-                                    } else {
-                                      _performNoRollMove(context, move);
-                                    }
+                                    
+                                    // Use Future.delayed to ensure the dialog is fully closed before showing the next one
+                                    Future.delayed(Duration.zero, () {
+                                      // Handle the move based on its roll type
+                                      if (move.rollType == 'action_roll') {
+                                        _showActionRollDialog(context, move);
+                                      } else if (move.rollType == 'progress_roll') {
+                                        _showProgressRollDialog(context, move);
+                                      } else {
+                                        _performNoRollMove(context, move);
+                                      }
+                                    });
                                   },
                                 );
                               },
@@ -822,15 +827,20 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                                         color: _getRollTypeColor(move.rollType),
                                       ),
                                       onTap: () {
+                                        // Close the move selection dialog
                                         Navigator.pop(context);
-                                        // Handle the move based on its roll type
-                                        if (move.rollType == 'action_roll') {
-                                          _showActionRollDialog(context, move);
-                                        } else if (move.rollType == 'progress_roll') {
-                                          _showProgressRollDialog(context, move);
-                                        } else {
-                                          _performNoRollMove(context, move);
-                                        }
+                                        
+                                        // Use Future.delayed to ensure the dialog is fully closed before showing the next one
+                                        Future.delayed(Duration.zero, () {
+                                          // Handle the move based on its roll type
+                                          if (move.rollType == 'action_roll') {
+                                            _showActionRollDialog(context, move);
+                                          } else if (move.rollType == 'progress_roll') {
+                                            _showProgressRollDialog(context, move);
+                                          } else {
+                                            _performNoRollMove(context, move);
+                                          }
+                                        });
                                       },
                                     );
                                   }).toList(),

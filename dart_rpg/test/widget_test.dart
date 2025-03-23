@@ -7,24 +7,31 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 
 import 'package:dart_rpg/main.dart';
+import 'package:dart_rpg/providers/settings_provider.dart';
+import 'package:dart_rpg/providers/datasworn_provider.dart';
+import 'package:dart_rpg/providers/game_provider.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('DartRPG app smoke test', (WidgetTester tester) async {
+    // This is a simple smoke test to verify that the app can be built without errors.
+    // We're not testing any specific functionality here, just that the app can be built.
+    
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
-
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => SettingsProvider()),
+          ChangeNotifierProvider(create: (_) => DataswornProvider()),
+          ChangeNotifierProvider(create: (_) => GameProvider()),
+        ],
+        child: const MyApp(),
+      ),
+    );
+    
+    // Verify that the app builds without errors
+    expect(find.byType(MaterialApp), findsOneWidget);
   });
 }

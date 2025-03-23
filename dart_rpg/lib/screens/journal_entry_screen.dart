@@ -1539,7 +1539,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.casino),
+                    icon: const Icon(Icons.sports_martial_arts),
                     tooltip: 'Roll Move',
                     onPressed: () {
                       _showRollMoveDialog(context);

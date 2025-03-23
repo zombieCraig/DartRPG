@@ -5,6 +5,277 @@ import '../providers/game_provider.dart';
 import '../models/oracle.dart';
 import '../utils/dice_roller.dart';
 
+class OracleCategoryScreen extends StatelessWidget {
+  final OracleCategory category;
+  
+  const OracleCategoryScreen({super.key, required this.category});
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(category.name),
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: category.tables.length,
+        itemBuilder: (context, index) {
+          final table = category.tables[index];
+          
+          return Card(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: ListTile(
+              title: Text(table.name),
+              subtitle: table.description != null
+                  ? Text(
+                      table.description!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  : null,
+              trailing: IconButton(
+                icon: const Icon(Icons.casino),
+                tooltip: 'Roll on this oracle',
+                onPressed: () {
+                  _rollOnOracleFromCategory(context, table);
+                },
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => OracleTableScreen(table: table),
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+  
+  void _rollOnOracleFromCategory(BuildContext context, OracleTable table) {
+    if (table.rows.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('This oracle has no table entries'),
+        ),
+      );
+      return;
+    }
+    
+    // Roll on the oracle
+    final rollResult = DiceRoller.rollOracle(table.diceFormat);
+    final total = rollResult['total'] as int;
+    
+    // Find the matching table entry
+    OracleTableRow? matchingRow;
+    for (final row in table.rows) {
+      if (row.matchesRoll(total)) {
+        matchingRow = row;
+        break;
+      }
+    }
+    
+    if (matchingRow == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No result found for roll: $total'),
+        ),
+      );
+      return;
+    }
+    
+    // Show the result
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('${table.name} Result'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Roll: $total'),
+              const SizedBox(height: 16),
+              Text(
+                matchingRow!.result,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Close'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _rollOnOracleFromCategory(context, table);
+              },
+              child: const Text('Roll Again'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class OracleTableScreen extends StatelessWidget {
+  final OracleTable table;
+  
+  const OracleTableScreen({super.key, required this.table});
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(table.name),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.casino),
+            tooltip: 'Roll on this oracle',
+            onPressed: () {
+              _rollOnOracleTable(context, table);
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Oracle description
+          if (table.description != null)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                table.description!,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+          
+          // Oracle table
+          Expanded(
+            child: table.rows.isEmpty
+                ? const Center(
+                    child: Text('This oracle has no table entries'),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: table.rows.length,
+                    itemBuilder: (context, index) {
+                      final row = table.rows[index];
+                      
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 4),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Roll range
+                              SizedBox(
+                                width: 60,
+                                child: Text(
+                                  row.minRoll == row.maxRoll
+                                      ? '${row.minRoll}'
+                                      : '${row.minRoll}-${row.maxRoll}',
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              
+                              // Result
+                              Expanded(
+                                child: Text(row.result),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _rollOnOracleTable(BuildContext context, OracleTable table) {
+    if (table.rows.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('This oracle has no table entries'),
+        ),
+      );
+      return;
+    }
+    
+    // Roll on the oracle
+    final rollResult = DiceRoller.rollOracle(table.diceFormat);
+    final total = rollResult['total'] as int;
+    
+    // Find the matching table entry
+    OracleTableRow? matchingRow;
+    for (final row in table.rows) {
+      if (row.matchesRoll(total)) {
+        matchingRow = row;
+        break;
+      }
+    }
+    
+    if (matchingRow == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No result found for roll: $total'),
+        ),
+      );
+      return;
+    }
+    
+    // Show the result
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('${table.name} Result'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Roll: $total'),
+              const SizedBox(height: 16),
+              Text(
+                matchingRow!.result,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Close'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _rollOnOracleTable(context, table);
+              },
+              child: const Text('Roll Again'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class OraclesScreen extends StatefulWidget {
   const OraclesScreen({super.key});
 
@@ -106,32 +377,30 @@ class _OraclesScreenState extends State<OraclesScreen> {
         
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
-          child: ExpansionTile(
+          child: ListTile(
             title: Text(category.name),
-            children: category.tables.map((table) {
-              return ListTile(
-                title: Text(table.name),
-                subtitle: table.description != null
-                    ? Text(
-                        table.description!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      )
-                    : null,
-                trailing: IconButton(
-                  icon: const Icon(Icons.casino),
-                  tooltip: 'Roll on this oracle',
-                  onPressed: () {
-                    _rollOnOracle(context, table);
-                  },
+            trailing: IconButton(
+              icon: const Icon(Icons.casino),
+              tooltip: 'Roll on this category',
+              onPressed: () {
+                _rollOnOracle(context, category.tables.first);
+              },
+            ),
+            onTap: () {
+              // Show the tables for this category
+              setState(() {
+                _selectedCategoryId = category.id;
+                _selectedTable = null;
+              });
+              
+              // Navigate to the oracle list for this category
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => OracleCategoryScreen(category: category),
                 ),
-                onTap: () {
-                  setState(() {
-                    _selectedTable = table;
-                  });
-                },
               );
-            }).toList(),
+            },
           ),
         );
       },

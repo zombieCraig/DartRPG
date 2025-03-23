@@ -982,7 +982,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.help_outline),
+                    icon: const Icon(Icons.casino),
                     tooltip: 'Roll Oracle',
                     onPressed: () {
                       _showRollOracleDialog(context);

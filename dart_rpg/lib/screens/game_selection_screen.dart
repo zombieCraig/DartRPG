@@ -83,8 +83,12 @@ class GameSelectionScreen extends StatelessWidget {
                     onPressed: () async {
                       final game = await gameProvider.importGame();
                       if (game != null && context.mounted) {
-                        // Always start with the Characters tab
-                        const initialTabIndex = 1; // 1 = Characters tab
+                        // Check if there's a main character
+                        final hasMainCharacter = gameProvider.currentGame?.mainCharacter != null;
+                        
+                        // If there's a main character, start with Journal tab (0)
+                        // Otherwise, start with Characters tab (1)
+                        final initialTabIndex = hasMainCharacter ? 0 : 1;
                         
                         Navigator.pushReplacement(
                           context,
@@ -200,8 +204,12 @@ class GameSelectionScreen extends StatelessWidget {
                                 }
                                 
                                 if (context.mounted) {
-                                  // Always start with the Characters tab
-                                  const initialTabIndex = 1; // 1 = Characters tab
+                                  // Check if there's a main character
+                                  final hasMainCharacter = gameProvider.currentGame?.mainCharacter != null;
+                                  
+                                  // If there's a main character, start with Journal tab (0)
+                                  // Otherwise, start with Characters tab (1)
+                                  final initialTabIndex = hasMainCharacter ? 0 : 1;
                                   
                                   Navigator.pushReplacement(
                                     context,
@@ -227,8 +235,12 @@ class GameSelectionScreen extends StatelessWidget {
                           }
                           
                           if (context.mounted) {
-                            // Always start with the Characters tab
-                            const initialTabIndex = 1; // 1 = Characters tab
+                            // Check if there's a main character
+                            final hasMainCharacter = gameProvider.currentGame?.mainCharacter != null;
+                            
+                            // If there's a main character, start with Journal tab (0)
+                            // Otherwise, start with Characters tab (1)
+                            final initialTabIndex = hasMainCharacter ? 0 : 1;
                             
                             Navigator.pushReplacement(
                               context,

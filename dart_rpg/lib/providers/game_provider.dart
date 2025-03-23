@@ -216,14 +216,14 @@ class GameProvider extends ChangeNotifier {
   }
 
   // Create a new character
-  Future<Character> createCharacter(String name, {bool isMainCharacter = false}) async {
+  Future<Character> createCharacter(String name, {bool isMainCharacter = false, String? handle}) async {
     if (_currentGame == null) {
       throw Exception('No game selected');
     }
     
     final character = isMainCharacter
-        ? Character.createMainCharacter(name)
-        : Character(name: name);
+        ? Character.createMainCharacter(name, handle: handle)
+        : Character(name: name, handle: handle);
     
     _currentGame!.addCharacter(character);
     

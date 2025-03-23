@@ -72,6 +72,33 @@
 - Comprehensive error handling
 - Performance optimization for mobile devices
 
+## Journal Entry System
+
+### Rich Text Editor
+- Custom implementation with markdown-style formatting
+- Toolbar with formatting options (bold, italic, headings, lists)
+- Support for character and location references using @ and # syntax
+- Image embedding support
+- Keyboard shortcuts for common actions (Ctrl+M for Move, Ctrl+O for Oracle)
+
+### Autocompletion
+- Show suggestions after typing @ or # plus one character
+- Display inline suggestions as greyed-out text
+- Support tab completion for efficiency
+- Match on character handle or location name
+
+### Character References
+- Use @ syntax with handle-based references
+- Automatically generate handle from first name if not provided
+- Validate to prevent spaces and special characters in handles
+- Format: @handle for characters, #name for locations
+
+### Linked Items Summary
+- Collapsible summary below journal entry
+- Sections for characters, locations, move rolls, and oracle rolls
+- Interactive elements to view details of linked items
+- Visual presentation with color coding for move outcomes
+
 ## Known Challenges
 
 ### Technical Challenges
@@ -79,24 +106,31 @@
 - **Performance**: JSON serialization/deserialization can be CPU-intensive
 - **Memory Usage**: In-memory logging can consume significant memory
 - **Error Handling**: Balancing comprehensive logging with performance
+- **Rich Text Persistence**: Storing and retrieving complex formatted text efficiently
+- **Image Handling**: Managing embedded images effectively
 
 ### UX Challenges
 - **Navigation Complexity**: Many screens and features to navigate
 - **Information Density**: Balancing detail with clarity
 - **Accessibility**: Supporting various user needs
 - **Error Messaging**: Providing helpful error messages without technical jargon
+- **Autocompletion UX**: Making suggestions helpful without being intrusive
+- **Mobile Text Editing**: Optimizing the rich text editor for touch screens
 
 ## Project Evolution
 
 ### Recent Focus
-- Implementing comprehensive logging system
-- Improving error handling
-- Enhancing settings access throughout the app
+- Enhancing the journal entry system with rich text editing
+- Implementing character handle/short name support
+- Adding autocompletion for character and location references
+- Fixing UI and navigation issues
+- Improving search functionality in Moves and Oracles screens
 
 ### Current Direction
-- Testing and refining the logging system
-- Documenting the logging service
-- Reviewing and improving error handling throughout the app
+- Testing and refining the journal entry features
+- Optimizing performance for complex journal entries
+- Improving the mobile experience for text editing
+- Enhancing the visual design of the rich text editor
 
 ### Future Considerations
 - Moving to a database solution for larger datasets

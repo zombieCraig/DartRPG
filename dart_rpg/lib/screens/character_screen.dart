@@ -187,6 +187,7 @@ class CharacterScreen extends StatelessWidget {
 
   Future<void> _showCreateCharacterDialog(BuildContext context, GameProvider gameProvider) async {
     final nameController = TextEditingController();
+    final handleController = TextEditingController();
     final bioController = TextEditingController();
     final imageUrlController = TextEditingController();
     bool isPlayerCharacter = true;
@@ -217,6 +218,15 @@ class CharacterScreen extends StatelessWidget {
                       decoration: const InputDecoration(
                         labelText: 'Name',
                         hintText: 'Enter character name',
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: handleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Short Name or Handle',
+                        hintText: 'Enter a short name without spaces or special characters',
+                        helperText: 'No spaces, @, #, or brackets. Will default to first name if blank.',
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -324,10 +334,14 @@ class CharacterScreen extends StatelessWidget {
                     // Create character
                     Character character;
                     if (isPlayerCharacter) {
-                      character = Character.createMainCharacter(nameController.text);
+                      character = Character.createMainCharacter(
+                        nameController.text,
+                        handle: handleController.text.isEmpty ? null : handleController.text,
+                      );
                     } else {
                       character = Character(
                         name: nameController.text,
+                        handle: handleController.text.isEmpty ? null : handleController.text,
                       );
                     }
                     
@@ -341,10 +355,14 @@ class CharacterScreen extends StatelessWidget {
                       character.stats.addAll(stats);
                     }
                     
-                    // Add character to game
-                    if (gameProvider.currentGame != null) {
-                      // Use the createCharacter method from GameProvider
-                      await gameProvider.createCharacter(character.name, isMainCharacter: isPlayerCharacter);
+                      // Add character to game
+                      if (gameProvider.currentGame != null) {
+                        // Use the createCharacter method from GameProvider
+                        await gameProvider.createCharacter(
+                          character.name, 
+                          isMainCharacter: isPlayerCharacter,
+                          handle: handleController.text.isEmpty ? null : handleController.text,
+                        );
                       
                       // Update the character with our custom data
                       final createdCharacter = gameProvider.currentGame!.characters.last;
@@ -388,6 +406,7 @@ class CharacterScreen extends StatelessWidget {
 
   void _showCharacterDetailsDialog(BuildContext context, GameProvider gameProvider, Character character) {
     final nameController = TextEditingController(text: character.name);
+    final handleController = TextEditingController(text: character.handle ?? character.getHandle());
     final bioController = TextEditingController(text: character.bio);
     final imageUrlController = TextEditingController(text: character.imageUrl ?? '');
     final notesController = TextEditingController(text: character.notes.isNotEmpty ? character.notes.join('\n') : '');
@@ -449,6 +468,14 @@ class CharacterScreen extends StatelessWidget {
                         controller: nameController,
                         decoration: const InputDecoration(
                           labelText: 'Name',
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: handleController,
+                        decoration: const InputDecoration(
+                          labelText: 'Short Name or Handle',
+                          helperText: 'No spaces, @, #, or brackets. Will default to first name if blank.',
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -1055,6 +1082,7 @@ class CharacterScreen extends StatelessWidget {
                         if (index != -1) {
                           // Update the character properties
                           character.name = nameController.text;
+                          character.setHandle(handleController.text);
                           character.bio = bioController.text;
                           character.imageUrl = imageUrlController.text.isEmpty ? null : imageUrlController.text;
                           

@@ -16,6 +16,9 @@ class RichTextEditor extends StatefulWidget {
   final Function(String imageUrl)? onImageAdded;
   final Function()? onMoveRequested;
   final Function()? onOracleRequested;
+  
+  // Controller for external access
+  final TextEditingController? controller;
 
   const RichTextEditor({
     super.key,
@@ -28,6 +31,7 @@ class RichTextEditor extends StatefulWidget {
     this.onImageAdded,
     this.onMoveRequested,
     this.onOracleRequested,
+    this.controller,
   });
   
   // Static method to insert text at the current cursor position
@@ -53,7 +57,7 @@ class RichTextEditor extends StatefulWidget {
 }
 
 class _RichTextEditorState extends State<RichTextEditor> {
-  final TextEditingController _controller = TextEditingController();
+  late TextEditingController _controller;
   final FocusNode _focusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
   
@@ -69,8 +73,13 @@ class _RichTextEditorState extends State<RichTextEditor> {
   void initState() {
     super.initState();
     
-    // Initialize the controller with the initial text
-    _controller.text = widget.initialText;
+    // Use the controller provided by the parent widget or create a new one
+    _controller = widget.controller ?? TextEditingController();
+    
+    // Initialize the controller with the initial text if it's empty
+    if (_controller.text.isEmpty) {
+      _controller.text = widget.initialText;
+    }
     
     // Set up keyboard shortcuts
     _focusNode.onKeyEvent = _handleKeyEvent;
@@ -78,7 +87,10 @@ class _RichTextEditorState extends State<RichTextEditor> {
   
   @override
   void dispose() {
-    _controller.dispose();
+    // Only dispose the controller if it was created by this widget
+    if (widget.controller == null) {
+      _controller.dispose();
+    }
     _focusNode.dispose();
     _scrollController.dispose();
     _removeOverlay();

@@ -44,11 +44,11 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Improved navigation flow based on character creation status
 - ✅ Keyboard shortcuts for common actions
 - ✅ Image embedding support in journal entries
+- ✅ Comprehensive unit tests for journal entry features
 
 ## What's Left to Build
 
 ### High Priority
-- ⬜ Comprehensive testing of the journal entry features
 - ⬜ Performance optimization for complex journal entries
 - ⬜ UI refinements for the rich text editor
 - ⬜ Mobile-friendly interaction improvements for text editing

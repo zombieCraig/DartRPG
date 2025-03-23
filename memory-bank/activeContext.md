@@ -65,11 +65,12 @@ This work enhances the journaling system to provide a more intuitive and feature
 
 ### Short-term Tasks
 1. **Testing Journal Entry Features**
-   - Test character and location autocompletion
-   - Verify tab-completion functionality
-   - Check image embedding and display
-   - Test keyboard shortcuts for moves and oracles
-   - Expand regression test coverage for other features
+   - ✅ Added unit tests for OracleRoll.getFormattedText()
+   - ✅ Added unit tests for Character.getHandle() and setHandle()
+   - ✅ Added unit tests for MoveRoll.getFormattedText()
+   - ✅ Added unit tests for RichTextEditor.insertTextAtCursor()
+   - ✅ Added widget tests for LinkedItemsSummary
+   - Continue expanding test coverage for other components
 
 2. **UI Refinements**
    - Improve the visual design of the rich text editor

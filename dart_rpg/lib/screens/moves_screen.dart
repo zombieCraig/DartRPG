@@ -4,6 +4,7 @@ import '../providers/datasworn_provider.dart';
 import '../providers/game_provider.dart';
 import '../models/move.dart';
 import '../models/character.dart';
+import '../models/journal_entry.dart';
 import '../utils/dice_roller.dart';
 
 class MovesScreen extends StatefulWidget {
@@ -19,6 +20,8 @@ class _MovesScreenState extends State<MovesScreen> {
   final TextEditingController _modifierController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  int _progressValue = 5; // Default progress value for progress rolls
+  String? _selectedStat; // Selected stat for action rolls
   
   @override
   void initState() {
@@ -43,12 +46,12 @@ class _MovesScreenState extends State<MovesScreen> {
       builder: (context, dataswornProvider, gameProvider, _) {
         final moves = dataswornProvider.moves;
         
-        // Group moves by category
+        // Group moves by move_category instead of category
         final categories = <String>{};
         final movesByCategory = <String, List<Move>>{};
         
         for (final move in moves) {
-          final category = move.category ?? 'Uncategorized';
+          final category = move.moveCategory ?? move.category ?? 'Uncategorized';
           categories.add(category);
           
           if (!movesByCategory.containsKey(category)) {
@@ -67,7 +70,8 @@ class _MovesScreenState extends State<MovesScreen> {
             filteredMoves.addAll(
               movesByCategory[category]!.where((move) => 
                 move.name.toLowerCase().contains(_searchQuery) ||
-                (move.description?.toLowerCase().contains(_searchQuery) ?? false)
+                (move.description?.toLowerCase().contains(_searchQuery) ?? false) ||
+                (move.trigger?.toLowerCase().contains(_searchQuery) ?? false)
               )
             );
           }
@@ -158,15 +162,63 @@ class _MovesScreenState extends State<MovesScreen> {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
+            // Use a person kicking icon instead of casino
+            trailing: Tooltip(
+              message: _getRollTypeTooltip(move.rollType),
+              child: Icon(
+                _getRollTypeIcon(move.rollType),
+                color: _getRollTypeColor(move.rollType),
+              ),
+            ),
             onTap: () {
               setState(() {
                 _selectedMove = move;
+                _selectedStat = null; // Reset selected stat when selecting a new move
               });
             },
           ),
         );
       },
     );
+  }
+  
+  IconData _getRollTypeIcon(String rollType) {
+    switch (rollType) {
+      case 'action_roll':
+        return Icons.sports_martial_arts; // Person kicking icon
+      case 'progress_roll':
+        return Icons.trending_up;
+      case 'no_roll':
+        return Icons.check_circle_outline;
+      default:
+        return Icons.sports_martial_arts;
+    }
+  }
+  
+  Color _getRollTypeColor(String rollType) {
+    switch (rollType) {
+      case 'action_roll':
+        return Colors.blue;
+      case 'progress_roll':
+        return Colors.green;
+      case 'no_roll':
+        return Colors.grey;
+      default:
+        return Colors.blue;
+    }
+  }
+  
+  String _getRollTypeTooltip(String rollType) {
+    switch (rollType) {
+      case 'action_roll':
+        return 'Action Roll';
+      case 'progress_roll':
+        return 'Progress Roll';
+      case 'no_roll':
+        return 'No Roll Required';
+      default:
+        return 'Move';
+    }
   }
   
   Widget _buildMoveDetails(Move move) {
@@ -182,24 +234,36 @@ class _MovesScreenState extends State<MovesScreen> {
             onPressed: () {
               setState(() {
                 _selectedMove = null;
+                _selectedStat = null;
               });
             },
           ),
           
           const SizedBox(height: 16),
           
-          // Move name
-          Text(
-            move.name,
-            style: Theme.of(context).textTheme.headlineMedium,
+          // Move name and roll type icon
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  move.name,
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+              ),
+              Icon(
+                _getRollTypeIcon(move.rollType),
+                color: _getRollTypeColor(move.rollType),
+                size: 32,
+              ),
+            ],
           ),
           
           const SizedBox(height: 8),
           
           // Move category
-          if (move.category != null) ...[
+          if (move.moveCategory != null || move.category != null) ...[
             Text(
-              move.category!,
+              move.moveCategory ?? move.category!,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Colors.grey[600],
               ),
@@ -253,82 +317,283 @@ class _MovesScreenState extends State<MovesScreen> {
             const SizedBox(height: 16),
           ],
           
-          // Optional modifier field for action moves
-          if (move.stat != null && !move.isProgressMove) ...[
-            const SizedBox(height: 16),
-            TextField(
-              controller: _modifierController,
-              decoration: const InputDecoration(
-                labelText: 'Optional Modifier',
-                hintText: 'e.g., +2, -1',
-                helperText: 'One-time adjustment to Action Score',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: const TextInputType.numberWithOptions(signed: true),
-            ),
-            const SizedBox(height: 16),
+          // Different UI based on roll type
+          if (move.rollType == 'action_roll') ...[
+            _buildActionRollUI(move),
+          ] else if (move.rollType == 'progress_roll') ...[
+            _buildProgressRollUI(move),
+          ] else if (move.rollType == 'no_roll') ...[
+            _buildNoRollUI(move),
           ],
-          
-          // Roll button
-          if (move.stat != null || move.isProgressMove)
-            ElevatedButton.icon(
-              icon: const Icon(Icons.casino),
-              label: Text('Roll ${move.isProgressMove ? "Progress" : "Action"} Move'),
-              onPressed: () {
-                _rollForMove(context, move);
-                // Clear the modifier after rolling
-                _modifierController.clear();
-              },
-            ),
         ],
       ),
     );
   }
   
-  void _rollForMove(BuildContext context, Move move) {
+  Widget _buildActionRollUI(Move move) {
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final character = gameProvider.currentGame?.mainCharacter;
+    final availableStats = move.getAvailableStats();
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Stat selection
+        const Text(
+          'Select Stat:',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: availableStats.map((stat) {
+            // Get the stat value from the character if available
+            int statValue = 2; // Default value
+            if (character != null) {
+              final characterStat = character.stats.firstWhere(
+                (s) => s.name.toLowerCase() == stat.toLowerCase(),
+                orElse: () => CharacterStat(name: stat, value: 2),
+              );
+              statValue = characterStat.value;
+            }
+            
+            return ChoiceChip(
+              label: Text('$stat ($statValue)'),
+              selected: _selectedStat == stat,
+              onSelected: (selected) {
+                setState(() {
+                  _selectedStat = selected ? stat : null;
+                });
+              },
+            );
+          }).toList(),
+        ),
+        
+        // Only show modifier field if a stat is selected
+        if (_selectedStat != null) ...[
+          const SizedBox(height: 16),
+          TextField(
+            controller: _modifierController,
+            decoration: const InputDecoration(
+              labelText: 'Optional Modifier',
+              hintText: 'e.g., +2, -1',
+              helperText: 'One-time adjustment to Action Score',
+              border: OutlineInputBorder(),
+            ),
+            keyboardType: const TextInputType.numberWithOptions(signed: true),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Roll button
+          Center(
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.sports_martial_arts),
+              label: const Text('Roll Dice'),
+              onPressed: () {
+                _rollActionMove(context, move);
+              },
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+  
+  Widget _buildProgressRollUI(Move move) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Select Progress:',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        
+        // Progress slider
+        Slider(
+          value: _progressValue.toDouble(),
+          min: 1,
+          max: 10,
+          divisions: 9,
+          label: _progressValue.toString(),
+          onChanged: (value) {
+            setState(() {
+              _progressValue = value.round();
+            });
+          },
+        ),
+        
+        // Progress value indicator
+        Center(
+          child: Text(
+            'Progress: $_progressValue',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Roll button
+        Center(
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.trending_up),
+            label: const Text('Perform Move'),
+            onPressed: () {
+              _rollProgressMove(context, move);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildNoRollUI(Move move) {
+    return Center(
+      child: ElevatedButton.icon(
+        icon: const Icon(Icons.check_circle_outline),
+        label: const Text('Perform Move'),
+        onPressed: () {
+          _performNoRollMove(context, move);
+        },
+      ),
+    );
+  }
+  
+  void _rollActionMove(BuildContext context, Move move) {
+    if (_selectedStat == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a stat first'),
+        ),
+      );
+      return;
+    }
+    
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final character = gameProvider.currentGame?.mainCharacter;
     
-    // Determine which dice to roll based on the move type
-    Map<String, dynamic> rollResult;
-    
-    if (move.isProgressMove) {
-      // For progress moves, we'll use a default progress value of 3
-      // In a real app, this would come from the character's progress track
-      rollResult = DiceRoller.rollProgressMove(progressValue: 3);
-    } else {
-      // For action moves, we'll use the character's stat if available
-      int? statValue;
-      
-      // Get the stat value from the character if possible
-      if (character != null && move.stat != null) {
-        final stat = character.stats.firstWhere(
-          (s) => s.name.toLowerCase() == move.stat!.toLowerCase(),
-          orElse: () => CharacterStat(name: move.stat!, value: 2),
-        );
-        statValue = stat.value;
-      } else {
-        statValue = 2; // Default stat value
-      }
-      
-      // Get the character's momentum
-      final momentum = character?.momentum ?? 2;
-      
-      // Parse the optional modifier
-      int modifier = 0;
-      if (_modifierController.text.isNotEmpty) {
-        modifier = int.tryParse(_modifierController.text) ?? 0;
-      }
-      
-      // Roll with momentum and modifier
-      rollResult = DiceRoller.rollMove(
-        statValue: statValue,
-        momentum: momentum,
-        modifier: modifier,
+    // Get the stat value from the character if available
+    int statValue = 2; // Default value
+    if (character != null) {
+      final characterStat = character.stats.firstWhere(
+        (s) => s.name.toLowerCase() == _selectedStat!.toLowerCase(),
+        orElse: () => CharacterStat(name: _selectedStat!, value: 2),
       );
+      statValue = characterStat.value;
     }
     
+    // Get the character's momentum
+    final momentum = character?.momentum ?? 2;
+    
+    // Parse the optional modifier
+    int modifier = 0;
+    if (_modifierController.text.isNotEmpty) {
+      modifier = int.tryParse(_modifierController.text) ?? 0;
+    }
+    
+    // Roll with momentum and modifier
+    final rollResult = DiceRoller.rollMove(
+      statValue: statValue,
+      momentum: momentum,
+      modifier: modifier,
+    );
+    
+    // Create a MoveRoll object for the journal entry
+    final moveRoll = MoveRoll(
+      moveName: move.name,
+      moveDescription: move.description,
+      stat: _selectedStat,
+      statValue: statValue,
+      actionDie: rollResult['actionDie'],
+      challengeDice: rollResult['challengeDice'],
+      outcome: rollResult['outcome'],
+      rollType: 'action_roll',
+      modifier: modifier,
+      moveData: {'moveId': move.id},
+    );
+    
     // Show the roll result
+    _showRollResultDialog(context, move, rollResult, moveRoll);
+  }
+  
+  void _rollProgressMove(BuildContext context, Move move) {
+    // Roll for progress move
+    final rollResult = DiceRoller.rollProgressMove(progressValue: _progressValue);
+    
+    // Create a MoveRoll object for the journal entry
+    final moveRoll = MoveRoll(
+      moveName: move.name,
+      moveDescription: move.description,
+      actionDie: 0, // No action die for progress moves
+      challengeDice: rollResult['challengeDice'],
+      outcome: rollResult['outcome'],
+      rollType: 'progress_roll',
+      progressValue: _progressValue,
+      moveData: {'moveId': move.id},
+    );
+    
+    // Show the roll result
+    _showRollResultDialog(context, move, rollResult, moveRoll);
+  }
+  
+  void _performNoRollMove(BuildContext context, Move move) {
+    // Create a MoveRoll object for the journal entry
+    final moveRoll = MoveRoll(
+      moveName: move.name,
+      moveDescription: move.description,
+      actionDie: 0, // No action die for no-roll moves
+      challengeDice: [], // No challenge dice for no-roll moves
+      outcome: 'performed', // Custom outcome for no-roll moves
+      rollType: 'no_roll',
+      moveData: {'moveId': move.id},
+    );
+    
+    // Show a simple dialog
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(move.name),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (move.description != null) ...[
+                Text(move.description!),
+                const SizedBox(height: 16),
+              ],
+              const Text(
+                'Move performed successfully',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Close'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _addMoveToJournal(context, moveRoll);
+              },
+              child: const Text('Add to Journal'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  
+  void _showRollResultDialog(BuildContext context, Move move, Map<String, dynamic> rollResult, MoveRoll moveRoll) {
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final character = gameProvider.currentGame?.mainCharacter;
+    
     showDialog(
       context: context,
       builder: (context) {
@@ -340,7 +605,7 @@ class _MovesScreenState extends State<MovesScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (rollResult.containsKey('actionDie')) ...[
+                  if (moveRoll.rollType == 'action_roll') ...[
                     Row(
                       children: [
                         Text(
@@ -362,59 +627,58 @@ class _MovesScreenState extends State<MovesScreen> {
                       ],
                     ),
                     const SizedBox(height: 4),
-                  ],
-                  
-                  if (rollResult.containsKey('statValue') && rollResult['statValue'] != null) ...[
-                    Text('Stat Value: ${rollResult['statValue']}'),
-                    const SizedBox(height: 4),
-                  ],
-                  
-                  if (rollResult.containsKey('modifier') && rollResult['modifier'] != 0) ...[
-                    Text('Modifier: ${rollResult['modifier'] > 0 ? '+' : ''}${rollResult['modifier']}'),
-                    const SizedBox(height: 4),
-                  ],
-                  
-                  if (rollResult.containsKey('actionValue')) ...[
+                    
+                    if (moveRoll.stat != null) ...[
+                      Text('Stat: ${moveRoll.stat} (${moveRoll.statValue})'),
+                      const SizedBox(height: 4),
+                    ],
+                    
+                    if (moveRoll.modifier != null && moveRoll.modifier != 0) ...[
+                      Text('Modifier: ${moveRoll.modifier! > 0 ? '+' : ''}${moveRoll.modifier}'),
+                      const SizedBox(height: 4),
+                    ],
+                    
                     Text('Total Action Value: ${rollResult['actionValue']}'),
                     const SizedBox(height: 8),
                   ],
                   
-                  if (rollResult.containsKey('progressValue')) ...[
-                    Text('Progress Value: ${rollResult['progressValue']}'),
+                  if (moveRoll.rollType == 'progress_roll') ...[
+                    Text('Progress Value: ${moveRoll.progressValue}'),
                     const SizedBox(height: 8),
                   ],
                   
-                  if (rollResult.containsKey('challengeDice')) ...[
-                    Text('Challenge Dice: ${rollResult['challengeDice'][0]} and ${rollResult['challengeDice'][1]}'),
+                  if (moveRoll.challengeDice.isNotEmpty) ...[
+                    Text('Challenge Dice: ${moveRoll.challengeDice.join(' and ')}'),
                     const SizedBox(height: 16),
                   ],
                   
                   // Momentum information
-                  if (rollResult.containsKey('momentum') && !move.isProgressMove) ...[
+                  if (rollResult.containsKey('momentum') && moveRoll.rollType == 'action_roll') ...[
                     Text('Current Momentum: ${rollResult['momentum']}'),
                     const SizedBox(height: 8),
                   ],
                   
                   // Outcome
-                  if (rollResult.containsKey('outcome')) ...[
-                    Text(
-                      'Outcome: ${rollResult['outcome'].toUpperCase()}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                  Text(
+                    'Outcome: ${moveRoll.outcome.toUpperCase()}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _getOutcomeColor(moveRoll.outcome),
                     ),
-                    const SizedBox(height: 8),
-                  ],
+                  ),
+                  const SizedBox(height: 8),
                   
                   // Find the matching outcome description
-                  if (rollResult.containsKey('outcome')) ...[
+                  if (moveRoll.outcome != 'performed') ...[
                     for (final outcome in move.outcomes)
-                      if (outcome.type == rollResult['outcome'])
+                      if (outcome.type == moveRoll.outcome)
                         Text(outcome.description),
                   ],
                   
                   // Burn Momentum button
                   if (rollResult['couldBurnMomentum'] == true && 
                       character != null && 
-                      !move.isProgressMove) ...[
+                      moveRoll.rollType == 'action_roll') ...[
                     const SizedBox(height: 16),
                     const Divider(),
                     const SizedBox(height: 8),
@@ -430,7 +694,7 @@ class _MovesScreenState extends State<MovesScreen> {
                           final newActionValue = character.momentum;
                           
                           // Determine new outcome
-                          final challengeDice = rollResult['challengeDice'] as List<int>;
+                          final challengeDice = moveRoll.challengeDice;
                           final strongHit = newActionValue > challengeDice[0] && newActionValue > challengeDice[1];
                           final weakHit = (newActionValue > challengeDice[0] && newActionValue <= challengeDice[1]) ||
                                           (newActionValue <= challengeDice[0] && newActionValue > challengeDice[1]);
@@ -442,6 +706,9 @@ class _MovesScreenState extends State<MovesScreen> {
                           
                           // Burn momentum
                           character.burnMomentum();
+                          
+                          // Update the moveRoll
+                          moveRoll.outcome = newOutcome;
                           
                           // Update the UI
                           setState(() {
@@ -483,7 +750,20 @@ class _MovesScreenState extends State<MovesScreen> {
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    _rollForMove(context, move);
+                    _addMoveToJournal(context, moveRoll);
+                  },
+                  child: const Text('Add to Journal'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    if (moveRoll.rollType == 'action_roll') {
+                      _rollActionMove(context, move);
+                    } else if (moveRoll.rollType == 'progress_roll') {
+                      _rollProgressMove(context, move);
+                    } else {
+                      _performNoRollMove(context, move);
+                    }
                   },
                   child: const Text('Roll Again'),
                 ),
@@ -493,5 +773,36 @@ class _MovesScreenState extends State<MovesScreen> {
         );
       },
     );
+  }
+  
+  void _addMoveToJournal(BuildContext context, MoveRoll moveRoll) {
+    // Show a snackbar to indicate the move was added to the journal
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${moveRoll.moveName} added to journal'),
+        action: SnackBarAction(
+          label: 'View',
+          onPressed: () {
+            // Navigate to the journal entry screen
+            // This would be implemented in a real app
+          },
+        ),
+      ),
+    );
+  }
+  
+  Color _getOutcomeColor(String outcome) {
+    switch (outcome.toLowerCase()) {
+      case 'strong hit':
+        return Colors.green;
+      case 'weak hit':
+        return Colors.orange;
+      case 'miss':
+        return Colors.red;
+      case 'performed':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
   }
 }

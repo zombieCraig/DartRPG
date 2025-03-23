@@ -29,6 +29,24 @@ class RichTextEditor extends StatefulWidget {
     this.onMoveRequested,
     this.onOracleRequested,
   });
+  
+  // Static method to insert text at the current cursor position
+  static void insertTextAtCursor(TextEditingController controller, String text) {
+    final selection = controller.selection;
+    final currentText = controller.text;
+    
+    if (selection.isValid) {
+      final newText = currentText.replaceRange(selection.baseOffset, selection.extentOffset, text);
+      controller.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: selection.baseOffset + text.length),
+      );
+    } else {
+      // If no valid selection, append to the end
+      controller.text = currentText + text;
+      controller.selection = TextSelection.collapsed(offset: controller.text.length);
+    }
+  }
 
   @override
   State<RichTextEditor> createState() => _RichTextEditorState();

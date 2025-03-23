@@ -327,26 +327,47 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                   const SizedBox(height: 16),
                 ],
                 
-                Text('Action Die: ${moveRoll.actionDie}'),
-                
-                if (moveRoll.statValue != null) ...[
-                  const SizedBox(height: 4),
-                  Text('Stat: ${moveRoll.stat} (${moveRoll.statValue})'),
-                  const SizedBox(height: 4),
-                  Text('Total Action Value: ${moveRoll.actionDie + moveRoll.statValue!}'),
+                if (moveRoll.rollType == 'action_roll') ...[
+                  Text('Action Die: ${moveRoll.actionDie}'),
+                  
+                  if (moveRoll.statValue != null) ...[
+                    const SizedBox(height: 4),
+                    Text('Stat: ${moveRoll.stat} (${moveRoll.statValue})'),
+                    const SizedBox(height: 4),
+                    Text('Total Action Value: ${moveRoll.actionDie + moveRoll.statValue!}'),
+                  ],
+                  
+                  if (moveRoll.modifier != null && moveRoll.modifier != 0) ...[
+                    const SizedBox(height: 4),
+                    Text('Modifier: ${moveRoll.modifier! > 0 ? '+' : ''}${moveRoll.modifier}'),
+                  ],
                 ],
                 
-                const SizedBox(height: 8),
-                Text('Challenge Dice: ${moveRoll.challengeDice.join(', ')}'),
+                if (moveRoll.rollType == 'progress_roll' && moveRoll.progressValue != null) ...[
+                  Text('Progress Value: ${moveRoll.progressValue}'),
+                ],
                 
-                const SizedBox(height: 16),
-                Text(
-                  'Outcome: ${moveRoll.outcome.toUpperCase()}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: _getOutcomeColor(moveRoll.outcome),
+                if (moveRoll.challengeDice.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text('Challenge Dice: ${moveRoll.challengeDice.join(' and ')}'),
+                ],
+                
+                if (moveRoll.outcome != 'performed') ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    'Outcome: ${moveRoll.outcome.toUpperCase()}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _getOutcomeColor(moveRoll.outcome),
+                    ),
                   ),
-                ),
+                ] else ...[
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Move performed successfully',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                  ),
+                ],
               ],
             ),
           ),
@@ -673,68 +694,480 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   void _showRollMoveDialog(BuildContext context) {
     final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
     final moves = dataswornProvider.moves;
+    final TextEditingController searchController = TextEditingController();
+    String searchQuery = '';
     
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Select Move'),
-          content: SizedBox(
-            width: double.maxFinite,
-            height: 300,
-            child: ListView.builder(
-              itemCount: moves.length,
-              itemBuilder: (context, index) {
-                final move = moves[index];
-                return ListTile(
-                  title: Text(move.name),
-                  subtitle: move.description != null
-                      ? Text(
-                          move.description!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        )
-                      : null,
-                  onTap: () {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            // Filter moves by search query if provided
+            List<Move> filteredMoves = [];
+            if (searchQuery.isNotEmpty) {
+              filteredMoves = moves.where((move) => 
+                move.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
+                (move.description?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false) ||
+                (move.trigger?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false)
+              ).toList();
+            }
+            
+            // Group moves by category
+            final categories = <String>{};
+            final movesByCategory = <String, List<Move>>{};
+            
+            for (final move in searchQuery.isNotEmpty ? filteredMoves : moves) {
+              final category = move.moveCategory ?? move.category ?? 'Uncategorized';
+              categories.add(category);
+              
+              if (!movesByCategory.containsKey(category)) {
+                movesByCategory[category] = [];
+              }
+              
+              movesByCategory[category]!.add(move);
+            }
+            
+            final sortedCategories = categories.toList()..sort();
+            
+            return AlertDialog(
+              title: const Text('Select Move'),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 400,
+                child: Column(
+                  children: [
+                    // Search bar
+                    TextField(
+                      controller: searchController,
+                      decoration: InputDecoration(
+                        labelText: 'Search Moves',
+                        hintText: 'Enter move name or description',
+                        prefixIcon: const Icon(Icons.search),
+                        border: const OutlineInputBorder(),
+                        suffixIcon: searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  setState(() {
+                                    searchController.clear();
+                                    searchQuery = '';
+                                  });
+                                },
+                              )
+                            : null,
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          searchQuery = value;
+                        });
+                      },
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Move list
+                    Expanded(
+                      child: searchQuery.isNotEmpty
+                          ? ListView.builder(
+                              itemCount: filteredMoves.length,
+                              itemBuilder: (context, index) {
+                                final move = filteredMoves[index];
+                                return ListTile(
+                                  title: Text(move.name),
+                                  subtitle: move.description != null
+                                      ? Text(
+                                          move.description!,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        )
+                                      : null,
+                                  trailing: Icon(
+                                    _getRollTypeIcon(move.rollType),
+                                    color: _getRollTypeColor(move.rollType),
+                                  ),
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    // Handle the move based on its roll type
+                                    if (move.rollType == 'action_roll') {
+                                      _showActionRollDialog(context, move);
+                                    } else if (move.rollType == 'progress_roll') {
+                                      _showProgressRollDialog(context, move);
+                                    } else {
+                                      _performNoRollMove(context, move);
+                                    }
+                                  },
+                                );
+                              },
+                            )
+                          : ListView.builder(
+                              itemCount: sortedCategories.length,
+                              itemBuilder: (context, index) {
+                                final category = sortedCategories[index];
+                                final categoryMoves = movesByCategory[category]!;
+                                
+                                return ExpansionTile(
+                                  title: Text(category),
+                                  children: categoryMoves.map((move) {
+                                    return ListTile(
+                                      title: Text(move.name),
+                                      subtitle: move.description != null
+                                          ? Text(
+                                              move.description!,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            )
+                                          : null,
+                                      trailing: Icon(
+                                        _getRollTypeIcon(move.rollType),
+                                        color: _getRollTypeColor(move.rollType),
+                                      ),
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                        // Handle the move based on its roll type
+                                        if (move.rollType == 'action_roll') {
+                                          _showActionRollDialog(context, move);
+                                        } else if (move.rollType == 'progress_roll') {
+                                          _showProgressRollDialog(context, move);
+                                        } else {
+                                          _performNoRollMove(context, move);
+                                        }
+                                      },
+                                    );
+                                  }).toList(),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
                     Navigator.pop(context);
-                    // Roll the move
-                    _rollMove(context, move);
                   },
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Cancel'),
-            ),
-          ],
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
   
-  void _rollMove(BuildContext context, Move move) {
-    // Roll the move
-    final rollResult = DiceRoller.rollMove(statValue: 0);
+  IconData _getRollTypeIcon(String rollType) {
+    switch (rollType) {
+      case 'action_roll':
+        return Icons.sports_martial_arts; // Person kicking icon
+      case 'progress_roll':
+        return Icons.trending_up;
+      case 'no_roll':
+        return Icons.check_circle_outline;
+      default:
+        return Icons.sports_martial_arts;
+    }
+  }
+  
+  Color _getRollTypeColor(String rollType) {
+    switch (rollType) {
+      case 'action_roll':
+        return Colors.blue;
+      case 'progress_roll':
+        return Colors.green;
+      case 'no_roll':
+        return Colors.grey;
+      default:
+        return Colors.blue;
+    }
+  }
+  
+  void _showActionRollDialog(BuildContext context, Move move) {
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final character = gameProvider.currentGame?.mainCharacter;
+    final availableStats = move.getAvailableStats();
+    String? selectedStat;
+    int modifier = 0;
+    final modifierController = TextEditingController();
     
-    // Create a MoveRoll
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text(move.name),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (move.description != null) ...[
+                      Text(move.description!),
+                      const SizedBox(height: 16),
+                    ],
+                    
+                    const Text(
+                      'Select Stat:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: availableStats.map((stat) {
+                        // Get the stat value from the character if available
+                        int statValue = 2; // Default value
+                        if (character != null) {
+                          final characterStat = character.stats.firstWhere(
+                            (s) => s.name.toLowerCase() == stat.toLowerCase(),
+                            orElse: () => CharacterStat(name: stat, value: 2),
+                          );
+                          statValue = characterStat.value;
+                        }
+                        
+                        return ChoiceChip(
+                          label: Text('$stat ($statValue)'),
+                          selected: selectedStat == stat,
+                          onSelected: (selected) {
+                            setState(() {
+                              selectedStat = selected ? stat : null;
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    
+                    // Only show modifier field if a stat is selected
+                    if (selectedStat != null) ...[
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: modifierController,
+                        decoration: const InputDecoration(
+                          labelText: 'Optional Modifier',
+                          hintText: 'e.g., +2, -1',
+                          helperText: 'One-time adjustment to Action Score',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(signed: true),
+                        onChanged: (value) {
+                          modifier = int.tryParse(value) ?? 0;
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancel'),
+                ),
+                if (selectedStat != null)
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _rollActionMove(context, move, selectedStat!, modifier);
+                    },
+                    child: const Text('Roll Dice'),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+  
+  void _showProgressRollDialog(BuildContext context, Move move) {
+    int progressValue = 5; // Default progress value
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text(move.name),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (move.description != null) ...[
+                    Text(move.description!),
+                    const SizedBox(height: 16),
+                  ],
+                  
+                  const Text(
+                    'Select Progress:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  // Progress slider
+                  Slider(
+                    value: progressValue.toDouble(),
+                    min: 1,
+                    max: 10,
+                    divisions: 9,
+                    label: progressValue.toString(),
+                    onChanged: (value) {
+                      setState(() {
+                        progressValue = value.round();
+                      });
+                    },
+                  ),
+                  
+                  // Progress value indicator
+                  Center(
+                    child: Text(
+                      'Progress: $progressValue',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _rollProgressMove(context, move, progressValue);
+                  },
+                  child: const Text('Perform Move'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+  
+  void _performNoRollMove(BuildContext context, Move move) {
+    // Create a MoveRoll object for the journal entry
     final moveRoll = MoveRoll(
       moveName: move.name,
       moveDescription: move.description,
-      stat: null,
-      statValue: null,
-      actionDie: rollResult['actionDie'] ?? 0,
-      challengeDice: rollResult['challengeDice'] ?? [0, 0],
-      outcome: rollResult['outcome'] ?? 'miss',
+      actionDie: 0, // No action die for no-roll moves
+      challengeDice: [], // No challenge dice for no-roll moves
+      outcome: 'performed', // Custom outcome for no-roll moves
+      rollType: 'no_roll',
+      moveData: {'moveId': move.id},
     );
     
     // Add to move rolls
     setState(() {
       _moveRolls.add(moveRoll);
+      
+      // Insert the formatted text at the cursor position
+      // We'll just append it to the content for now
+      final formattedText = moveRoll.getFormattedText();
+      _content += ' ' + formattedText;
+      
+      // Start the auto-save timer
+      _startAutoSaveTimer();
+    });
+    
+    // Show a snackbar to indicate the move was added
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${move.name} performed and added to journal'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+  
+  void _rollActionMove(BuildContext context, Move move, String stat, int modifier) {
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final character = gameProvider.currentGame?.mainCharacter;
+    
+    // Get the stat value from the character if available
+    int statValue = 2; // Default value
+    if (character != null) {
+      final characterStat = character.stats.firstWhere(
+        (s) => s.name.toLowerCase() == stat.toLowerCase(),
+        orElse: () => CharacterStat(name: stat, value: 2),
+      );
+      statValue = characterStat.value;
+    }
+    
+    // Get the character's momentum
+    final momentum = character?.momentum ?? 2;
+    
+    // Roll with momentum and modifier
+    final rollResult = DiceRoller.rollMove(
+      statValue: statValue,
+      momentum: momentum,
+      modifier: modifier,
+    );
+    
+    // Create a MoveRoll object for the journal entry
+    final moveRoll = MoveRoll(
+      moveName: move.name,
+      moveDescription: move.description,
+      stat: stat,
+      statValue: statValue,
+      actionDie: rollResult['actionDie'],
+      challengeDice: rollResult['challengeDice'],
+      outcome: rollResult['outcome'],
+      rollType: 'action_roll',
+      modifier: modifier,
+      moveData: {'moveId': move.id},
+    );
+    
+    // Add to move rolls
+    setState(() {
+      _moveRolls.add(moveRoll);
+      
+      // Insert the formatted text at the cursor position
+      // We'll just append it to the content for now
+      final formattedText = moveRoll.getFormattedText();
+      _content += ' ' + formattedText;
+      
+      // Start the auto-save timer
+      _startAutoSaveTimer();
+    });
+    
+    // Show the roll details
+    _showMoveRollDetailsDialog(context, moveRoll);
+  }
+  
+  void _rollProgressMove(BuildContext context, Move move, int progressValue) {
+    // Roll for progress move
+    final rollResult = DiceRoller.rollProgressMove(progressValue: progressValue);
+    
+    // Create a MoveRoll object for the journal entry
+    final moveRoll = MoveRoll(
+      moveName: move.name,
+      moveDescription: move.description,
+      actionDie: 0, // No action die for progress moves
+      challengeDice: rollResult['challengeDice'],
+      outcome: rollResult['outcome'],
+      rollType: 'progress_roll',
+      progressValue: progressValue,
+      moveData: {'moveId': move.id},
+    );
+    
+    // Add to move rolls
+    setState(() {
+      _moveRolls.add(moveRoll);
+      
+      // Insert the formatted text at the cursor position
+      // We'll just append it to the content for now
+      final formattedText = moveRoll.getFormattedText();
+      _content += ' ' + formattedText;
+      
+      // Start the auto-save timer
+      _startAutoSaveTimer();
     });
     
     // Show the roll details

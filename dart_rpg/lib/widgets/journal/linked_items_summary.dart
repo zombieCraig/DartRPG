@@ -181,19 +181,40 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                     ),
                     const SizedBox(height: 4),
                     ...moveRolls.map((moveRoll) {
-                      final outcomeIcon = _getOutcomeIcon(moveRoll.outcome);
                       final outcomeColor = _getOutcomeColor(moveRoll.outcome);
+                      
+                      String subtitleText;
+                      if (moveRoll.rollType == 'action_roll') {
+                        // Action roll subtitle
+                        String statInfo = moveRoll.stat != null ? '${moveRoll.stat} (${moveRoll.statValue})' : '';
+                        String modifierInfo = moveRoll.modifier != null && moveRoll.modifier != 0 
+                            ? '${moveRoll.modifier! > 0 ? '+' : ''}${moveRoll.modifier}' 
+                            : '';
+                        
+                        subtitleText = '${moveRoll.outcome.toUpperCase()} - Action Die: ${moveRoll.actionDie}';
+                        if (statInfo.isNotEmpty) {
+                          subtitleText += ', $statInfo';
+                        }
+                        if (modifierInfo.isNotEmpty) {
+                          subtitleText += ', Mod: $modifierInfo';
+                        }
+                        subtitleText += ' vs ${moveRoll.challengeDice.join(', ')}';
+                      } else if (moveRoll.rollType == 'progress_roll') {
+                        // Progress roll subtitle
+                        subtitleText = '${moveRoll.outcome.toUpperCase()} - Progress: ${moveRoll.progressValue} vs ${moveRoll.challengeDice.join(', ')}';
+                      } else {
+                        // No-roll move subtitle
+                        subtitleText = 'Performed';
+                      }
                       
                       return ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: Icon(
-                          outcomeIcon,
+                          _getRollTypeIcon(moveRoll.rollType, moveRoll.outcome),
                           color: outcomeColor,
                         ),
                         title: Text(moveRoll.moveName),
-                        subtitle: Text(
-                          '${moveRoll.outcome} (${moveRoll.actionDie} vs ${moveRoll.challengeDice.join(', ')})',
-                        ),
+                        subtitle: Text(subtitleText),
                         dense: true,
                         onTap: () {
                           if (widget.onMoveRollTap != null) {
@@ -240,7 +261,16 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
     );
   }
   
-  IconData _getOutcomeIcon(String outcome) {
+  IconData _getRollTypeIcon(String rollType, String outcome) {
+    if (rollType == 'no_roll') {
+      return Icons.check_circle_outline;
+    }
+    
+    if (rollType == 'progress_roll') {
+      return Icons.trending_up;
+    }
+    
+    // For action rolls, use outcome-based icons
     switch (outcome.toLowerCase()) {
       case 'strong hit':
         return Icons.check_circle;

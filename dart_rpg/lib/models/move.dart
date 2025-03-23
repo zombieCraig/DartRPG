@@ -26,22 +26,36 @@ class Move {
   final String id;
   final String name;
   String? category;
+  String? moveCategory; // Added for grouping by move_category
   final String? description;
   final String? trigger;
   final List<MoveOutcome> outcomes;
   final String? stat; // The stat used for this move (Edge, Heart, Iron, Shadow, Wits)
   final bool isProgressMove;
+  
+  // New properties for enhanced move functionality
+  final String rollType; // "action_roll", "progress_roll", or "no_roll"
+  final List<Map<String, dynamic>> triggerConditions; // Conditions from the trigger
+  final List<Map<String, dynamic>> rollOptions; // Options for rolling
 
   Move({
     required this.id,
     required this.name,
     this.category,
+    this.moveCategory,
     this.description,
     this.trigger,
     List<MoveOutcome>? outcomes,
     this.stat,
     this.isProgressMove = false,
-  }) : outcomes = outcomes ?? [];
+    String? rollType,
+    List<Map<String, dynamic>>? triggerConditions,
+    List<Map<String, dynamic>>? rollOptions,
+  }) : 
+    outcomes = outcomes ?? [],
+    rollType = rollType ?? (isProgressMove ? 'progress_roll' : (stat != null ? 'action_roll' : 'no_roll')),
+    triggerConditions = triggerConditions ?? [],
+    rollOptions = rollOptions ?? [];
 
   factory Move.fromJson(Map<String, dynamic> json) {
     List<MoveOutcome> outcomes = [];
@@ -56,11 +70,19 @@ class Move {
       id: json['id'],
       name: json['name'],
       category: json['category'],
+      moveCategory: json['moveCategory'],
       description: json['description'],
       trigger: json['trigger'],
       outcomes: outcomes,
       stat: json['stat'],
       isProgressMove: json['isProgressMove'] ?? false,
+      rollType: json['rollType'],
+      triggerConditions: json['triggerConditions'] != null 
+          ? List<Map<String, dynamic>>.from(json['triggerConditions'])
+          : null,
+      rollOptions: json['rollOptions'] != null 
+          ? List<Map<String, dynamic>>.from(json['rollOptions'])
+          : null,
     );
   }
 
@@ -69,11 +91,15 @@ class Move {
       'id': id,
       'name': name,
       'category': category,
+      'moveCategory': moveCategory,
       'description': description,
       'trigger': trigger,
       'outcomes': outcomes.map((o) => o.toJson()).toList(),
       'stat': stat,
       'isProgressMove': isProgressMove,
+      'rollType': rollType,
+      'triggerConditions': triggerConditions,
+      'rollOptions': rollOptions,
     };
   }
 
@@ -82,6 +108,7 @@ class Move {
     final String name = json['name'] ?? 'Unknown Move';
     final String? description = json['text'];
     final String? trigger = json['trigger']?['text'];
+    final String? moveCategory = json['move_category'];
     
     List<MoveOutcome> outcomes = [];
     
@@ -123,17 +150,81 @@ class Move {
         stat = 'Wits';
       }
     }
+    
+    // Determine roll type
+    String rollType;
+    if (moveId.contains('progress') || 
+        (name.toLowerCase().contains('progress') && 
+         !name.toLowerCase().contains('mark progress'))) {
+      rollType = 'progress_roll';
+    } else if (stat != null) {
+      rollType = 'action_roll';
+    } else {
+      rollType = 'no_roll';
+    }
+    
+    // Extract trigger conditions
+    List<Map<String, dynamic>> triggerConditions = [];
+    if (json['trigger']?['conditions'] != null) {
+      for (var condition in json['trigger']['conditions']) {
+        triggerConditions.add(Map<String, dynamic>.from(condition));
+      }
+    }
+    
+    // Extract roll options
+    List<Map<String, dynamic>> rollOptions = [];
+    if (json['roll_options'] != null) {
+      for (var option in json['roll_options']) {
+        rollOptions.add(Map<String, dynamic>.from(option));
+      }
+    }
 
     return Move(
       id: moveId,
       name: name,
       description: description,
+      moveCategory: moveCategory,
       trigger: trigger,
       outcomes: outcomes,
       stat: stat,
-      isProgressMove: moveId.contains('progress') || 
-                     (name.toLowerCase().contains('progress') && 
-                      !name.toLowerCase().contains('mark progress')),
+      isProgressMove: rollType == 'progress_roll',
+      rollType: rollType,
+      triggerConditions: triggerConditions,
+      rollOptions: rollOptions,
     );
+  }
+  
+  // Helper method to get available stats for this move
+  List<String> getAvailableStats() {
+    List<String> availableStats = [];
+    
+    // Check roll options for stats
+    for (var option in rollOptions) {
+      if (option['using'] == 'stat' && option['stat'] != null) {
+        availableStats.add(option['stat']);
+      }
+    }
+    
+    // If no stats found in roll options but we have a stat property, use that
+    if (availableStats.isEmpty && stat != null) {
+      availableStats.add(stat!);
+    }
+    
+    // If still empty, return default stats
+    if (availableStats.isEmpty) {
+      availableStats = ['Edge', 'Heart', 'Iron', 'Shadow', 'Wits'];
+    }
+    
+    return availableStats;
+  }
+  
+  // Helper method to check if this move has player choice
+  bool hasPlayerChoice() {
+    for (var condition in triggerConditions) {
+      if (condition['method'] == 'Player_choice') {
+        return true;
+      }
+    }
+    return false;
   }
 }

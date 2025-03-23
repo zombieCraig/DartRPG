@@ -174,13 +174,13 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     if (widget.entryId != null) {
       final gameProvider = Provider.of<GameProvider>(context, listen: false);
       final currentSession = gameProvider.currentSession;
-      
+
       if (currentSession != null) {
         try {
           final entry = currentSession.entries.firstWhere(
-            (e) => e.id == widget.entryId,
+            (e) => e.id == widget.entryId
           );
-          
+
           setState(() {
             _content = entry.content;
             _richContent = entry.richContent;
@@ -189,6 +189,9 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
             _moveRolls = List.from(entry.moveRolls);
             _oracleRolls = List.from(entry.oracleRolls);
             _embeddedImages = List.from(entry.embeddedImages);
+            
+            // Update the editor controller with the loaded content
+            _editorController.text = entry.content;
           });
         } catch (e) {
           // Entry not found

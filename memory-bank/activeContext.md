@@ -26,6 +26,7 @@ This work enhances the journaling system to provide a more intuitive and feature
 - Fixed Oracle widget in journal entry screen to prevent errors when rolling on categories
 - Improved Oracle dialog UI with ExpansionTile for categories
 - Added search functionality to Oracle dialog in journal entry screen
+- Fixed bug where journal entry content wasn't loading in the editor when opening existing entries
 
 ### Journal Entry Screen Enhancements
 - Implemented a rich text editor with markdown-style formatting

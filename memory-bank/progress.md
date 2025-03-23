@@ -93,6 +93,7 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Autocompletion Accuracy**: Enhanced character/location matching with inline suggestions
 - ✅ **Keyboard Shortcuts**: Added support for tab completion and move/oracle shortcuts
 - ✅ **Journal Entry Bugs**: Fixed duplicate entry creation and entry opening issues
+- ✅ **Journal Content Loading**: Fixed bug where journal entry content wasn't loading in the editor
 - ✅ **Dark Mode Readability**: Improved text contrast in dark mode for Asset Cards
 - ✅ **Search Functionality**: Added search to Moves and Oracles screens
 - ✅ **Oracle Widget**: Fixed Oracle widget in journal entry screen to prevent errors when rolling on categories

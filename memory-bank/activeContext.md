@@ -69,6 +69,7 @@ This work enhances the journaling system to provide a more intuitive and feature
    - Verify tab-completion functionality
    - Check image embedding and display
    - Test keyboard shortcuts for moves and oracles
+   - Expand regression test coverage for other features
 
 2. **UI Refinements**
    - Improve the visual design of the rich text editor
@@ -81,6 +82,12 @@ This work enhances the journaling system to provide a more intuitive and feature
    - Improve rendering of complex journal entries
    - Enhance image handling and caching
    - Optimize saving and loading of rich text content
+
+4. **Testing Infrastructure**
+   - Expand test coverage to other critical components
+   - Set up continuous integration for automated testing
+   - Create test fixtures for common test scenarios
+   - Implement integration tests for key user flows
 
 ### Medium-term Goals
 1. **Enhanced Journal Features**

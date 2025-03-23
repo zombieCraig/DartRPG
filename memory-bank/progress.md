@@ -98,6 +98,7 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Oracle Widget**: Fixed Oracle widget in journal entry screen to prevent errors when rolling on categories
 - ✅ **Oracle Navigation**: Improved Oracle screen navigation with dedicated category and table screens
 - ✅ **Oracle Dialog**: Added search functionality to Oracle dialog in journal entry screen
+- ✅ **Regression Testing**: Added comprehensive test suite for Oracle functionality
 
 ## Recent Milestones
 

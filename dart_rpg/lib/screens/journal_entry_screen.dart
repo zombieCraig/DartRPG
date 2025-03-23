@@ -36,6 +36,9 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   List<String> _embeddedImages = [];
   Timer? _autoSaveTimer;
   
+  // Controller for the RichTextEditor
+  final TextEditingController _editorController = TextEditingController();
+  
   @override
   void initState() {
     super.initState();
@@ -697,6 +700,191 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     final TextEditingController searchController = TextEditingController();
     String searchQuery = '';
     
+    // Function to handle move selection
+    void handleMoveSelection(Move move) {
+      if (move.rollType == 'action_roll') {
+        // For action rolls, we need to show the stat selection dialog
+        final gameProvider = Provider.of<GameProvider>(context, listen: false);
+        final character = gameProvider.currentGame?.mainCharacter;
+        final availableStats = move.getAvailableStats();
+        String? selectedStat;
+        int modifier = 0;
+        final modifierController = TextEditingController();
+        
+        // Close the move selection dialog first
+        Navigator.pop(context);
+        
+        // Show the action roll dialog
+        showDialog(
+          context: context,
+          builder: (context) {
+            return StatefulBuilder(
+              builder: (context, setDialogState) {
+                return AlertDialog(
+                  title: Text(move.name),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (move.description != null) ...[
+                          Text(move.description!),
+                          const SizedBox(height: 16),
+                        ],
+                        
+                        const Text(
+                          'Select Stat:',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: availableStats.map((stat) {
+                            // Get the stat value from the character if available
+                            int statValue = 2; // Default value
+                            if (character != null) {
+                              final characterStat = character.stats.firstWhere(
+                                (s) => s.name.toLowerCase() == stat.toLowerCase(),
+                                orElse: () => CharacterStat(name: stat, value: 2),
+                              );
+                              statValue = characterStat.value;
+                            }
+                            
+                            return ChoiceChip(
+                              label: Text('$stat ($statValue)'),
+                              selected: selectedStat == stat,
+                              onSelected: (selected) {
+                                setDialogState(() {
+                                  selectedStat = selected ? stat : null;
+                                });
+                              },
+                            );
+                          }).toList(),
+                        ),
+                        
+                        // Only show modifier field if a stat is selected
+                        if (selectedStat != null) ...[
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: modifierController,
+                            decoration: const InputDecoration(
+                              labelText: 'Optional Modifier',
+                              hintText: 'e.g., +2, -1',
+                              helperText: 'One-time adjustment to Action Score',
+                              border: OutlineInputBorder(),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(signed: true),
+                            onChanged: (value) {
+                              modifier = int.tryParse(value) ?? 0;
+                            },
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Cancel'),
+                    ),
+                    if (selectedStat != null)
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _rollActionMove(context, move, selectedStat!, modifier);
+                        },
+                        child: const Text('Roll Dice'),
+                      ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      } else if (move.rollType == 'progress_roll') {
+        // For progress rolls, we need to show the progress selection dialog
+        int progressValue = 5; // Default progress value
+        
+        // Close the move selection dialog first
+        Navigator.pop(context);
+        
+        // Show the progress roll dialog
+        showDialog(
+          context: context,
+          builder: (context) {
+            return StatefulBuilder(
+              builder: (context, setDialogState) {
+                return AlertDialog(
+                  title: Text(move.name),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (move.description != null) ...[
+                        Text(move.description!),
+                        const SizedBox(height: 16),
+                      ],
+                      
+                      const Text(
+                        'Select Progress:',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      
+                      // Progress slider
+                      Slider(
+                        value: progressValue.toDouble(),
+                        min: 1,
+                        max: 10,
+                        divisions: 9,
+                        label: progressValue.toString(),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            progressValue = value.round();
+                          });
+                        },
+                      ),
+                      
+                      // Progress value indicator
+                      Center(
+                        child: Text(
+                          'Progress: $progressValue',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _rollProgressMove(context, move, progressValue);
+                      },
+                      child: const Text('Perform Move'),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      } else {
+        // For no-roll moves, just perform the move directly
+        Navigator.pop(context);
+        _performNoRollMove(context, move);
+      }
+    }
+    
     showDialog(
       context: context,
       builder: (context) {
@@ -785,22 +973,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                                     _getRollTypeIcon(move.rollType),
                                     color: _getRollTypeColor(move.rollType),
                                   ),
-                                  onTap: () {
-                                    // Close the move selection dialog
-                                    Navigator.pop(context);
-                                    
-                                    // Use Future.delayed to ensure the dialog is fully closed before showing the next one
-                                    Future.delayed(Duration.zero, () {
-                                      // Handle the move based on its roll type
-                                      if (move.rollType == 'action_roll') {
-                                        _showActionRollDialog(context, move);
-                                      } else if (move.rollType == 'progress_roll') {
-                                        _showProgressRollDialog(context, move);
-                                      } else {
-                                        _performNoRollMove(context, move);
-                                      }
-                                    });
-                                  },
+                                  onTap: () => handleMoveSelection(move),
                                 );
                               },
                             )
@@ -826,22 +999,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                                         _getRollTypeIcon(move.rollType),
                                         color: _getRollTypeColor(move.rollType),
                                       ),
-                                      onTap: () {
-                                        // Close the move selection dialog
-                                        Navigator.pop(context);
-                                        
-                                        // Use Future.delayed to ensure the dialog is fully closed before showing the next one
-                                        Future.delayed(Duration.zero, () {
-                                          // Handle the move based on its roll type
-                                          if (move.rollType == 'action_roll') {
-                                            _showActionRollDialog(context, move);
-                                          } else if (move.rollType == 'progress_roll') {
-                                            _showProgressRollDialog(context, move);
-                                          } else {
-                                            _performNoRollMove(context, move);
-                                          }
-                                        });
-                                      },
+                                      onTap: () => handleMoveSelection(move),
                                     );
                                   }).toList(),
                                 );
@@ -1075,25 +1233,33 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     );
     
     // Add to move rolls
-    setState(() {
-      _moveRolls.add(moveRoll);
+    if (mounted) {
+      setState(() {
+        _moveRolls.add(moveRoll);
+        
+        // Insert the formatted text at the cursor position
+        final formattedText = moveRoll.getFormattedText();
+        RichTextEditor.insertTextAtCursor(_editorController, ' ' + formattedText);
+        
+        // Update the content from the controller
+        _content = _editorController.text;
+        
+        // Start the auto-save timer
+        _startAutoSaveTimer();
+      });
       
-      // Insert the formatted text at the cursor position
-      // We'll just append it to the content for now
-      final formattedText = moveRoll.getFormattedText();
-      _content += ' ' + formattedText;
-      
-      // Start the auto-save timer
-      _startAutoSaveTimer();
-    });
-    
-    // Show a snackbar to indicate the move was added
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${move.name} performed and added to journal'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+      // Use a post-frame callback to show the snackbar to ensure the context is still valid
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${move.name} performed and added to journal'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      });
+    }
   }
   
   void _rollActionMove(BuildContext context, Move move, String stat, int modifier) {
@@ -1139,9 +1305,11 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
       _moveRolls.add(moveRoll);
       
       // Insert the formatted text at the cursor position
-      // We'll just append it to the content for now
       final formattedText = moveRoll.getFormattedText();
-      _content += ' ' + formattedText;
+      RichTextEditor.insertTextAtCursor(_editorController, ' ' + formattedText);
+      
+      // Update the content from the controller
+      _content = _editorController.text;
       
       // Start the auto-save timer
       _startAutoSaveTimer();
@@ -1172,9 +1340,11 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
       _moveRolls.add(moveRoll);
       
       // Insert the formatted text at the cursor position
-      // We'll just append it to the content for now
       final formattedText = moveRoll.getFormattedText();
-      _content += ' ' + formattedText;
+      RichTextEditor.insertTextAtCursor(_editorController, ' ' + formattedText);
+      
+      // Update the content from the controller
+      _content = _editorController.text;
       
       // Start the auto-save timer
       _startAutoSaveTimer();
@@ -1370,6 +1540,16 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     // Add to oracle rolls
     setState(() {
       _oracleRolls.add(oracleRoll);
+      
+      // Insert the formatted text at the cursor position
+      final formattedText = oracleRoll.getFormattedText();
+      RichTextEditor.insertTextAtCursor(_editorController, ' ' + formattedText);
+      
+      // Update the content from the controller
+      _content = _editorController.text;
+      
+      // Start the auto-save timer
+      _startAutoSaveTimer();
     });
     
     // Show the roll details
@@ -1448,6 +1628,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                 initialText: _content,
                 initialRichText: _richContent,
                 readOnly: !_isEditing,
+                controller: _editorController,
                 onChanged: (plainText, richText) {
                   setState(() {
                     _content = plainText;

@@ -153,8 +153,13 @@ class Move {
     
     // Determine roll type
     String rollType;
-    if (moveId.contains('progress') || 
-        (name.toLowerCase().contains('progress') && 
+    // First check if roll_type is explicitly defined in the JSON
+    if (json['roll_type'] != null) {
+      rollType = json['roll_type'];
+    } 
+    // Otherwise, try to infer it from the move name and ID
+    else if (moveId.contains('progress') ||
+        (name.toLowerCase().contains('progress') &&
          !name.toLowerCase().contains('mark progress'))) {
       rollType = 'progress_roll';
     } else if (stat != null) {

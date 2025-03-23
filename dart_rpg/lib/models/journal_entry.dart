@@ -120,6 +120,11 @@ class OracleRoll {
       timestamp: DateTime.parse(json['timestamp']),
     );
   }
+  
+  // Helper method to get formatted text for journal entry
+  String getFormattedText() {
+    return '[${oracleName}: $result]';
+  }
 }
 
 class JournalEntry {

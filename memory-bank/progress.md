@@ -81,15 +81,23 @@ The DartRPG application is in active development with core functionality impleme
 ### Medium Priority
 - **UI Responsiveness**: Some screens may become sluggish with large amounts of data
 - **Graph Layout**: Auto-layout algorithm may not produce optimal results in all cases
-- **Navigation Flow**: Some screens could benefit from improved navigation patterns
-- **Autocompletion Accuracy**: Character/location matching could be improved for partial names
 - **Image Handling**: Embedded images may have display issues on some devices
 
 ### Low Priority
 - **Visual Polish**: Some UI elements could use refinement
 - **Accessibility**: Additional accessibility features needed
 - **Tablet Support**: UI not fully optimized for tablet screens
-- **Keyboard Shortcuts**: More comprehensive keyboard shortcut support needed
+
+### Recently Fixed Issues
+- ✅ **Navigation Flow**: Improved navigation patterns, especially for game screen with main character
+- ✅ **Autocompletion Accuracy**: Enhanced character/location matching with inline suggestions
+- ✅ **Keyboard Shortcuts**: Added support for tab completion and move/oracle shortcuts
+- ✅ **Journal Entry Bugs**: Fixed duplicate entry creation and entry opening issues
+- ✅ **Dark Mode Readability**: Improved text contrast in dark mode for Asset Cards
+- ✅ **Search Functionality**: Added search to Moves and Oracles screens
+- ✅ **Oracle Widget**: Fixed Oracle widget in journal entry screen to prevent errors when rolling on categories
+- ✅ **Oracle Navigation**: Improved Oracle screen navigation with dedicated category and table screens
+- ✅ **Oracle Dialog**: Added search functionality to Oracle dialog in journal entry screen
 
 ## Recent Milestones
 

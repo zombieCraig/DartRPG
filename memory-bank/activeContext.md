@@ -14,6 +14,19 @@ This work enhances the journaling system to provide a more intuitive and feature
 
 ## Recent Changes
 
+### Bug Fixes and UI Improvements (March 2025)
+- Fixed duplicate journal entry bug when closing the editor
+- Fixed journal entries not opening correctly when clicked
+- Fixed Oracle icon inconsistency across the application
+- Improved dark mode text readability in Asset Cards
+- Added search functionality to Moves and Oracles screens
+- Fixed game screen navigation to go to journal screen when main character exists
+- Implemented inline suggestions for character/location autocompletion
+- Enhanced tab completion for character and location references
+- Fixed Oracle widget in journal entry screen to prevent errors when rolling on categories
+- Improved Oracle dialog UI with ExpansionTile for categories
+- Added search functionality to Oracle dialog in journal entry screen
+
 ### Journal Entry Screen Enhancements
 - Implemented a rich text editor with markdown-style formatting
 - Added toolbar with formatting options (bold, italic, headings, lists)
@@ -44,7 +57,7 @@ This work enhances the journaling system to provide a more intuitive and feature
 ### User Experience Enhancements
 - Added tooltips to all toolbar buttons
 - Implemented tab-completion for character and location references
-- Added visual feedback for autocompletion suggestions
+- Added visual feedback for autocompletion suggestions with greyed-out text
 - Improved error handling and validation in forms
 - Enhanced the overall journal writing experience with modern text editor features
 

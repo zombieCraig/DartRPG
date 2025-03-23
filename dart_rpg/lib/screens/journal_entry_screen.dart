@@ -744,53 +744,184 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   void _showRollOracleDialog(BuildContext context) {
     final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
     final oracles = dataswornProvider.oracles;
+    final TextEditingController searchController = TextEditingController();
+    String searchQuery = '';
     
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Select Oracle'),
-          content: SizedBox(
-            width: double.maxFinite,
-            height: 300,
-            child: ListView.builder(
-              itemCount: oracles.length,
-              itemBuilder: (context, index) {
-                final oracle = oracles[index];
-                return ListTile(
-                  title: Text(oracle.name),
-                  onTap: () {
-                    Navigator.pop(context);
-                    // Roll the oracle
-                    _rollOracle(context, oracle);
-                  },
+        return StatefulBuilder(
+          builder: (context, setState) {
+            // Filter oracles by search query if provided
+            List<OracleTable> filteredTables = [];
+            if (searchQuery.isNotEmpty) {
+              for (final category in oracles) {
+                filteredTables.addAll(
+                  category.tables.where((table) => 
+                    table.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
+                    (table.description?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false)
+                  )
                 );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Cancel'),
-            ),
-          ],
+              }
+            }
+            
+            return AlertDialog(
+              title: const Text('Select Oracle'),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 400,
+                child: Column(
+                  children: [
+                    // Search bar
+                    TextField(
+                      controller: searchController,
+                      decoration: InputDecoration(
+                        labelText: 'Search Oracles',
+                        hintText: 'Enter oracle name or description',
+                        prefixIcon: const Icon(Icons.search),
+                        border: const OutlineInputBorder(),
+                        suffixIcon: searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  setState(() {
+                                    searchController.clear();
+                                    searchQuery = '';
+                                  });
+                                },
+                              )
+                            : null,
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          searchQuery = value;
+                        });
+                      },
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Oracle list
+                    Expanded(
+                      child: searchQuery.isNotEmpty
+                          ? ListView.builder(
+                              itemCount: filteredTables.length,
+                              itemBuilder: (context, index) {
+                                final table = filteredTables[index];
+                                return ListTile(
+                                  title: Text(table.name),
+                                  subtitle: table.description != null
+                                      ? Text(
+                                          table.description!,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        )
+                                      : null,
+                                  trailing: IconButton(
+                                    icon: const Icon(Icons.casino),
+                                    tooltip: 'Roll on this oracle',
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      _rollOracleTable(context, table);
+                                    },
+                                  ),
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    _rollOracleTable(context, table);
+                                  },
+                                );
+                              },
+                            )
+                          : ListView.builder(
+                              itemCount: oracles.length,
+                              itemBuilder: (context, index) {
+                                final category = oracles[index];
+                                return ExpansionTile(
+                                  title: Text(category.name),
+                                  children: category.tables.map((table) {
+                                    return ListTile(
+                                      title: Text(table.name),
+                                      subtitle: table.description != null
+                                          ? Text(
+                                              table.description!,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            )
+                                          : null,
+                                      trailing: IconButton(
+                                        icon: const Icon(Icons.casino),
+                                        tooltip: 'Roll on this oracle',
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          _rollOracleTable(context, table);
+                                        },
+                                      ),
+                                      onTap: () {
+                                        Navigator.pop(context);
+                                        _rollOracleTable(context, table);
+                                      },
+                                    );
+                                  }).toList(),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
   }
   
-  void _rollOracle(BuildContext context, OracleCategory oracle) {
-    // Roll the oracle
-    final rollResult = DiceRoller.rollOracle(oracle.name);
+  void _rollOracleTable(BuildContext context, OracleTable table) {
+    if (table.rows.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('This oracle has no table entries'),
+        ),
+      );
+      return;
+    }
+    
+    // Roll on the oracle
+    final rollResult = DiceRoller.rollOracle(table.diceFormat);
+    final total = rollResult['total'] as int;
+    
+    // Find the matching table entry
+    OracleTableRow? matchingRow;
+    for (final row in table.rows) {
+      if (row.matchesRoll(total)) {
+        matchingRow = row;
+        break;
+      }
+    }
+    
+    if (matchingRow == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No result found for roll: $total'),
+        ),
+      );
+      return;
+    }
     
     // Create an OracleRoll
     final oracleRoll = OracleRoll(
-      oracleName: oracle.name,
-      oracleTable: null,
-      dice: [rollResult['roll'] ?? 0],
-      result: rollResult['result'] ?? 'No result',
+      oracleName: table.name,
+      oracleTable: null, // We don't have a category name available here
+      dice: rollResult['dice'] as List<int>,
+      result: matchingRow.result,
     );
     
     // Add to oracle rolls

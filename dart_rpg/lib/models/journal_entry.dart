@@ -16,6 +16,7 @@ class MoveRoll {
   int? progressValue; // For progress rolls
   int? modifier; // For action rolls with modifiers
   Map<String, dynamic>? moveData; // Store original move data for reference
+  bool isMatch; // Whether the challenge dice match
 
   MoveRoll({
     String? id,
@@ -31,6 +32,7 @@ class MoveRoll {
     this.progressValue,
     this.modifier,
     this.moveData,
+    this.isMatch = false,
   })  : id = id ?? const Uuid().v4(),
         timestamp = timestamp ?? DateTime.now(),
         rollType = rollType ?? 'action_roll';
@@ -50,6 +52,7 @@ class MoveRoll {
       'progressValue': progressValue,
       'modifier': modifier,
       'moveData': moveData,
+      'isMatch': isMatch,
     };
   }
 
@@ -68,6 +71,7 @@ class MoveRoll {
       progressValue: json['progressValue'],
       modifier: json['modifier'],
       moveData: json['moveData'],
+      isMatch: json['isMatch'] ?? false,
     );
   }
   
@@ -123,7 +127,7 @@ class OracleRoll {
   
   // Helper method to get formatted text for journal entry
   String getFormattedText() {
-    return '[${oracleName}: $result]';
+    return '[$oracleName: $result]';
   }
 }
 

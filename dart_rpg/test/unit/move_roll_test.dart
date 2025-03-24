@@ -80,9 +80,59 @@ void main() {
           challengeDice: [2, 1],
           outcome: 'strong hit with a match',
           rollType: 'action_roll',
+          isMatch: true,
         );
         
         expect(moveRoll.getFormattedText(), equals('[Face Danger - Strong Hit With A Match]'));
+      });
+    });
+    
+    group('serialization', () {
+      test('correctly serializes and deserializes isMatch property', () {
+        final originalMoveRoll = MoveRoll(
+          moveName: 'Face Danger',
+          stat: 'Edge',
+          statValue: 3,
+          actionDie: 5,
+          challengeDice: [2, 1],
+          outcome: 'strong hit with a match',
+          rollType: 'action_roll',
+          isMatch: true,
+        );
+        
+        // Serialize to JSON
+        final json = originalMoveRoll.toJson();
+        
+        // Verify isMatch is included in the JSON
+        expect(json.containsKey('isMatch'), isTrue);
+        expect(json['isMatch'], isTrue);
+        
+        // Deserialize from JSON
+        final deserializedMoveRoll = MoveRoll.fromJson(json);
+        
+        // Verify isMatch is correctly deserialized
+        expect(deserializedMoveRoll.isMatch, isTrue);
+        expect(deserializedMoveRoll.outcome, equals('strong hit with a match'));
+      });
+      
+      test('defaults isMatch to false when not provided in JSON', () {
+        final json = {
+          'id': 'test-id',
+          'moveName': 'Face Danger',
+          'stat': 'Edge',
+          'statValue': 3,
+          'actionDie': 5,
+          'challengeDice': [2, 1],
+          'outcome': 'strong hit',
+          'timestamp': DateTime.now().toIso8601String(),
+          'rollType': 'action_roll',
+          // isMatch is intentionally omitted
+        };
+        
+        final moveRoll = MoveRoll.fromJson(json);
+        
+        // Verify isMatch defaults to false
+        expect(moveRoll.isMatch, isFalse);
       });
     });
   });

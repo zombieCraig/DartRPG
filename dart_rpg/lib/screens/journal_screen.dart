@@ -7,10 +7,49 @@ import '../models/character.dart';
 import '../models/location.dart';
 import 'journal_entry_screen.dart';
 
-class JournalScreen extends StatelessWidget {
+class JournalScreen extends StatefulWidget {
   final String gameId;
 
   const JournalScreen({super.key, required this.gameId});
+
+  @override
+  State<JournalScreen> createState() => _JournalScreenState();
+}
+
+class _JournalScreenState extends State<JournalScreen> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showScrollButton = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_scrollListener);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.hasClients) {
+      setState(() {
+        _showScrollButton = _scrollController.position.maxScrollExtent > 0;
+      });
+    }
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +62,14 @@ class JournalScreen extends StatelessWidget {
           return const Center(
             child: Text('No game selected'),
           );
+        }
+
+        // Check if we have entries to determine if we should show the scroll button
+        if (currentSession != null && currentSession.entries.isNotEmpty) {
+          // Schedule a check after the layout is complete to see if we have a scrollbar
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _scrollListener();
+          });
         }
 
         return Column(
@@ -100,12 +147,28 @@ class JournalScreen extends StatelessWidget {
                                     ],
                                   ),
                                 )
-                              : ListView.builder(
-                                  itemCount: currentSession.entries.length,
-                                  itemBuilder: (context, index) {
-                                    final entry = currentSession.entries[index];
-                                    return _buildJournalEntryCard(context, entry, gameProvider);
-                                  },
+                              : Stack(
+                                  children: [
+                                    ListView.builder(
+                                      controller: _scrollController,
+                                      itemCount: currentSession.entries.length,
+                                      itemBuilder: (context, index) {
+                                        final entry = currentSession.entries[index];
+                                        return _buildJournalEntryCard(context, entry, gameProvider);
+                                      },
+                                    ),
+                                    if (_showScrollButton)
+                                      Positioned(
+                                        right: 16,
+                                        bottom: 16,
+                                        child: FloatingActionButton(
+                                          mini: true,
+                                          tooltip: 'Jump to last entry',
+                                          onPressed: _scrollToBottom,
+                                          child: const Icon(Icons.arrow_downward),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                         ),
                       ],

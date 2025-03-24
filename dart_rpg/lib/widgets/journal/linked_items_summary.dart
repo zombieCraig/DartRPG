@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../providers/game_provider.dart';
-import '../../models/character.dart';
-import '../../models/location.dart';
-import '../../models/move.dart';
-import '../../models/oracle.dart';
 import '../../models/journal_entry.dart';
 
 class LinkedItemsSummary extends StatefulWidget {
@@ -191,7 +188,14 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                             ? '${moveRoll.modifier! > 0 ? '+' : ''}${moveRoll.modifier}' 
                             : '';
                         
-                        subtitleText = '${moveRoll.outcome.toUpperCase()} - Action Die: ${moveRoll.actionDie}';
+                        subtitleText = '${moveRoll.outcome.toUpperCase()}';
+                        
+                        // Add Match indicator
+                        if (moveRoll.isMatch && (moveRoll.outcome.contains('strong hit') || moveRoll.outcome.contains('miss'))) {
+                          subtitleText += ' - MATCH!';
+                        }
+                        
+                        subtitleText += ' - Action Die: ${moveRoll.actionDie}';
                         if (statInfo.isNotEmpty) {
                           subtitleText += ', $statInfo';
                         }
@@ -201,7 +205,14 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                         subtitleText += ' vs ${moveRoll.challengeDice.join(', ')}';
                       } else if (moveRoll.rollType == 'progress_roll') {
                         // Progress roll subtitle
-                        subtitleText = '${moveRoll.outcome.toUpperCase()} - Progress: ${moveRoll.progressValue} vs ${moveRoll.challengeDice.join(', ')}';
+                        subtitleText = '${moveRoll.outcome.toUpperCase()}';
+                        
+                        // Add Match indicator for progress rolls too
+                        if (moveRoll.isMatch && (moveRoll.outcome.contains('strong hit') || moveRoll.outcome.contains('miss'))) {
+                          subtitleText += ' - MATCH!';
+                        }
+                        
+                        subtitleText += ' - Progress: ${moveRoll.progressValue} vs ${moveRoll.challengeDice.join(', ')}';
                       } else {
                         // No-roll move subtitle
                         subtitleText = 'Performed';
@@ -213,16 +224,30 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                           _getRollTypeIcon(moveRoll.rollType, moveRoll.outcome),
                           color: outcomeColor,
                         ),
-                        title: Text(moveRoll.moveName),
+                        title: Row(
+                          children: [
+                            Expanded(child: Text(moveRoll.moveName)),
+                            // Add a match indicator icon if applicable
+                            if (moveRoll.isMatch && (moveRoll.outcome.contains('strong hit') || moveRoll.outcome.contains('miss')))
+                              Icon(
+                                moveRoll.outcome.contains('strong hit') ? Icons.star : Icons.warning,
+                                size: 16,
+                                color: moveRoll.outcome.contains('strong hit') ? Colors.green[700] : Colors.red[700],
+                              ),
+                          ],
+                        ),
                         subtitle: Text(subtitleText),
                         dense: true,
-                        onTap: () {
-                          if (widget.onMoveRollTap != null) {
-                            widget.onMoveRollTap!(moveRoll);
-                          }
-                        },
+                      onTap: () {
+                        if (widget.onMoveRollTap != null) {
+                          widget.onMoveRollTap!(moveRoll);
+                        } else {
+                          // If no tap handler is provided, show a dialog with the move details
+                          _showMoveDetailsDialog(context, moveRoll);
+                        }
+                      },
                       );
-                    }).toList(),
+                    }),
                   ],
                   
                   // Oracle Rolls
@@ -245,13 +270,16 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                           '${oracleRoll.result} (${oracleRoll.dice.join(', ')})',
                         ),
                         dense: true,
-                        onTap: () {
-                          if (widget.onOracleRollTap != null) {
-                            widget.onOracleRollTap!(oracleRoll);
-                          }
-                        },
+                      onTap: () {
+                        if (widget.onOracleRollTap != null) {
+                          widget.onOracleRollTap!(oracleRoll);
+                        } else {
+                          // If no tap handler is provided, show a dialog with the oracle details
+                          _showOracleDetailsDialog(context, oracleRoll);
+                        }
+                      },
                       );
-                    }).toList(),
+                    }),
                   ],
                 ],
               ),
@@ -271,28 +299,145 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
     }
     
     // For action rolls, use outcome-based icons
-    switch (outcome.toLowerCase()) {
-      case 'strong hit':
-        return Icons.check_circle;
-      case 'weak hit':
-        return Icons.check_circle_outline;
-      case 'miss':
-        return Icons.cancel;
-      default:
-        return Icons.sports_martial_arts;
+    if (outcome.toLowerCase().contains('strong hit with a match')) {
+      return Icons.star; // Special icon for strong hit with match
+    } else if (outcome.toLowerCase().contains('strong hit')) {
+      return Icons.check_circle;
+    } else if (outcome.toLowerCase().contains('weak hit')) {
+      return Icons.check_circle_outline;
+    } else if (outcome.toLowerCase().contains('miss with a match')) {
+      return Icons.warning; // Special icon for miss with match
+    } else if (outcome.toLowerCase().contains('miss')) {
+      return Icons.cancel;
+    } else {
+      return Icons.sports_martial_arts;
     }
   }
   
   Color _getOutcomeColor(String outcome) {
-    switch (outcome.toLowerCase()) {
-      case 'strong hit':
-        return Colors.green;
-      case 'weak hit':
-        return Colors.orange;
-      case 'miss':
-        return Colors.red;
-      default:
-        return Colors.grey;
+    if (outcome.toLowerCase().contains('strong hit with a match')) {
+      return Colors.green[700]!; // Darker green for strong hit with match
+    } else if (outcome.toLowerCase().contains('strong hit')) {
+      return Colors.green;
+    } else if (outcome.toLowerCase().contains('weak hit')) {
+      return Colors.orange;
+    } else if (outcome.toLowerCase().contains('miss with a match')) {
+      return Colors.red[700]!; // Darker red for miss with match
+    } else if (outcome.toLowerCase().contains('miss')) {
+      return Colors.red;
+    } else {
+      return Colors.grey;
     }
+  }
+  
+  // Show a dialog with move details
+  void _showMoveDetailsDialog(BuildContext context, MoveRoll moveRoll) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(moveRoll.moveName),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Outcome
+                Row(
+                  children: [
+                    Text(
+                      'Outcome: ${moveRoll.outcome.toUpperCase()}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: _getOutcomeColor(moveRoll.outcome),
+                      ),
+                    ),
+                    if (moveRoll.isMatch && 
+                        (moveRoll.outcome.contains('strong hit') || moveRoll.outcome.contains('miss'))) ...[
+                      const SizedBox(width: 8),
+                      Icon(
+                        moveRoll.outcome.contains('strong hit') ? Icons.star : Icons.warning,
+                        size: 16,
+                        color: moveRoll.outcome.contains('strong hit') ? Colors.green[700] : Colors.red[700],
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 16),
+                
+                // Roll details
+                if (moveRoll.rollType == 'action_roll') ...[
+                  Text('Action Die: ${moveRoll.actionDie}'),
+                  if (moveRoll.stat != null)
+                    Text('Stat: ${moveRoll.stat} (${moveRoll.statValue})'),
+                  if (moveRoll.modifier != null && moveRoll.modifier != 0)
+                    Text('Modifier: ${moveRoll.modifier! > 0 ? '+' : ''}${moveRoll.modifier}'),
+                  Text('Challenge Dice: ${moveRoll.challengeDice.join(' and ')}'),
+                ] else if (moveRoll.rollType == 'progress_roll') ...[
+                  Text('Progress Value: ${moveRoll.progressValue}'),
+                  Text('Challenge Dice: ${moveRoll.challengeDice.join(' and ')}'),
+                ],
+                
+                const SizedBox(height: 16),
+                const Divider(),
+                const SizedBox(height: 16),
+                
+                // Move description
+                if (moveRoll.moveDescription != null) ...[
+                  const Text(
+                    'Move Description:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  MarkdownBody(
+                    data: moveRoll.moveDescription!,
+                    styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                      p: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    selectable: true,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  
+  // Show a dialog with oracle details
+  void _showOracleDetailsDialog(BuildContext context, OracleRoll oracleRoll) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(oracleRoll.oracleName),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Result: ${oracleRoll.result}'),
+              Text('Dice: ${oracleRoll.dice.join(', ')}'),
+              if (oracleRoll.oracleTable != null) ...[
+                const SizedBox(height: 8),
+                Text('Table: ${oracleRoll.oracleTable}'),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

@@ -10,7 +10,7 @@ class StatAdjusterWidget extends StatelessWidget {
   final Color? valueColor;
 
   const StatAdjusterWidget({
-    Key? key,
+    super.key,
     required this.label,
     required this.value,
     required this.onChanged,
@@ -18,7 +18,7 @@ class StatAdjusterWidget extends StatelessWidget {
     this.maxValue = 10,
     this.isEditable = true,
     this.valueColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

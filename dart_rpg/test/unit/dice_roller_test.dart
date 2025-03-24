@@ -83,6 +83,7 @@ void main() {
       expect(result.containsKey('actionDie'), isTrue);
       expect(result.containsKey('challengeDice'), isTrue);
       expect(result.containsKey('outcome'), isTrue);
+      expect(result.containsKey('isMatch'), isTrue);
       expect(result['actionDie'], isA<int>());
       expect(result['actionDie'], greaterThanOrEqualTo(1));
       expect(result['actionDie'], lessThanOrEqualTo(6));
@@ -93,7 +94,20 @@ void main() {
       expect(result['challengeDice'][1], greaterThanOrEqualTo(1));
       expect(result['challengeDice'][1], lessThanOrEqualTo(10));
       expect(result['outcome'], isA<String>());
-      expect(['strong hit', 'weak hit', 'miss'].contains(result['outcome']), isTrue);
+      expect(result['isMatch'], isA<bool>());
+      
+      // Check if outcome string matches the isMatch property
+      if (result['isMatch'] == true) {
+        expect(
+          ['strong hit with a match', 'weak hit', 'miss with a match'].contains(result['outcome']), 
+          isTrue
+        );
+      } else {
+        expect(
+          ['strong hit', 'weak hit', 'miss'].contains(result['outcome']), 
+          isTrue
+        );
+      }
     });
     
     test('rollMove returns strong hit when action value > both challenge dice', () {
@@ -153,6 +167,123 @@ void main() {
         expect(result['actionDieCanceled'], isFalse);
         expect(result['actionValue'], equals(result['actionDie'] + 2));
       }
+    });
+    
+    test('rollMove detects matching challenge dice', () {
+      // Mock the random number generator to ensure matching dice
+      // We'll test this by checking multiple rolls until we find a match
+      bool foundMatch = false;
+      bool foundNonMatch = false;
+      
+      // Try up to 20 rolls to find both a match and non-match
+      for (int i = 0; i < 20 && (!foundMatch || !foundNonMatch); i++) {
+        final result = DiceRoller.rollMove(statValue: 3);
+        final challengeDice = result['challengeDice'] as List<int>;
+        
+        if (challengeDice[0] == challengeDice[1]) {
+          foundMatch = true;
+          expect(result['isMatch'], isTrue);
+          
+          // Check outcome string includes "with a match" for strong hit or miss
+          if (result['outcome'].contains('strong hit')) {
+            expect(result['outcome'], equals('strong hit with a match'));
+          } else if (result['outcome'].contains('miss')) {
+            expect(result['outcome'], equals('miss with a match'));
+          }
+        } else {
+          foundNonMatch = true;
+          expect(result['isMatch'], isFalse);
+          
+          // Check outcome string doesn't include "with a match"
+          expect(result['outcome'].contains('with a match'), isFalse);
+        }
+      }
+      
+      // We should have found at least one match or non-match in 20 tries
+      // If not, the test will still pass, but it's less comprehensive
+      if (!foundMatch) {
+        print('Warning: No matching challenge dice found in test. Test is less comprehensive.');
+      }
+      if (!foundNonMatch) {
+        print('Warning: No non-matching challenge dice found in test. Test is less comprehensive.');
+      }
+    });
+  });
+  
+  group('DiceRoller.rollProgressMove', () {
+    test('rollProgressMove returns valid result', () {
+      final result = DiceRoller.rollProgressMove(progressValue: 5);
+      
+      expect(result.containsKey('progressValue'), isTrue);
+      expect(result.containsKey('challengeDice'), isTrue);
+      expect(result.containsKey('outcome'), isTrue);
+      expect(result.containsKey('isMatch'), isTrue);
+      expect(result['progressValue'], equals(5));
+      expect(result['challengeDice'], isA<List<int>>());
+      expect(result['challengeDice'].length, equals(2));
+      expect(result['challengeDice'][0], greaterThanOrEqualTo(1));
+      expect(result['challengeDice'][0], lessThanOrEqualTo(10));
+      expect(result['challengeDice'][1], greaterThanOrEqualTo(1));
+      expect(result['challengeDice'][1], lessThanOrEqualTo(10));
+      expect(result['outcome'], isA<String>());
+      expect(result['isMatch'], isA<bool>());
+    });
+    
+    test('rollProgressMove detects matching challenge dice', () {
+      // Try up to 20 rolls to find both a match and non-match
+      bool foundMatch = false;
+      bool foundNonMatch = false;
+      
+      for (int i = 0; i < 20 && (!foundMatch || !foundNonMatch); i++) {
+        final result = DiceRoller.rollProgressMove(progressValue: 5);
+        final challengeDice = result['challengeDice'] as List<int>;
+        
+        if (challengeDice[0] == challengeDice[1]) {
+          foundMatch = true;
+          expect(result['isMatch'], isTrue);
+          
+          // Check outcome string includes "with a match" for strong hit or miss
+          if (result['outcome'].contains('strong hit')) {
+            expect(result['outcome'], equals('strong hit with a match'));
+          } else if (result['outcome'].contains('miss')) {
+            expect(result['outcome'], equals('miss with a match'));
+          }
+        } else {
+          foundNonMatch = true;
+          expect(result['isMatch'], isFalse);
+          
+          // Check outcome string doesn't include "with a match"
+          expect(result['outcome'].contains('with a match'), isFalse);
+        }
+      }
+      
+      // We should have found at least one match or non-match in 20 tries
+      if (!foundMatch) {
+        print('Warning: No matching challenge dice found in test. Test is less comprehensive.');
+      }
+      if (!foundNonMatch) {
+        print('Warning: No non-matching challenge dice found in test. Test is less comprehensive.');
+      }
+    });
+    
+    test('rollProgressMove returns correct outcome based on dice values', () {
+      final result = DiceRoller.rollProgressMove(progressValue: 5);
+      
+      // Calculate what the outcome should be based on the actual dice rolled
+      final progressValue = result['progressValue'] as int;
+      final challengeDice = result['challengeDice'] as List<int>;
+      final isMatch = challengeDice[0] == challengeDice[1];
+      
+      String expectedOutcome;
+      if (progressValue > challengeDice[0] && progressValue > challengeDice[1]) {
+        expectedOutcome = isMatch ? 'strong hit with a match' : 'strong hit';
+      } else if (progressValue > challengeDice[0] || progressValue > challengeDice[1]) {
+        expectedOutcome = 'weak hit';
+      } else {
+        expectedOutcome = isMatch ? 'miss with a match' : 'miss';
+      }
+      
+      expect(result['outcome'], equals(expectedOutcome));
     });
   });
 }

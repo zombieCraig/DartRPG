@@ -100,6 +100,7 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Oracle Navigation**: Improved Oracle screen navigation with dedicated category and table screens
 - ✅ **Oracle Dialog**: Added search functionality to Oracle dialog in journal entry screen
 - ✅ **Regression Testing**: Added comprehensive test suite for Oracle functionality
+- ✅ **Journal Navigation**: Added "Jump to last entry" button on journal screen when entries are scrollable
 
 ## Recent Milestones
 
@@ -109,6 +110,7 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Created character and location reference system with autocompletion
 - ✅ Implemented linked items summary for journal entries
 - ✅ Updated navigation flow based on character creation status
+- ✅ Added "Jump to last entry" button for improved journal navigation
 
 ### Milestone: Location Graph Implementation (March 2025)
 - ✅ Updated Location model with segment and connection support

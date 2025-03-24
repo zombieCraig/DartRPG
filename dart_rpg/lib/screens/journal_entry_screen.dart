@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -1242,7 +1241,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         
         // Insert the formatted text at the cursor position
         final formattedText = moveRoll.getFormattedText();
-        RichTextEditor.insertTextAtCursor(_editorController, ' ' + formattedText);
+        RichTextEditor.insertTextAtCursor(_editorController, ' $formattedText');
         
         // Update the content from the controller
         _content = _editorController.text;
@@ -1309,7 +1308,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
       
       // Insert the formatted text at the cursor position
       final formattedText = moveRoll.getFormattedText();
-      RichTextEditor.insertTextAtCursor(_editorController, ' ' + formattedText);
+      RichTextEditor.insertTextAtCursor(_editorController, ' $formattedText');
       
       // Update the content from the controller
       _content = _editorController.text;
@@ -1344,7 +1343,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
       
       // Insert the formatted text at the cursor position
       final formattedText = moveRoll.getFormattedText();
-      RichTextEditor.insertTextAtCursor(_editorController, ' ' + formattedText);
+      RichTextEditor.insertTextAtCursor(_editorController, ' $formattedText');
       
       // Update the content from the controller
       _content = _editorController.text;
@@ -1546,7 +1545,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
       
       // Insert the formatted text at the cursor position
       final formattedText = oracleRoll.getFormattedText();
-      RichTextEditor.insertTextAtCursor(_editorController, ' ' + formattedText);
+      RichTextEditor.insertTextAtCursor(_editorController, ' $formattedText');
       
       // Update the content from the controller
       _content = _editorController.text;

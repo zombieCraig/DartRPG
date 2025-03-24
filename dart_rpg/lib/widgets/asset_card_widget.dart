@@ -7,11 +7,11 @@ class AssetCardWidget extends StatelessWidget {
   final VoidCallback? onRemove;
 
   const AssetCardWidget({
-    Key? key,
+    super.key,
     required this.asset,
     this.onTap,
     this.onRemove,
-  }) : super(key: key);
+  });
 
   Color _getAssetColor(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;

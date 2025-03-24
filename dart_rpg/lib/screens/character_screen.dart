@@ -3,8 +3,6 @@ import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../models/character.dart';
-import '../widgets/character_stats_card.dart';
-import '../widgets/asset_card_widget.dart';
 import '../widgets/progress_track_widget.dart';
 
 class CharacterScreen extends StatelessWidget {
@@ -298,7 +296,7 @@ class CharacterScreen extends StatelessWidget {
                             ),
                           ],
                         );
-                      }).toList(),
+                      }),
                       const SizedBox(height: 8),
                       const Text(
                         'Note: Stats range from 1-5. Typical characters have one stat at 3, two at 2, and two at 1.',
@@ -838,7 +836,7 @@ class CharacterScreen extends StatelessWidget {
                               ),
                             ),
                           );
-                        }).toList(),
+                        }),
                         
                         if (isEditing) ...[
                           const SizedBox(height: 8),
@@ -984,7 +982,7 @@ class CharacterScreen extends StatelessWidget {
                               ),
                             ],
                           );
-                        }).toList(),
+                        }),
                         
                         if (isEditing) ...[
                           const SizedBox(height: 8),

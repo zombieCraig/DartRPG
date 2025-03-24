@@ -8,13 +8,13 @@ class ProgressTrackWidget extends StatelessWidget {
   final bool isEditable;
 
   const ProgressTrackWidget({
-    Key? key,
+    super.key,
     required this.label,
     required this.value,
     this.maxValue = 10,
     this.onChanged,
     this.isEditable = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

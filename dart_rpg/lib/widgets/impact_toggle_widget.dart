@@ -8,13 +8,13 @@ class ImpactToggleWidget extends StatelessWidget {
   final bool isEditable;
 
   const ImpactToggleWidget({
-    Key? key,
+    super.key,
     required this.label,
     required this.category,
     required this.value,
     this.onChanged,
     this.isEditable = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -35,10 +35,10 @@ class ImpactCategoryWidget extends StatelessWidget {
   final List<Widget> children;
 
   const ImpactCategoryWidget({
-    Key? key,
+    super.key,
     required this.title,
     required this.children,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

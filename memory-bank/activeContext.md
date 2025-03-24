@@ -27,6 +27,12 @@ This work enhances the journaling system to provide a more intuitive and feature
 - Improved Oracle dialog UI with ExpansionTile for categories
 - Added search functionality to Oracle dialog in journal entry screen
 - Fixed bug where journal entry content wasn't loading in the editor when opening existing entries
+- Added "Jump to last entry" button on journal screen when entries are scrollable
+
+### Journal Screen Enhancements
+- Added a floating action button to jump to the last journal entry when there are enough entries to create a scroll bar
+- Improved scrolling behavior with smooth animations
+- Enhanced user experience for reviewing previous journal entries
 
 ### Journal Entry Screen Enhancements
 - Implemented a rich text editor with markdown-style formatting

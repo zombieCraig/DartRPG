@@ -4,6 +4,7 @@ import '../models/location.dart';
 import '../models/game.dart';
 import 'dart:math' as math;
 import 'package:collection/collection.dart';
+import 'hacker_grid_painter.dart';
 
 class LocationGraphWidget extends StatefulWidget {
   final List<Location> locations;
@@ -29,7 +30,7 @@ class LocationGraphWidget extends StatefulWidget {
   _LocationGraphWidgetState createState() => _LocationGraphWidgetState();
 }
 
-class _LocationGraphWidgetState extends State<LocationGraphWidget> with SingleTickerProviderStateMixin {
+class _LocationGraphWidgetState extends State<LocationGraphWidget> with TickerProviderStateMixin {
   late Graph graph;
   late Algorithm algorithm;
   double _scale = 1.0;
@@ -42,6 +43,14 @@ class _LocationGraphWidgetState extends State<LocationGraphWidget> with SingleTi
   // For rig node pulsing effect
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+  
+  // For hacker grid background
+  late AnimationController _gridPulseController;
+  late Animation<double> _gridPulseAnimation;
+  late AnimationController _dataFlowController;
+  late Animation<double> _dataFlowAnimation;
+  // Default to true, but can be disabled for testing
+  bool _showHackerGrid = !bool.fromEnvironment('FLUTTER_TEST', defaultValue: false);
   
   @override
   void initState() {
@@ -56,6 +65,26 @@ class _LocationGraphWidgetState extends State<LocationGraphWidget> with SingleTi
     
     _pulseAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut)
+    );
+    
+    // Setup animation for hacker grid background
+    _gridPulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat(reverse: true);
+    
+    _gridPulseAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _gridPulseController, curve: Curves.easeInOut)
+    );
+    
+    // Setup animation for data flow effect
+    _dataFlowController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
+    )..repeat();
+    
+    _dataFlowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _dataFlowController, curve: Curves.linear)
     );
     
     // Focus on location if provided
@@ -120,6 +149,8 @@ class _LocationGraphWidgetState extends State<LocationGraphWidget> with SingleTi
   @override
   void dispose() {
     _pulseController.dispose();
+    _gridPulseController.dispose();
+    _dataFlowController.dispose();
     _transformationController.dispose();
     super.dispose();
   }
@@ -318,7 +349,8 @@ class _LocationGraphWidgetState extends State<LocationGraphWidget> with SingleTi
   
   // Check if a location is the rig
   bool _isRigLocation(Location location) {
-    return widget.game?.rigLocation?.id == location.id;
+    if (widget.game?.rigLocation == null) return false;
+    return widget.game!.rigLocation!.id == location.id;
   }
   
   @override
@@ -381,6 +413,16 @@ class _LocationGraphWidgetState extends State<LocationGraphWidget> with SingleTi
                 onPressed: _toggleAutoArrange,
                 tooltip: _autoArrangeEnabled ? 'Auto-arrange on' : 'Auto-arrange off',
               ),
+              IconButton(
+                icon: Icon(Icons.grid_3x3),
+                color: _showHackerGrid ? Theme.of(context).colorScheme.primary : null,
+                onPressed: () {
+                  setState(() {
+                    _showHackerGrid = !_showHackerGrid;
+                  });
+                },
+                tooltip: _showHackerGrid ? 'Hide grid background' : 'Show grid background',
+              ),
             ],
           ),
         ),
@@ -395,37 +437,61 @@ class _LocationGraphWidgetState extends State<LocationGraphWidget> with SingleTi
             onInteractionEnd: (details) {
               widget.onScaleChanged(_scale);
             },
-            child: GraphView(
-              key: ValueKey(widget.locations.map((l) => l.id).join(',')),
-              graph: graph,
-              algorithm: algorithm,
-              paint: Paint()
-                ..color = Colors.black
-                ..strokeWidth = 2.0
-                ..style = PaintingStyle.stroke,
-              builder: (Node node) {
-                final locationId = node.key!.value as String;
-                final location = widget.locations.firstWhere(
-                  (loc) => loc.id == locationId,
-                  orElse: () => widget.locations.first,
-                );
+            child: Stack(
+              children: [
+                // Hacker grid background
+                if (_showHackerGrid)
+                  AnimatedBuilder(
+                    animation: Listenable.merge([_gridPulseAnimation, _dataFlowAnimation]),
+                    builder: (context, _) {
+                      return CustomPaint(
+                        painter: HackerGridPainter(
+                          pulseAnimation: _gridPulseAnimation,
+                          flowAnimation: _dataFlowAnimation,
+                          primaryColor: const Color(0xFF00FFFF), // Cyan
+                          secondaryColor: const Color(0xFF00FF88), // Neon green
+                          gridSpacing: 40.0,
+                          showDataFlow: true,
+                        ),
+                        size: Size(10000, 10000), // Use a large but finite size instead of infinite
+                      );
+                    },
+                  ),
                 
-                // Highlight the node if it matches the search query
-                bool isHighlighted = false;
-                if (widget.searchQuery != null && widget.searchQuery!.isNotEmpty) {
-                  final query = widget.searchQuery!.toLowerCase();
-                  isHighlighted = location.name.toLowerCase().contains(query) ||
-                    (location.description != null && location.description!.toLowerCase().contains(query));
-                }
-                
-                // Highlight the focused node
-                bool isFocused = widget.focusLocationId == locationId;
-                
-                // Check if this is the rig location
-                bool isRig = _isRigLocation(location);
-                
-                return _buildLocationNode(location, node, isHighlighted, isFocused, isRig);
-              },
+                // Graph view
+                GraphView(
+                  key: ValueKey(widget.locations.map((l) => l.id).join(',')),
+                  graph: graph,
+                  algorithm: algorithm,
+                  paint: Paint()
+                    ..color = Colors.white.withOpacity(0.7)
+                    ..strokeWidth = 2.0
+                    ..style = PaintingStyle.stroke,
+                  builder: (Node node) {
+                    final locationId = node.key!.value as String;
+                    final location = widget.locations.firstWhere(
+                      (loc) => loc.id == locationId,
+                      orElse: () => widget.locations.first,
+                    );
+                    
+                    // Highlight the node if it matches the search query
+                    bool isHighlighted = false;
+                    if (widget.searchQuery != null && widget.searchQuery!.isNotEmpty) {
+                      final query = widget.searchQuery!.toLowerCase();
+                      isHighlighted = location.name.toLowerCase().contains(query) ||
+                        (location.description != null && location.description!.toLowerCase().contains(query));
+                    }
+                    
+                    // Highlight the focused node
+                    bool isFocused = widget.focusLocationId == locationId;
+                    
+                    // Check if this is the rig location
+                    bool isRig = _isRigLocation(location);
+                    
+                    return _buildLocationNode(location, node, isHighlighted, isFocused, isRig);
+                  },
+                ),
+              ],
             ),
           ),
         ),

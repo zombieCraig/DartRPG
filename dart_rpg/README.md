@@ -1,6 +1,6 @@
 # dart_rpg
 
-A new Flutter project.
+Fe-Runners RPG Journal Game
 
 ## Getting Started
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../providers/datasworn_provider.dart';
 import '../providers/game_provider.dart';
 import '../models/move.dart';
@@ -284,9 +285,12 @@ class _MovesScreenState extends State<MovesScreen> {
           
           // Move description
           if (move.description != null) ...[
-            Text(
-              move.description!,
-              style: Theme.of(context).textTheme.bodyMedium,
+            MarkdownBody(
+              data: move.description!,
+              styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                p: Theme.of(context).textTheme.bodyMedium,
+              ),
+              selectable: true,
             ),
             const SizedBox(height: 24),
           ],
@@ -309,7 +313,14 @@ class _MovesScreenState extends State<MovesScreen> {
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
-                    Text(outcome.description),
+                    MarkdownBody(
+                      data: outcome.description,
+                      styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                        p: Theme.of(context).textTheme.bodyMedium,
+                        textAlign: WrapAlignment.start,
+                      ),
+                      selectable: true,
+                    ),
                   ],
                 ),
               );
@@ -512,6 +523,7 @@ class _MovesScreenState extends State<MovesScreen> {
       rollType: 'action_roll',
       modifier: modifier,
       moveData: {'moveId': move.id},
+      isMatch: rollResult['isMatch'], // Add the match information
     );
     
     // Show the roll result
@@ -532,6 +544,7 @@ class _MovesScreenState extends State<MovesScreen> {
       rollType: 'progress_roll',
       progressValue: _progressValue,
       moveData: {'moveId': move.id},
+      isMatch: rollResult['isMatch'], // Add the match information
     );
     
     // Show the roll result
@@ -561,7 +574,13 @@ class _MovesScreenState extends State<MovesScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (move.description != null) ...[
-                Text(move.description!),
+                MarkdownBody(
+                  data: move.description!,
+                  styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                    p: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  selectable: true,
+                ),
                 const SizedBox(height: 16),
               ],
               const Text(
@@ -648,7 +667,39 @@ class _MovesScreenState extends State<MovesScreen> {
                   ],
                   
                   if (moveRoll.challengeDice.isNotEmpty) ...[
-                    Text('Challenge Dice: ${moveRoll.challengeDice.join(' and ')}'),
+                    Row(
+                      children: [
+                        Text('Challenge Dice: ${moveRoll.challengeDice.join(' and ')}'),
+                        if (moveRoll.isMatch) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: _getMatchColor(moveRoll.outcome),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _getMatchIcon(moveRoll.outcome),
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 4),
+                                const Text(
+                                  'Match!',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                     const SizedBox(height: 16),
                   ],
                   
@@ -659,12 +710,29 @@ class _MovesScreenState extends State<MovesScreen> {
                   ],
                   
                   // Outcome
-                  Text(
-                    'Outcome: ${moveRoll.outcome.toUpperCase()}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: _getOutcomeColor(moveRoll.outcome),
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        'Outcome: ${moveRoll.outcome.toUpperCase()}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: _getOutcomeColor(moveRoll.outcome),
+                        ),
+                      ),
+                      if (moveRoll.isMatch && 
+                          (moveRoll.outcome.contains('strong hit') || moveRoll.outcome.contains('miss'))) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          moveRoll.outcome.contains('strong hit') 
+                              ? '(Something special happens!)' 
+                              : '(Something bad happens!)',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: _getMatchColor(moveRoll.outcome),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 8),
                   
@@ -672,7 +740,13 @@ class _MovesScreenState extends State<MovesScreen> {
                   if (moveRoll.outcome != 'performed') ...[
                     for (final outcome in move.outcomes)
                       if (outcome.type == moveRoll.outcome)
-                        Text(outcome.description),
+                        MarkdownBody(
+                          data: outcome.description,
+                          styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                            p: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          selectable: true,
+                        ),
                   ],
                   
                   // Burn Momentum button
@@ -700,9 +774,13 @@ class _MovesScreenState extends State<MovesScreen> {
                                           (newActionValue <= challengeDice[0] && newActionValue > challengeDice[1]);
                           
                           String newOutcome;
-                          if (strongHit) newOutcome = 'strong hit';
-                          else if (weakHit) newOutcome = 'weak hit';
-                          else newOutcome = 'miss';
+                          if (strongHit) {
+                            newOutcome = 'strong hit';
+                          } else if (weakHit) {
+                             newOutcome = 'weak hit';
+                          } else {
+                            newOutcome = 'miss';
+                          }
                           
                           // Burn momentum
                           character.burnMomentum();
@@ -792,17 +870,38 @@ class _MovesScreenState extends State<MovesScreen> {
   }
   
   Color _getOutcomeColor(String outcome) {
-    switch (outcome.toLowerCase()) {
-      case 'strong hit':
-        return Colors.green;
-      case 'weak hit':
-        return Colors.orange;
-      case 'miss':
-        return Colors.red;
-      case 'performed':
-        return Colors.blue;
-      default:
-        return Colors.grey;
+    if (outcome.toLowerCase().contains('strong hit with a match')) {
+      return Colors.green[700]!;
+    } else if (outcome.toLowerCase().contains('strong hit')) {
+      return Colors.green;
+    } else if (outcome.toLowerCase().contains('weak hit')) {
+      return Colors.orange;
+    } else if (outcome.toLowerCase().contains('miss with a match')) {
+      return Colors.red[700]!;
+    } else if (outcome.toLowerCase().contains('miss')) {
+      return Colors.red;
+    } else if (outcome.toLowerCase() == 'performed') {
+      return Colors.blue;
+    } else {
+      return Colors.grey;
     }
+  }
+  
+  Color _getMatchColor(String outcome) {
+    if (outcome.contains('strong hit')) {
+      return Colors.green[700]!;
+    } else if (outcome.contains('miss')) {
+      return Colors.red[700]!;
+    }
+    return Colors.grey;
+  }
+  
+  IconData _getMatchIcon(String outcome) {
+    if (outcome.contains('strong hit')) {
+      return Icons.star; // Star icon for positive matches
+    } else if (outcome.contains('miss')) {
+      return Icons.warning; // Warning icon for negative matches
+    }
+    return Icons.casino; // Default dice icon
   }
 }

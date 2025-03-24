@@ -44,6 +44,7 @@ class DiceRoller {
         : actionDie + (statValue ?? 0) + modifier;
     
     final challengeDice = rollDice(2, 10);
+    final bool isMatch = challengeDice[0] == challengeDice[1]; // Check for matching challenge dice
     
     // Determine outcome
     final strongHit = actionValue > challengeDice[0] && actionValue > challengeDice[1];
@@ -52,11 +53,11 @@ class DiceRoller {
     
     String outcome;
     if (strongHit) {
-      outcome = 'strong hit';
+      outcome = isMatch ? 'strong hit with a match' : 'strong hit';
     } else if (weakHit) {
       outcome = 'weak hit';
     } else {
-      outcome = 'miss';
+      outcome = isMatch ? 'miss with a match' : 'miss';
     }
     
     return {
@@ -69,12 +70,14 @@ class DiceRoller {
       'outcome': outcome,
       'momentum': momentum,
       'couldBurnMomentum': momentum > 0 && momentum > actionValue,
+      'isMatch': isMatch, // Add the match information
     };
   }
 
   // Roll for a progress move (progress value vs 2d10)
   static Map<String, dynamic> rollProgressMove({required int progressValue}) {
     final challengeDice = rollDice(2, 10);
+    final bool isMatch = challengeDice[0] == challengeDice[1]; // Check for matching challenge dice
     
     // Determine outcome
     final strongHit = progressValue > challengeDice[0] && progressValue > challengeDice[1];
@@ -83,17 +86,18 @@ class DiceRoller {
     
     String outcome;
     if (strongHit) {
-      outcome = 'strong hit';
+      outcome = isMatch ? 'strong hit with a match' : 'strong hit';
     } else if (weakHit) {
       outcome = 'weak hit';
     } else {
-      outcome = 'miss';
+      outcome = isMatch ? 'miss with a match' : 'miss';
     }
     
     return {
       'progressValue': progressValue,
       'challengeDice': challengeDice,
       'outcome': outcome,
+      'isMatch': isMatch, // Add the match information
     };
   }
 

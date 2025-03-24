@@ -1,8 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dart_rpg/models/oracle.dart';
 import 'package:dart_rpg/models/journal_entry.dart';
-import 'package:dart_rpg/screens/journal_entry_screen.dart';
 
 void main() {
   group('OracleRoll in JournalEntry', () {

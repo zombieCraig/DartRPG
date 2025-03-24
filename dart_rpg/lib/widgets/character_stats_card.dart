@@ -9,10 +9,10 @@ class CharacterStatsCard extends StatefulWidget {
   final VoidCallback? onEdit;
 
   const CharacterStatsCard({
-    Key? key,
+    super.key,
     required this.character,
     this.onEdit,
-  }) : super(key: key);
+  });
 
   @override
   State<CharacterStatsCard> createState() => _CharacterStatsCardState();

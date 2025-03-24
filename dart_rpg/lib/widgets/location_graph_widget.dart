@@ -39,6 +39,7 @@ class _LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPr
   final GlobalKey _graphKey = GlobalKey();
   Map<String, Node> _nodeMap = {};
   final Map<Node, Offset> _nodePositions = {};
+  final Map<String, Offset> _nodePositionsByLocationId = {};
   
   // For rig node pulsing effect
   late AnimationController _pulseController;
@@ -186,7 +187,23 @@ class _LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPr
         }
         
         if (!edgeExists) {
-          graph.addEdge(sourceNode, targetNode);
+          // Get the segments of the source and target locations
+          final sourceSegment = location.segment;
+          final targetLocation = widget.locations.firstWhere(
+            (loc) => loc.id == targetId,
+            orElse: () => location,
+          );
+          final targetSegment = targetLocation.segment;
+          
+          // Create a custom Paint object based on the segments
+          final edgePaint = Paint()
+            ..color = _getEdgeColor(sourceSegment, targetSegment)
+            ..strokeWidth = 2.5
+            ..style = PaintingStyle.stroke
+            ..strokeCap = StrokeCap.round;
+          
+          // Add the edge with the custom Paint
+          graph.addEdge(sourceNode, targetNode, paint: edgePaint);
         }
       }
     }
@@ -311,6 +328,10 @@ class _LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPr
           final position = algorithm.getNodePosition(node);
           if (position != null) {
             _nodePositions[node] = position;
+            
+            // Also store by location ID for the edge painter
+            final locationId = node.key!.value as String;
+            _nodePositionsByLocationId[locationId] = position;
           }
           return Container();
         }
@@ -458,14 +479,14 @@ class _LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPr
                     },
                   ),
                 
-                // Graph view
+                // Graph view with transparent edges
                 GraphView(
                   key: ValueKey(widget.locations.map((l) => l.id).join(',')),
                   graph: graph,
                   algorithm: algorithm,
                   paint: Paint()
-                    ..color = Colors.white.withOpacity(0.7)
-                    ..strokeWidth = 2.0
+                    ..color = Colors.transparent // Make the default edges invisible
+                    ..strokeWidth = 0.0
                     ..style = PaintingStyle.stroke,
                   builder: (Node node) {
                     final locationId = node.key!.value as String;
@@ -586,6 +607,35 @@ class _LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPr
     
     // Use white text for dark backgrounds, black text for light backgrounds
     return luminance > 0.5 ? Colors.black : Colors.white;
+  }
+  
+  /// Determines the color for an edge based on the segments of the connected locations.
+  Color _getEdgeColor(LocationSegment sourceSegment, LocationSegment targetSegment) {
+    // If both locations are in the same segment, use that segment's color
+    if (sourceSegment == targetSegment) {
+      return _getSegmentEdgeColor(sourceSegment);
+    }
+    
+    // If they're in different segments, blend the colors
+    final sourceColor = _getSegmentEdgeColor(sourceSegment);
+    final targetColor = _getSegmentEdgeColor(targetSegment);
+    
+    // Create a blend of the two colors
+    return Color.lerp(sourceColor, targetColor, 0.5)!;
+  }
+  
+  /// Gets a color for a segment that's suitable for edges (may be different from node colors).
+  Color _getSegmentEdgeColor(LocationSegment segment) {
+    switch (segment) {
+      case LocationSegment.core:
+        return Colors.green.shade400.withOpacity(0.8);
+      case LocationSegment.corpNet:
+        return Colors.yellow.shade600.withOpacity(0.8);
+      case LocationSegment.govNet:
+        return Colors.blue.shade300.withOpacity(0.8); // Using blue instead of grey for better visibility
+      case LocationSegment.darkNet:
+        return Colors.purple.shade300.withOpacity(0.8); // Using purple instead of black for better visibility
+    }
   }
 }
 

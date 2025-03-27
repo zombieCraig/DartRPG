@@ -64,7 +64,6 @@ class _RichTextEditorState extends State<RichTextEditor> {
   bool _showLocationSuggestions = false;
   String _currentSearchText = '';
   List<dynamic> _filteredSuggestions = [];
-  OverlayEntry? _overlayEntry;
   final LayerLink _layerLink = LayerLink();
   
   @override
@@ -91,7 +90,6 @@ class _RichTextEditorState extends State<RichTextEditor> {
     }
     _focusNode.dispose();
     _scrollController.dispose();
-    _removeOverlay();
     super.dispose();
   }
   
@@ -115,11 +113,12 @@ class _RichTextEditorState extends State<RichTextEditor> {
       return KeyEventResult.handled;
     }
     
-    // Check for Tab key for autocomplete
+    // Check for Tab or Enter key for autocomplete
     if (event is KeyDownEvent && 
-        event.logicalKey == LogicalKeyboardKey.tab && 
+        (event.logicalKey == LogicalKeyboardKey.tab || event.logicalKey == LogicalKeyboardKey.enter) && 
         (_showCharacterSuggestions || _showLocationSuggestions) &&
-        _filteredSuggestions.isNotEmpty) {
+        _filteredSuggestions.isNotEmpty &&
+        _inlineSuggestion != null) {
       _insertMention(_filteredSuggestions.first);
       return KeyEventResult.handled;
     }
@@ -139,7 +138,6 @@ class _RichTextEditorState extends State<RichTextEditor> {
     final cursorPosition = _controller.selection.baseOffset;
     
     if (cursorPosition <= 0 || cursorPosition > text.length) {
-      _removeOverlay();
       _clearInlineSuggestion();
       return;
     }
@@ -164,7 +162,6 @@ class _RichTextEditorState extends State<RichTextEditor> {
       _suggestionStartPosition = wordStart;
       _updateSuggestions();
     } else {
-      _removeOverlay();
       _clearInlineSuggestion();
     }
   }
@@ -200,7 +197,6 @@ class _RichTextEditorState extends State<RichTextEditor> {
     }
     
     if (_filteredSuggestions.isEmpty) {
-      _removeOverlay();
       _clearInlineSuggestion();
       return;
     }
@@ -222,80 +218,8 @@ class _RichTextEditorState extends State<RichTextEditor> {
         _inlineSuggestion = completionText;
       });
     }
-    
-    _showSuggestions();
   }
   
-  void _showSuggestions() {
-    _removeOverlay();
-    
-    // Make sure the context is still valid
-    if (!mounted) return;
-    
-    final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null) return;
-    
-    final size = renderBox.size;
-    
-    _overlayEntry = OverlayEntry(
-      builder: (overlayContext) => Positioned(
-        width: size.width * 0.8,
-        child: CompositedTransformFollower(
-          link: _layerLink,
-          showWhenUnlinked: false,
-          offset: const Offset(0, 40),
-          child: Material(
-            elevation: 4.0,
-            child: Container(
-              constraints: BoxConstraints(
-                maxHeight: 200,
-                maxWidth: size.width * 0.8,
-              ),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _filteredSuggestions.length,
-                itemBuilder: (listContext, index) {
-                  final suggestion = _filteredSuggestions[index];
-                  String displayText;
-                  
-                  if (_showCharacterSuggestions) {
-                    final character = suggestion as Character;
-                    final handle = character.handle ?? character.getHandle();
-                    displayText = '$handle (${character.name})';
-                  } else {
-                    displayText = suggestion.name;
-                  }
-                  
-                  return ListTile(
-                    leading: Icon(
-                      _showCharacterSuggestions ? Icons.person : Icons.place,
-                      size: 20,
-                    ),
-                    title: Text(displayText),
-                    dense: true,
-                    onTap: () => _insertMention(suggestion),
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-    
-    // Make sure the context is still valid before inserting the overlay
-    if (mounted) {
-      final overlay = Overlay.of(context);
-      overlay.insert(_overlayEntry!);
-    }
-  }
-  
-  void _removeOverlay() {
-    _showCharacterSuggestions = false;
-    _showLocationSuggestions = false;
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-  }
   
   void _insertMention(dynamic entity) {
     final selection = _controller.selection;
@@ -338,7 +262,7 @@ class _RichTextEditorState extends State<RichTextEditor> {
     // Notify parent about the change
     widget.onChanged(_controller.text, _controller.text);
     
-    _removeOverlay();
+    _clearInlineSuggestion();
   }
   
   // Add an image to the document
@@ -404,196 +328,193 @@ class _RichTextEditorState extends State<RichTextEditor> {
   
   @override
   Widget build(BuildContext context) {
-    return CompositedTransformTarget(
-      link: _layerLink,
-      child: Column(
-        children: [
-          // Formatting toolbar
-          if (!widget.readOnly)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(4),
-                  topRight: Radius.circular(4),
-                ),
-              ),
-              child: Wrap(
-                spacing: 4,
-                children: [
-                  // Bold
-                  IconButton(
-                    icon: const Icon(Icons.format_bold),
-                    tooltip: 'Bold',
-                    onPressed: () => _insertFormatting('**', '**'),
-                  ),
-                  
-                  // Italic
-                  IconButton(
-                    icon: const Icon(Icons.format_italic),
-                    tooltip: 'Italic',
-                    onPressed: () => _insertFormatting('*', '*'),
-                  ),
-                  
-                  // Heading
-                  IconButton(
-                    icon: const Icon(Icons.title),
-                    tooltip: 'Heading',
-                    onPressed: () => _insertFormatting('# ', ''),
-                  ),
-                  
-                  // Bullet list
-                  IconButton(
-                    icon: const Icon(Icons.format_list_bulleted),
-                    tooltip: 'Bullet List',
-                    onPressed: () => _insertFormatting('- ', ''),
-                  ),
-                  
-                  // Numbered list
-                  IconButton(
-                    icon: const Icon(Icons.format_list_numbered),
-                    tooltip: 'Numbered List',
-                    onPressed: () => _insertFormatting('1. ', ''),
-                  ),
-                ],
+    return Column(
+      children: [
+        // Formatting toolbar
+        if (!widget.readOnly)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(4),
+                topRight: Radius.circular(4),
               ),
             ),
-          
-          // Custom toolbar for character, location, and image buttons
-          if (!widget.readOnly)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(4),
-                  bottomRight: Radius.circular(4),
+            child: Wrap(
+              spacing: 4,
+              children: [
+                // Bold
+                IconButton(
+                  icon: const Icon(Icons.format_bold),
+                  tooltip: 'Bold',
+                  onPressed: () => _insertFormatting('**', '**'),
                 ),
-              ),
-              child: Row(
-                children: [
-                  // Character button
-                  Tooltip(
-                    message: 'Add Character (@)',
-                    child: IconButton(
-                      icon: const Icon(Icons.person),
-                      onPressed: () {
-                        _showCharacterSelectionDialog();
-                      },
-                    ),
-                  ),
-                  
-                  // Location button
-                  Tooltip(
-                    message: 'Add Location (#)',
-                    child: IconButton(
-                      icon: const Icon(Icons.place),
-                      onPressed: () {
-                        _showLocationSelectionDialog();
-                      },
-                    ),
-                  ),
-                  
-                  // Image button
-                  Tooltip(
-                    message: 'Add Image',
-                    child: IconButton(
-                      icon: const Icon(Icons.image),
-                      onPressed: () {
-                        _addImage();
-                      },
-                    ),
-                  ),
-                  
-                  // Move button
-                  Tooltip(
-                    message: 'Roll Move (Ctrl+M)',
-                    child: IconButton(
-                      icon: const Icon(Icons.sports_martial_arts),
-                      onPressed: widget.onMoveRequested,
-                    ),
-                  ),
-                  
-                  // Oracle button
-                  Tooltip(
-                    message: 'Roll Oracle (Ctrl+O)',
-                    child: IconButton(
-                      icon: const Icon(Icons.casino),
-                      onPressed: widget.onOracleRequested,
-                    ),
-                  ),
-                ],
+                
+                // Italic
+                IconButton(
+                  icon: const Icon(Icons.format_italic),
+                  tooltip: 'Italic',
+                  onPressed: () => _insertFormatting('*', '*'),
+                ),
+                
+                // Heading
+                IconButton(
+                  icon: const Icon(Icons.title),
+                  tooltip: 'Heading',
+                  onPressed: () => _insertFormatting('# ', ''),
+                ),
+                
+                // Bullet list
+                IconButton(
+                  icon: const Icon(Icons.format_list_bulleted),
+                  tooltip: 'Bullet List',
+                  onPressed: () => _insertFormatting('- ', ''),
+                ),
+                
+                // Numbered list
+                IconButton(
+                  icon: const Icon(Icons.format_list_numbered),
+                  tooltip: 'Numbered List',
+                  onPressed: () => _insertFormatting('1. ', ''),
+                ),
+              ],
+            ),
+          ),
+          
+        // Custom toolbar for character, location, and image buttons
+        if (!widget.readOnly)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(4),
+                bottomRight: Radius.circular(4),
               ),
             ),
-          
-          // Editor
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Stack(
-                children: [
-                  // Main text field
-                  TextField(
-                    controller: _controller,
-                    focusNode: _focusNode,
-                    readOnly: widget.readOnly,
-                    maxLines: null,
-                    expands: true,
-                    textAlignVertical: TextAlignVertical.top,
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.all(8),
-                      border: InputBorder.none,
-                      hintText: 'Write your journal entry here...',
-                    ),
-                    onChanged: (value) {
-                      widget.onChanged(value, value);
-                      _checkForMentions();
+            child: Row(
+              children: [
+                // Character button
+                Tooltip(
+                  message: 'Add Character (@)',
+                  child: IconButton(
+                    icon: const Icon(Icons.person),
+                    onPressed: () {
+                      _showCharacterSelectionDialog();
                     },
-                    onTap: _checkForMentions,
                   ),
-                  
-                  // Inline suggestion overlay
-                  if (_inlineSuggestion != null && _suggestionStartPosition != null)
-                    Positioned(
-                      left: 8, // Same as contentPadding
-                      top: 8,   // Same as contentPadding
-                      child: IgnorePointer(
-                        child: RichText(
-                          text: TextSpan(
-                            children: [
-                              // Invisible text to match the user's input
-                              TextSpan(
-                                text: _controller.text.substring(0, _suggestionStartPosition! + _currentSearchText.length + 1),
-                                style: TextStyle(
-                                  color: Colors.transparent,
-                                  fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
-                                ),
+                ),
+                
+                // Location button
+                Tooltip(
+                  message: 'Add Location (#)',
+                  child: IconButton(
+                    icon: const Icon(Icons.place),
+                    onPressed: () {
+                      _showLocationSelectionDialog();
+                    },
+                  ),
+                ),
+                
+                // Image button
+                Tooltip(
+                  message: 'Add Image',
+                  child: IconButton(
+                    icon: const Icon(Icons.image),
+                    onPressed: () {
+                      _addImage();
+                    },
+                  ),
+                ),
+                
+                // Move button
+                Tooltip(
+                  message: 'Roll Move (Ctrl+M)',
+                  child: IconButton(
+                    icon: const Icon(Icons.sports_martial_arts),
+                    onPressed: widget.onMoveRequested,
+                  ),
+                ),
+                
+                // Oracle button
+                Tooltip(
+                  message: 'Roll Oracle (Ctrl+O)',
+                  child: IconButton(
+                    icon: const Icon(Icons.casino),
+                    onPressed: widget.onOracleRequested,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+        // Editor
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline,
+              ),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Stack(
+              children: [
+                // Main text field
+                TextField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  readOnly: widget.readOnly,
+                  maxLines: null,
+                  expands: true,
+                  textAlignVertical: TextAlignVertical.top,
+                  decoration: const InputDecoration(
+                    contentPadding: EdgeInsets.all(8),
+                    border: InputBorder.none,
+                    hintText: 'Write your journal entry here...',
+                  ),
+                  onChanged: (value) {
+                    widget.onChanged(value, value);
+                    _checkForMentions();
+                  },
+                  onTap: _checkForMentions,
+                ),
+                
+                // Inline suggestion overlay
+                if (_inlineSuggestion != null && _suggestionStartPosition != null)
+                  Positioned(
+                    left: 8, // Same as contentPadding
+                    top: 8,   // Same as contentPadding
+                    child: IgnorePointer(
+                      child: RichText(
+                        text: TextSpan(
+                          children: [
+                            // Invisible text to match the user's input
+                            TextSpan(
+                              text: _controller.text.substring(0, _suggestionStartPosition! + _currentSearchText.length + 1),
+                              style: TextStyle(
+                                color: Colors.transparent,
+                                fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
                               ),
-                              // Grey suggestion text
-                              TextSpan(
-                                text: _inlineSuggestion!.substring(_currentSearchText.length),
-                                style: TextStyle(
-                                  color: Colors.grey.withOpacity(0.7),
-                                  fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
-                                ),
+                            ),
+                            // Grey suggestion text
+                            TextSpan(
+                              text: _inlineSuggestion!.substring(_currentSearchText.length),
+                              style: TextStyle(
+                                color: Colors.grey.withOpacity(0.7),
+                                fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
   

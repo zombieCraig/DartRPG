@@ -713,13 +713,53 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     // Function to handle move selection
     void handleMoveSelection(Move move) {
       if (move.rollType == 'action_roll') {
-        // For action rolls, we need to show the stat selection dialog
+        // For action rolls, we need to show the option selection dialog
         final gameProvider = Provider.of<GameProvider>(context, listen: false);
         final character = gameProvider.currentGame?.mainCharacter;
-        final availableStats = move.getAvailableStats();
-        String? selectedStat;
+        
+        // Get all available options (stats and condition meters)
+        final availableOptions = move.getAvailableOptions();
+        String? selectedOptionKey;
+        Map<String, dynamic>? selectedOptionData;
         int modifier = 0;
         final modifierController = TextEditingController();
+        
+        // If this move uses a special method (highest or lowest), determine which option to use
+        if (move.hasSpecialMethod()) {
+          final specialMethod = move.getSpecialMethod();
+          Map<String, dynamic>? selectedOption;
+          int selectedValue = specialMethod == 'highest' ? -1 : 999; // Start with extreme values
+          
+          for (var option in availableOptions) {
+            int value = 0;
+            
+            if (option['using'] == 'stat' && character != null) {
+              // Get stat value
+              final statName = option['stat'];
+              final characterStat = character.stats.firstWhere(
+                (s) => s.name.toLowerCase() == statName.toLowerCase(),
+                orElse: () => CharacterStat(name: statName, value: 0),
+              );
+              value = characterStat.value;
+            } else if (option['using'] == 'condition_meter' && character != null) {
+              // Get condition meter value
+              final meterName = option['condition_meter'];
+              value = character.getConditionMeterValue(meterName) ?? 0;
+            }
+            
+            if ((specialMethod == 'highest' && value > selectedValue) ||
+                (specialMethod == 'lowest' && value < selectedValue)) {
+              selectedValue = value;
+              selectedOption = option;
+            }
+          }
+          
+          // Use only the selected option
+          if (selectedOption != null) {
+            availableOptions.clear();
+            availableOptions.add(selectedOption);
+          }
+        }
         
         // Close the move selection dialog first
         Navigator.pop(context);
@@ -749,8 +789,17 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                           const SizedBox(height: 16),
                         ],
                         
+                        // Display a message if using a special method
+                        if (move.hasSpecialMethod()) ...[
+                          Text(
+                            'This move uses the ${move.getSpecialMethod()} value option:',
+                            style: const TextStyle(fontStyle: FontStyle.italic),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                        
                         const Text(
-                          'Select Stat:',
+                          'Select Option:',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
@@ -758,31 +807,48 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: availableStats.map((stat) {
-                            // Get the stat value from the character if available
-                            int statValue = 2; // Default value
-                            if (character != null) {
-                              final characterStat = character.stats.firstWhere(
-                                (s) => s.name.toLowerCase() == stat.toLowerCase(),
-                                orElse: () => CharacterStat(name: stat, value: 2),
-                              );
-                              statValue = characterStat.value;
+                          children: availableOptions.map((option) {
+                            // Get the display name and value
+                            String name;
+                            int value = 0;
+                            
+                            if (option['using'] == 'stat') {
+                              name = option['stat'];
+                              if (character != null) {
+                                final characterStat = character.stats.firstWhere(
+                                  (s) => s.name.toLowerCase() == name.toLowerCase(),
+                                  orElse: () => CharacterStat(name: name, value: 0),
+                                );
+                                value = characterStat.value;
+                              }
+                            } else if (option['using'] == 'condition_meter') {
+                              name = option['condition_meter'];
+                              if (character != null) {
+                                value = character.getConditionMeterValue(name) ?? 0;
+                              }
+                            } else {
+                              // Fallback for unknown option types
+                              name = option['using'] ?? 'Unknown';
                             }
                             
+                            // Create a unique key for this option
+                            final optionKey = '${option['using']}_${option['using'] == 'stat' ? option['stat'] : option['condition_meter']}';
+                            
                             return ChoiceChip(
-                              label: Text('$stat ($statValue)'),
-                              selected: selectedStat == stat,
+                              label: Text('$name ($value)'),
+                              selected: selectedOptionKey == optionKey,
                               onSelected: (selected) {
                                 setDialogState(() {
-                                  selectedStat = selected ? stat : null;
+                                  selectedOptionKey = selected ? optionKey : null;
+                                  selectedOptionData = selected ? option : null;
                                 });
                               },
                             );
                           }).toList(),
                         ),
                         
-                        // Only show modifier field if a stat is selected
-                        if (selectedStat != null) ...[
+                        // Only show modifier field if an option is selected
+                        if (selectedOptionKey != null) ...[
                           const SizedBox(height: 16),
                           TextField(
                             controller: modifierController,
@@ -808,11 +874,11 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                       },
                       child: const Text('Cancel'),
                     ),
-                    if (selectedStat != null)
+                    if (selectedOptionKey != null)
                       TextButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          _rollActionMove(context, move, selectedStat!, modifier);
+                          _rollActionMoveWithOption(context, move, selectedOptionData!, modifier);
                         },
                         child: const Text('Roll Dice'),
                       ),
@@ -1300,18 +1366,29 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     }
   }
   
-  void _rollActionMove(BuildContext context, Move move, String stat, int modifier) {
+  void _rollActionMoveWithOption(BuildContext context, Move move, Map<String, dynamic> option, int modifier) {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final character = gameProvider.currentGame?.mainCharacter;
     
-    // Get the stat value from the character if available
-    int statValue = 2; // Default value
-    if (character != null) {
-      final characterStat = character.stats.firstWhere(
-        (s) => s.name.toLowerCase() == stat.toLowerCase(),
-        orElse: () => CharacterStat(name: stat, value: 2),
-      );
-      statValue = characterStat.value;
+    // Get the value based on the option type
+    int value = 0;
+    String optionName = '';
+    String optionType = option['using'];
+    
+    if (optionType == 'stat') {
+      optionName = option['stat'];
+      if (character != null) {
+        final characterStat = character.stats.firstWhere(
+          (s) => s.name.toLowerCase() == optionName.toLowerCase(),
+          orElse: () => CharacterStat(name: optionName, value: 0),
+        );
+        value = characterStat.value;
+      }
+    } else if (optionType == 'condition_meter') {
+      optionName = option['condition_meter'];
+      if (character != null) {
+        value = character.getConditionMeterValue(optionName) ?? 0;
+      }
     }
     
     // Get the character's momentum
@@ -1319,7 +1396,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     
     // Roll with momentum and modifier
     final rollResult = DiceRoller.rollMove(
-      statValue: statValue,
+      statValue: value,
       momentum: momentum,
       modifier: modifier,
     );
@@ -1328,14 +1405,17 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     final moveRoll = MoveRoll(
       moveName: move.name,
       moveDescription: move.description,
-      stat: stat,
-      statValue: statValue,
+      stat: optionName, // Use the option name (stat or condition meter)
+      statValue: value,
       actionDie: rollResult['actionDie'],
       challengeDice: rollResult['challengeDice'],
       outcome: rollResult['outcome'],
       rollType: 'action_roll',
       modifier: modifier,
-      moveData: {'moveId': move.id},
+      moveData: {
+        'moveId': move.id,
+        'optionType': optionType, // Store the option type
+      },
     );
     
     // Add to move rolls
@@ -1355,6 +1435,16 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     
     // Show the roll details
     _showMoveRollDetailsDialog(context, moveRoll);
+  }
+  
+  void _rollActionMove(BuildContext context, Move move, String stat, int modifier) {
+    // Convert the stat to an option map and use _rollActionMoveWithOption
+    final option = {
+      'using': 'stat',
+      'stat': stat,
+    };
+    
+    _rollActionMoveWithOption(context, move, option, modifier);
   }
   
   void _rollProgressMove(BuildContext context, Move move, int progressValue) {

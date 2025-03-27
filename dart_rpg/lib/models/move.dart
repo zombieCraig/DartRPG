@@ -199,37 +199,119 @@ class Move {
     );
   }
   
-  // Helper method to get available stats for this move
-  List<String> getAvailableStats() {
-    List<String> availableStats = [];
+  // Enhanced method to get available stats and condition meters
+  List<Map<String, dynamic>> getAvailableOptions() {
+    List<Map<String, dynamic>> availableOptions = [];
     
-    // Check roll options for stats
-    for (var option in rollOptions) {
-      if (option['using'] == 'stat' && option['stat'] != null) {
-        availableStats.add(option['stat']);
+    // First check if we have player_choice or other method conditions
+    for (var condition in triggerConditions) {
+      if (condition['method'] == 'player_choice') {
+        // For player_choice, add all options
+        if (condition['roll_options'] != null) {
+          for (var option in condition['roll_options']) {
+            if ((option['using'] == 'stat' && option['stat'] != null) ||
+                (option['using'] == 'condition_meter' && option['condition_meter'] != null)) {
+              availableOptions.add(option);
+            }
+          }
+        }
+      } else if (condition['method'] == 'highest' || condition['method'] == 'lowest') {
+        // For highest/lowest, we'll need to determine the value at runtime
+        // Just add all options for now, we'll filter in the UI
+        if (condition['roll_options'] != null) {
+          for (var option in condition['roll_options']) {
+            if ((option['using'] == 'stat' && option['stat'] != null) ||
+                (option['using'] == 'condition_meter' && option['condition_meter'] != null)) {
+              availableOptions.add({...option, 'method': condition['method']});
+            }
+          }
+        }
+      }
+      // Add other methods as needed
+    }
+    
+    // If no options found in conditions, check roll options
+    if (availableOptions.isEmpty) {
+      for (var option in rollOptions) {
+        if ((option['using'] == 'stat' && option['stat'] != null) ||
+            (option['using'] == 'condition_meter' && option['condition_meter'] != null)) {
+          availableOptions.add(option);
+        }
       }
     }
     
-    // If no stats found in roll options but we have a stat property, use that
-    if (availableStats.isEmpty && stat != null) {
-      availableStats.add(stat!);
+    // If still empty and we have a stat property, use that
+    if (availableOptions.isEmpty && stat != null) {
+      availableOptions.add({
+        'using': 'stat',
+        'stat': stat!
+      });
     }
     
-    // If still empty, return default stats
-    if (availableStats.isEmpty) {
-      availableStats = ['Edge', 'Heart', 'Iron', 'Shadow', 'Wits'];
+    return availableOptions;
+  }
+
+  // Helper method to get just the stat names (for backward compatibility)
+  List<String> getAvailableStats() {
+    final options = getAvailableOptions();
+    final stats = <String>[];
+    
+    for (var option in options) {
+      if (option['using'] == 'stat' && option['stat'] != null) {
+        stats.add(option['stat']);
+      }
     }
     
-    return availableStats;
+    // If no stats found, return default stats
+    if (stats.isEmpty) {
+      return ['Edge', 'Heart', 'Iron', 'Shadow', 'Wits'];
+    }
+    
+    return stats;
   }
   
   // Helper method to check if this move has player choice
   bool hasPlayerChoice() {
     for (var condition in triggerConditions) {
-      if (condition['method'] == 'Player_choice') {
+      if (condition['method'] == 'player_choice') {
         return true;
       }
     }
     return false;
+  }
+  
+  // Helper method to check if this move has the "highest" method
+  bool hasHighestMethod() {
+    for (var condition in triggerConditions) {
+      if (condition['method'] == 'highest') {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  // Helper method to check if this move has the "lowest" method
+  bool hasLowestMethod() {
+    for (var condition in triggerConditions) {
+      if (condition['method'] == 'lowest') {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  // Helper method to check if this move has any special method (highest or lowest)
+  bool hasSpecialMethod() {
+    return hasHighestMethod() || hasLowestMethod();
+  }
+  
+  // Helper method to get the special method if any
+  String? getSpecialMethod() {
+    for (var condition in triggerConditions) {
+      if (condition['method'] == 'highest' || condition['method'] == 'lowest') {
+        return condition['method'];
+      }
+    }
+    return null;
   }
 }

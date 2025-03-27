@@ -344,44 +344,112 @@ class _MovesScreenState extends State<MovesScreen> {
   Widget _buildActionRollUI(Move move) {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final character = gameProvider.currentGame?.mainCharacter;
-    final availableStats = move.getAvailableStats();
+    
+    // Get all available options (stats and condition meters)
+    final availableOptions = move.getAvailableOptions();
+    Map<String, dynamic>? _selectedOptionData;
+    String? _selectedOptionKey;
+    
+    // If this move uses a special method (highest or lowest), determine which option to use
+    if (move.hasSpecialMethod()) {
+      final specialMethod = move.getSpecialMethod();
+      Map<String, dynamic>? selectedOption;
+      int selectedValue = specialMethod == 'highest' ? -1 : 999; // Start with extreme values
+      
+      for (var option in availableOptions) {
+        int value = 0;
+        
+        if (option['using'] == 'stat' && character != null) {
+          // Get stat value
+          final statName = option['stat'];
+          final characterStat = character.stats.firstWhere(
+            (s) => s.name.toLowerCase() == statName.toLowerCase(),
+            orElse: () => CharacterStat(name: statName, value: 0),
+          );
+          value = characterStat.value;
+        } else if (option['using'] == 'condition_meter' && character != null) {
+          // Get condition meter value
+          final meterName = option['condition_meter'];
+          value = character.getConditionMeterValue(meterName) ?? 0;
+        }
+        
+        if ((specialMethod == 'highest' && value > selectedValue) ||
+            (specialMethod == 'lowest' && value < selectedValue)) {
+          selectedValue = value;
+          selectedOption = option;
+        }
+      }
+      
+      // Use only the selected option
+      if (selectedOption != null) {
+        availableOptions.clear();
+        availableOptions.add(selectedOption);
+      }
+    }
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Stat selection
+        // Display a message if using a special method
+        if (move.hasSpecialMethod()) ...[
+          Text(
+            'This move uses the ${move.getSpecialMethod()} value option:',
+            style: const TextStyle(fontStyle: FontStyle.italic),
+          ),
+          const SizedBox(height: 8),
+        ],
+        
+        // Option selection
         const Text(
-          'Select Stat:',
+          'Select Option:',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: availableStats.map((stat) {
-            // Get the stat value from the character if available
-            int statValue = 2; // Default value
-            if (character != null) {
-              final characterStat = character.stats.firstWhere(
-                (s) => s.name.toLowerCase() == stat.toLowerCase(),
-                orElse: () => CharacterStat(name: stat, value: 2),
-              );
-              statValue = characterStat.value;
+          children: availableOptions.map((option) {
+            // Get the display name and value
+            String name;
+            int value = 0;
+            
+            if (option['using'] == 'stat') {
+              name = option['stat'];
+              if (character != null) {
+                final characterStat = character.stats.firstWhere(
+                  (s) => s.name.toLowerCase() == name.toLowerCase(),
+                  orElse: () => CharacterStat(name: name, value: 0),
+                );
+                value = characterStat.value;
+              }
+            } else if (option['using'] == 'condition_meter') {
+              name = option['condition_meter'];
+              if (character != null) {
+                value = character.getConditionMeterValue(name) ?? 0;
+              }
+            } else {
+              // Fallback for unknown option types
+              name = option['using'] ?? 'Unknown';
             }
             
+            // Create a unique key for this option
+            final optionKey = '${option['using']}_${option['using'] == 'stat' ? option['stat'] : option['condition_meter']}';
+            
             return ChoiceChip(
-              label: Text('$stat ($statValue)'),
-              selected: _selectedStat == stat,
+              label: Text('$name ($value)'),
+              selected: _selectedOptionKey == optionKey || _selectedStat == name,
               onSelected: (selected) {
                 setState(() {
-                  _selectedStat = selected ? stat : null;
+                  _selectedOptionKey = selected ? optionKey : null;
+                  _selectedOptionData = selected ? option : null;
+                  _selectedStat = selected ? name : null;
                 });
               },
             );
           }).toList(),
         ),
         
-        // Only show modifier field if a stat is selected
+        // Only show modifier field if an option is selected
         if (_selectedStat != null) ...[
           const SizedBox(height: 16),
           TextField(
@@ -403,7 +471,11 @@ class _MovesScreenState extends State<MovesScreen> {
               icon: const Icon(Icons.sports_martial_arts),
               label: const Text('Roll Dice'),
               onPressed: () {
-                _rollActionMove(context, move);
+                if (_selectedOptionData != null) {
+                  _rollActionMoveWithOption(context, move, _selectedOptionData!);
+                } else if (_selectedStat != null) {
+                  _rollActionMove(context, move);
+                }
               },
             ),
           ),
@@ -472,27 +544,29 @@ class _MovesScreenState extends State<MovesScreen> {
     );
   }
   
-  void _rollActionMove(BuildContext context, Move move) {
-    if (_selectedStat == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a stat first'),
-        ),
-      );
-      return;
-    }
-    
+  void _rollActionMoveWithOption(BuildContext context, Move move, Map<String, dynamic> option) {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final character = gameProvider.currentGame?.mainCharacter;
     
-    // Get the stat value from the character if available
-    int statValue = 2; // Default value
-    if (character != null) {
-      final characterStat = character.stats.firstWhere(
-        (s) => s.name.toLowerCase() == _selectedStat!.toLowerCase(),
-        orElse: () => CharacterStat(name: _selectedStat!, value: 2),
-      );
-      statValue = characterStat.value;
+    // Get the value based on the option type
+    int value = 0;
+    String optionName = '';
+    String optionType = option['using'];
+    
+    if (optionType == 'stat') {
+      optionName = option['stat'];
+      if (character != null) {
+        final characterStat = character.stats.firstWhere(
+          (s) => s.name.toLowerCase() == optionName.toLowerCase(),
+          orElse: () => CharacterStat(name: optionName, value: 0),
+        );
+        value = characterStat.value;
+      }
+    } else if (optionType == 'condition_meter') {
+      optionName = option['condition_meter'];
+      if (character != null) {
+        value = character.getConditionMeterValue(optionName) ?? 0;
+      }
     }
     
     // Get the character's momentum
@@ -506,7 +580,7 @@ class _MovesScreenState extends State<MovesScreen> {
     
     // Roll with momentum and modifier
     final rollResult = DiceRoller.rollMove(
-      statValue: statValue,
+      statValue: value,
       momentum: momentum,
       modifier: modifier,
     );
@@ -515,19 +589,41 @@ class _MovesScreenState extends State<MovesScreen> {
     final moveRoll = MoveRoll(
       moveName: move.name,
       moveDescription: move.description,
-      stat: _selectedStat,
-      statValue: statValue,
+      stat: optionName, // Use the option name (stat or condition meter)
+      statValue: value,
       actionDie: rollResult['actionDie'],
       challengeDice: rollResult['challengeDice'],
       outcome: rollResult['outcome'],
       rollType: 'action_roll',
       modifier: modifier,
-      moveData: {'moveId': move.id},
+      moveData: {
+        'moveId': move.id,
+        'optionType': optionType, // Store the option type
+      },
       isMatch: rollResult['isMatch'], // Add the match information
     );
     
     // Show the roll result
     _showRollResultDialog(context, move, rollResult, moveRoll);
+  }
+  
+  void _rollActionMove(BuildContext context, Move move) {
+    if (_selectedStat == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a stat first'),
+        ),
+      );
+      return;
+    }
+    
+    // Convert the stat to an option map and use _rollActionMoveWithOption
+    final option = {
+      'using': 'stat',
+      'stat': _selectedStat!,
+    };
+    
+    _rollActionMoveWithOption(context, move, option);
   }
   
   void _rollProgressMove(BuildContext context, Move move) {

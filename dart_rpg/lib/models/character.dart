@@ -194,6 +194,20 @@ class Character {
     // Remove spaces and special characters
     handle = newHandle.replaceAll(RegExp(r'[\s@#\[\]\(\)]'), '');
   }
+  
+  // Get condition meter value by name
+  int? getConditionMeterValue(String meterName) {
+    switch (meterName.toLowerCase()) {
+      case 'health':
+        return health;
+      case 'spirit':
+        return spirit;
+      case 'supply':
+        return supply;
+      default:
+        return null;
+    }
+  }
 
   Map<String, dynamic> toJson() {
     return {

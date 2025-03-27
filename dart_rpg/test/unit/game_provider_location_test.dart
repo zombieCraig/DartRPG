@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dart_rpg/providers/game_provider.dart';
-import 'package:dart_rpg/models/game.dart';
 import 'package:dart_rpg/models/location.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../providers/game_provider.dart';
@@ -14,6 +13,7 @@ import '../utils/dice_roller.dart';
 import '../utils/logging_service.dart';
 import '../widgets/journal/rich_text_editor.dart';
 import '../widgets/journal/linked_items_summary.dart';
+import '../widgets/journal/journal_entry_viewer.dart';
 
 class JournalEntryScreen extends StatefulWidget {
   final String? entryId;
@@ -1622,50 +1622,68 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
       ),
       body: Column(
         children: [
-          // Editor
+          // Editor or Viewer
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: RichTextEditor(
-                initialText: _content,
-                initialRichText: _richContent,
-                readOnly: !_isEditing,
-                controller: _editorController,
-                onChanged: (plainText, richText) {
-                  setState(() {
-                    _content = plainText;
-                    _richContent = richText;
-                  });
-                  _startAutoSaveTimer();
-                },
-                onCharacterLinked: (characterId) {
-                  setState(() {
-                    if (!_linkedCharacterIds.contains(characterId)) {
-                      _linkedCharacterIds.add(characterId);
-                    }
-                  });
-                },
-                onLocationLinked: (locationId) {
-                  setState(() {
-                    if (!_linkedLocationIds.contains(locationId)) {
-                      _linkedLocationIds.add(locationId);
-                    }
-                  });
-                },
-                onImageAdded: (imageUrl) {
-                  setState(() {
-                    if (!_embeddedImages.contains(imageUrl)) {
-                      _embeddedImages.add(imageUrl);
-                    }
-                  });
-                },
-                onMoveRequested: () {
-                  _showRollMoveDialog(context);
-                },
-                onOracleRequested: () {
-                  _showRollOracleDialog(context);
-                },
-              ),
+              child: _isEditing
+                ? RichTextEditor(
+                    initialText: _content,
+                    initialRichText: _richContent,
+                    readOnly: false,
+                    controller: _editorController,
+                    onChanged: (plainText, richText) {
+                      setState(() {
+                        _content = plainText;
+                        _richContent = richText;
+                      });
+                      _startAutoSaveTimer();
+                    },
+                    onCharacterLinked: (characterId) {
+                      setState(() {
+                        if (!_linkedCharacterIds.contains(characterId)) {
+                          _linkedCharacterIds.add(characterId);
+                        }
+                      });
+                    },
+                    onLocationLinked: (locationId) {
+                      setState(() {
+                        if (!_linkedLocationIds.contains(locationId)) {
+                          _linkedLocationIds.add(locationId);
+                        }
+                      });
+                    },
+                    onImageAdded: (imageUrl) {
+                      setState(() {
+                        if (!_embeddedImages.contains(imageUrl)) {
+                          _embeddedImages.add(imageUrl);
+                        }
+                      });
+                    },
+                    onMoveRequested: () {
+                      _showRollMoveDialog(context);
+                    },
+                    onOracleRequested: () {
+                      _showRollOracleDialog(context);
+                    },
+                  )
+                : JournalEntryViewer(
+                    content: _content,
+                    moveRolls: _moveRolls,
+                    oracleRolls: _oracleRolls,
+                    onCharacterTap: (character) {
+                      _showCharacterDetailsDialog(context, character);
+                    },
+                    onLocationTap: (location) {
+                      _showLocationDetailsDialog(context, location);
+                    },
+                    onMoveRollTap: (moveRoll) {
+                      _showMoveRollDetailsDialog(context, moveRoll);
+                    },
+                    onOracleRollTap: (oracleRoll) {
+                      _showOracleRollDetailsDialog(context, oracleRoll);
+                    },
+                  ),
             ),
           ),
           

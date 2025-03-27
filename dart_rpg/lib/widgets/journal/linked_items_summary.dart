@@ -188,7 +188,7 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                             ? '${moveRoll.modifier! > 0 ? '+' : ''}${moveRoll.modifier}' 
                             : '';
                         
-                        subtitleText = '${moveRoll.outcome.toUpperCase()}';
+                        subtitleText = moveRoll.outcome.toUpperCase();
                         
                         // Add Match indicator
                         if (moveRoll.isMatch && (moveRoll.outcome.contains('strong hit') || moveRoll.outcome.contains('miss'))) {
@@ -205,7 +205,7 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                         subtitleText += ' vs ${moveRoll.challengeDice.join(', ')}';
                       } else if (moveRoll.rollType == 'progress_roll') {
                         // Progress roll subtitle
-                        subtitleText = '${moveRoll.outcome.toUpperCase()}';
+                        subtitleText = moveRoll.outcome.toUpperCase();
                         
                         // Add Match indicator for progress rolls too
                         if (moveRoll.isMatch && (moveRoll.outcome.contains('strong hit') || moveRoll.outcome.contains('miss'))) {

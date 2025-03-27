@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../providers/game_provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../models/journal_entry.dart';
@@ -328,7 +329,14 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (moveRoll.moveDescription != null) ...[
-                  Text(moveRoll.moveDescription!),
+                  MarkdownBody(
+                    data: moveRoll.moveDescription!,
+                    styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                      p: Theme.of(context).textTheme.bodyMedium,
+                      textAlign: WrapAlignment.start,
+                    ),
+                    softLineBreak: true,
+                  ),
                   const SizedBox(height: 16),
                 ],
                 
@@ -730,7 +738,14 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (move.description != null) ...[
-                          Text(move.description!),
+                          MarkdownBody(
+                            data: move.description!,
+                            styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                              p: Theme.of(context).textTheme.bodyMedium,
+                              textAlign: WrapAlignment.start,
+                            ),
+                            softLineBreak: true,
+                          ),
                           const SizedBox(height: 16),
                         ],
                         
@@ -827,7 +842,14 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (move.description != null) ...[
-                        Text(move.description!),
+                        MarkdownBody(
+                          data: move.description!,
+                          styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                            p: Theme.of(context).textTheme.bodyMedium,
+                            textAlign: WrapAlignment.start,
+                          ),
+                          softLineBreak: true,
+                        ),
                         const SizedBox(height: 16),
                       ],
                       
@@ -1073,7 +1095,14 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (move.description != null) ...[
-                      Text(move.description!),
+                      MarkdownBody(
+                        data: move.description!,
+                        styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                          p: Theme.of(context).textTheme.bodyMedium,
+                          textAlign: WrapAlignment.start,
+                        ),
+                        softLineBreak: true,
+                      ),
                       const SizedBox(height: 16),
                     ],
                     
@@ -1167,7 +1196,14 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (move.description != null) ...[
-                    Text(move.description!),
+                    MarkdownBody(
+                      data: move.description!,
+                      styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                        p: Theme.of(context).textTheme.bodyMedium,
+                        textAlign: WrapAlignment.start,
+                      ),
+                      softLineBreak: true,
+                    ),
                     const SizedBox(height: 16),
                   ],
                   

@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../providers/game_provider.dart';
 import '../../models/character.dart';
 import '../../models/location.dart';
@@ -364,7 +365,14 @@ class JournalEntryViewer extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (moveRoll.moveDescription != null) ...[
-                  Text(moveRoll.moveDescription!),
+                  MarkdownBody(
+                    data: moveRoll.moveDescription!,
+                    styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                      p: Theme.of(context).textTheme.bodyMedium,
+                      textAlign: WrapAlignment.start,
+                    ),
+                    softLineBreak: true,
+                  ),
                   const SizedBox(height: 16),
                 ],
                 

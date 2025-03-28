@@ -5,6 +5,7 @@ import '../models/game.dart';
 import 'journal_screen.dart';
 import 'character_screen.dart';
 import 'location_screen.dart';
+import 'quests_screen.dart';
 import 'moves_screen.dart';
 import 'oracles_screen.dart';
 import 'assets_screen.dart';
@@ -105,6 +106,10 @@ class _GameScreenState extends State<GameScreen> {
                 label: 'Locations',
               ),
               BottomNavigationBarItem(
+                icon: Icon(Icons.task_alt),
+                label: 'Quests',
+              ),
+              BottomNavigationBarItem(
                 icon: Icon(Icons.sports_martial_arts),
                 label: 'Moves',
               ),
@@ -132,10 +137,12 @@ class _GameScreenState extends State<GameScreen> {
       case 2:
         return LocationScreen(gameId: game.id);
       case 3:
-        return MovesScreen();
+        return QuestsScreen(gameId: game.id);
       case 4:
-        return OraclesScreen();
+        return MovesScreen();
       case 5:
+        return OraclesScreen();
+      case 6:
         return AssetsScreen();
       default:
         return const Center(child: Text('Unknown screen'));

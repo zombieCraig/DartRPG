@@ -6,6 +6,7 @@ import 'package:dart_rpg/models/game.dart';
 import 'package:dart_rpg/models/character.dart';
 import 'package:dart_rpg/models/session.dart';
 import 'package:dart_rpg/models/journal_entry.dart';
+import 'package:dart_rpg/models/quest.dart';
 import 'package:dart_rpg/providers/game_provider.dart';
 import 'package:dart_rpg/widgets/location_graph_widget.dart';
 
@@ -105,6 +106,32 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   
   @override
   Future<void> updateLocationSegment(String locationId, LocationSegment segment) async {}
+  
+  // Quest-related methods
+  @override
+  Future<Quest> createQuest(String title, String characterId, QuestRank rank, {String notes = ''}) async {
+    throw UnimplementedError();
+  }
+  
+  @override
+  Future<void> updateQuestProgress(String questId, int progress) async {}
+  
+  @override
+  Future<void> updateQuestNotes(String questId, String notes) async {}
+  
+  @override
+  Future<void> completeQuest(String questId) async {}
+  
+  @override
+  Future<void> forsakeQuest(String questId) async {}
+  
+  @override
+  Future<void> deleteQuest(String questId) async {}
+  
+  @override
+  Future<Map<String, dynamic>> makeQuestProgressRoll(String questId) async {
+    return {'outcome': 'miss', 'challengeDice': [5, 5]};
+  }
 }
 
 void main() {

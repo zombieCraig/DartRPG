@@ -8,7 +8,9 @@ import '../models/character.dart';
 import '../models/location.dart';
 import '../models/session.dart';
 import '../models/journal_entry.dart';
+import '../models/quest.dart';
 import '../utils/logging_service.dart';
+import '../utils/dice_roller.dart';
 
 class GameProvider extends ChangeNotifier {
   
@@ -477,6 +479,184 @@ class GameProvider extends ChangeNotifier {
     
     await _saveGames();
     notifyListeners();
+  }
+  
+  // Quest-related methods
+  
+  // Create a new quest
+  Future<Quest> createQuest(
+    String title,
+    String characterId,
+    QuestRank rank, {
+    String notes = '',
+  }) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    // Verify the character exists
+    final character = _currentGame!.characters.firstWhere(
+      (c) => c.id == characterId,
+      orElse: () => throw Exception('Character not found'),
+    );
+    
+    final quest = Quest(
+      title: title,
+      characterId: characterId,
+      rank: rank,
+      notes: notes,
+    );
+    
+    _currentGame!.quests.add(quest);
+    
+    await _saveGames();
+    notifyListeners();
+    
+    return quest;
+  }
+  
+  // Update quest progress
+  Future<void> updateQuestProgress(String questId, int progress) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    final quest = _currentGame!.quests.firstWhere(
+      (q) => q.id == questId,
+      orElse: () => throw Exception('Quest not found'),
+    );
+    
+    // Ensure progress is within bounds
+    final newProgress = progress.clamp(0, 10);
+    quest.updateProgress(newProgress);
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Update quest notes
+  Future<void> updateQuestNotes(String questId, String notes) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    final quest = _currentGame!.quests.firstWhere(
+      (q) => q.id == questId,
+      orElse: () => throw Exception('Quest not found'),
+    );
+    
+    quest.notes = notes;
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Complete a quest
+  Future<void> completeQuest(String questId) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    final quest = _currentGame!.quests.firstWhere(
+      (q) => q.id == questId,
+      orElse: () => throw Exception('Quest not found'),
+    );
+    
+    quest.complete();
+    
+    // Create a journal entry for the completed quest
+    if (_currentSession != null) {
+      final character = _currentGame!.characters.firstWhere(
+        (c) => c.id == quest.characterId,
+        orElse: () => throw Exception('Character not found'),
+      );
+      
+      _currentSession!.createNewEntry(
+        'Quest "${quest.title}" completed by ${character.name}.\n'
+        'Final progress: ${quest.progress}/10\n'
+        'Notes: ${quest.notes}'
+      );
+    }
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Forsake a quest
+  Future<void> forsakeQuest(String questId) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    final quest = _currentGame!.quests.firstWhere(
+      (q) => q.id == questId,
+      orElse: () => throw Exception('Quest not found'),
+    );
+    
+    quest.forsake();
+    
+    // Create a journal entry for the forsaken quest
+    if (_currentSession != null) {
+      final character = _currentGame!.characters.firstWhere(
+        (c) => c.id == quest.characterId,
+        orElse: () => throw Exception('Character not found'),
+      );
+      
+      _currentSession!.createNewEntry(
+        'Quest "${quest.title}" forsaken by ${character.name}.\n'
+        'Final progress: ${quest.progress}/10\n'
+        'Notes: ${quest.notes}'
+      );
+    }
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Delete a quest
+  Future<void> deleteQuest(String questId) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    _currentGame!.quests.removeWhere((q) => q.id == questId);
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Make a progress roll for a quest
+  Future<Map<String, dynamic>> makeQuestProgressRoll(String questId) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    final quest = _currentGame!.quests.firstWhere(
+      (q) => q.id == questId,
+      orElse: () => throw Exception('Quest not found'),
+    );
+    
+    final result = DiceRoller.rollProgressMove(progressValue: quest.progress);
+    
+    // Create a journal entry for the roll result
+    if (_currentSession != null) {
+      final character = _currentGame!.characters.firstWhere(
+        (c) => c.id == quest.characterId,
+        orElse: () => throw Exception('Character not found'),
+      );
+      
+      _currentSession!.createNewEntry(
+        'Progress roll for quest "${quest.title}" by ${character.name}.\n'
+        'Progress: ${quest.progress}/10\n'
+        'Challenge Dice: ${result['challengeDice'][0]}, ${result['challengeDice'][1]}\n'
+        'Outcome: ${result['outcome']}'
+      );
+    }
+    
+    await _saveGames();
+    notifyListeners();
+    
+    return result;
   }
 
   // Export game to JSON file

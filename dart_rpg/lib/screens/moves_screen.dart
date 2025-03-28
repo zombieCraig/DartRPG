@@ -347,8 +347,8 @@ class _MovesScreenState extends State<MovesScreen> {
     
     // Get all available options (stats and condition meters)
     final availableOptions = move.getAvailableOptions();
-    Map<String, dynamic>? _selectedOptionData;
-    String? _selectedOptionKey;
+    Map<String, dynamic>? selectedOptionData;
+    String? selectedOptionKey;
     
     // If this move uses a special method (highest or lowest), determine which option to use
     if (move.hasSpecialMethod()) {
@@ -437,11 +437,11 @@ class _MovesScreenState extends State<MovesScreen> {
             
             return ChoiceChip(
               label: Text('$name ($value)'),
-              selected: _selectedOptionKey == optionKey || _selectedStat == name,
+              selected: selectedOptionKey == optionKey || _selectedStat == name,
               onSelected: (selected) {
                 setState(() {
-                  _selectedOptionKey = selected ? optionKey : null;
-                  _selectedOptionData = selected ? option : null;
+                  selectedOptionKey = selected ? optionKey : null;
+                  selectedOptionData = selected ? option : null;
                   _selectedStat = selected ? name : null;
                 });
               },
@@ -471,8 +471,8 @@ class _MovesScreenState extends State<MovesScreen> {
               icon: const Icon(Icons.sports_martial_arts),
               label: const Text('Roll Dice'),
               onPressed: () {
-                if (_selectedOptionData != null) {
-                  _rollActionMoveWithOption(context, move, _selectedOptionData!);
+                if (selectedOptionData != null) {
+                  _rollActionMoveWithOption(context, move, selectedOptionData!);
                 } else if (_selectedStat != null) {
                   _rollActionMove(context, move);
                 }

@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import 'character.dart';
 import 'location.dart';
 import 'session.dart';
+import 'quest.dart';
 
 class Game {
   final String id;
@@ -12,6 +13,7 @@ class Game {
   List<Character> characters;
   List<Location> locations;
   List<Session> sessions;
+  List<Quest> quests;
   Character? mainCharacter;
   String? dataswornSource;
   Location? rigLocation;
@@ -24,6 +26,7 @@ class Game {
     List<Character>? characters,
     List<Location>? locations,
     List<Session>? sessions,
+    List<Quest>? quests,
     this.mainCharacter,
     this.dataswornSource,
     this.rigLocation,
@@ -32,7 +35,8 @@ class Game {
         lastPlayedAt = lastPlayedAt ?? DateTime.now(),
         characters = characters ?? [],
         locations = locations ?? [],
-        sessions = sessions ?? [] {
+        sessions = sessions ?? [],
+        quests = quests ?? [] {
     // Create "Your Rig" location if it doesn't exist and no locations are provided
     if (locations == null || locations.isEmpty) {
       createRigLocation();
@@ -61,6 +65,7 @@ class Game {
       'mainCharacterId': mainCharacter?.id,
       'dataswornSource': dataswornSource,
       'rigLocationId': rigLocation?.id,
+      'quests': quests.map((q) => q.toJson()).toList(),
     };
   }
 
@@ -106,6 +111,9 @@ class Game {
       sessions: (json['sessions'] as List)
           .map((s) => Session.fromJson(s))
           .toList(),
+      quests: (json['quests'] as List?)
+          ?.map((q) => Quest.fromJson(q))
+          .toList() ?? [],
       mainCharacter: mainChar,
       dataswornSource: json['dataswornSource'],
       rigLocation: rigLoc,
@@ -206,6 +214,23 @@ class Game {
 
   void addSession(Session session) {
     sessions.add(session);
+  }
+  
+  // Quest-related methods
+  
+  // Add a quest
+  void addQuest(Quest quest) {
+    quests.add(quest);
+  }
+  
+  // Get quests for a specific character
+  List<Quest> getQuestsForCharacter(String characterId) {
+    return quests.where((quest) => quest.characterId == characterId).toList();
+  }
+  
+  // Get all characters with stats (non-NPCs)
+  List<Character> getCharactersWithStats() {
+    return characters.where((character) => character.stats.isNotEmpty).toList();
   }
 
   Session createNewSession(String title) {

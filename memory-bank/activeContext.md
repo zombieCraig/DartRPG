@@ -2,17 +2,33 @@
 
 ## Current Work Focus
 
-The current development focus is on improving the journal entry screen and character handling in the Fe-Runners game. This includes:
+The current development focus is on enhancing the game management features with quest tracking capabilities and continuing to improve the journal entry system. This includes:
 
-1. Enhancing the journal entry screen with rich text editing capabilities
-2. Adding character handle/short name support for easier referencing
-3. Implementing autocompletion for character and location references
-4. Creating a linked items summary for journal entries
-5. Improving navigation flow based on character creation status
+1. Implementing a Quest viewer with tabs for Ongoing, Completed, and Forsaken quests
+2. Adding quest creation and management functionality
+3. Integrating quest progress tracking with a 10-segment progress bar
+4. Implementing quest status changes (complete, forsake)
+5. Adding keyboard shortcuts for quick navigation (CTRL+Q for Quests)
+6. Enhancing the journal entry screen with rich text editing capabilities
+7. Adding character handle/short name support for easier referencing
+8. Implementing autocompletion for character and location references
+9. Creating a linked items summary for journal entries
+10. Improving navigation flow based on character creation status
 
-This work enhances the journaling system to provide a more intuitive and feature-rich experience for players, making it easier to document their game progress and reference characters and locations.
+This work enhances both the quest management system and the journaling system to provide a more intuitive and feature-rich experience for players, making it easier to track progress and document their game journey.
 
 ## Recent Changes
+
+### Quest System Implementation (March 2025)
+- Added Quest model with properties for title, rank, progress, status, and notes
+- Implemented QuestsScreen with three tabs (Ongoing, Completed, Forsaken)
+- Created quest management methods in GameProvider
+- Added progress tracking with a 10-segment progress bar
+- Implemented quest status changes (complete, forsake)
+- Added CTRL+Q keyboard shortcut for quick navigation to Quests screen
+- Integrated quest system with the journal entry system for recording quest events
+- Added quest creation dialog with character association
+- Implemented quest progress rolls similar to other game mechanics
 
 ### Bug Fixes and UI Improvements (March 2025)
 - Fixed duplicate journal entry bug when closing the editor
@@ -40,7 +56,7 @@ This work enhances the journaling system to provide a more intuitive and feature
 - Created character and location reference system with @ and # syntax
 - Implemented autocompletion for character and location references
 - Added image embedding support
-- Implemented keyboard shortcuts for common actions (Ctrl+M for Move, Ctrl+O for Oracle)
+- Implemented keyboard shortcuts for common actions (Ctrl+M for Move, Ctrl+O for Oracle, Ctrl+Q for Quests)
 
 ### Character Model Improvements
 - Added handle/short name property to Character model
@@ -71,25 +87,23 @@ This work enhances the journaling system to provide a more intuitive and feature
 ## Next Steps
 
 ### Short-term Tasks
-1. **Testing Journal Entry Features**
-   - ✅ Added unit tests for OracleRoll.getFormattedText()
-   - ✅ Added unit tests for Character.getHandle() and setHandle()
-   - ✅ Added unit tests for MoveRoll.getFormattedText()
-   - ✅ Added unit tests for RichTextEditor.insertTextAtCursor()
-   - ✅ Added widget tests for LinkedItemsSummary
-   - Continue expanding test coverage for other components
+1. **Testing Quest System Features**
+   - Add unit tests for Quest model methods
+   - Add widget tests for QuestsScreen and components
+   - Test quest progress rolls and status changes
+   - Verify integration with journal entry system
 
 2. **UI Refinements**
-   - Improve the visual design of the rich text editor
-   - Enhance the linked items summary with better organization
-   - Add animations for smoother transitions
-   - Optimize mobile experience for the journal entry screen
+   - Improve the visual design of the quest cards
+   - Enhance the progress bar visualization
+   - Add animations for status changes
+   - Optimize mobile experience for the quest screen
 
 3. **Performance Optimization**
-   - Optimize autocompletion for large character/location lists
-   - Improve rendering of complex journal entries
-   - Enhance image handling and caching
-   - Optimize saving and loading of rich text content
+   - Optimize quest list rendering for large numbers of quests
+   - Improve progress tracking and roll calculations
+   - Enhance quest filtering and sorting
+   - Optimize saving and loading of quest data
 
 4. **Testing Infrastructure**
    - Expand test coverage to other critical components
@@ -98,25 +112,52 @@ This work enhances the journaling system to provide a more intuitive and feature
    - Implement integration tests for key user flows
 
 ### Medium-term Goals
-1. **Enhanced Journal Features**
-   - Add support for more advanced formatting options
-   - Implement full-text search across journal entries
-   - Add tagging system for better organization
-   - Support for templates and presets for common entry types
+1. **Enhanced Quest Features**
+   - Add support for quest dependencies and prerequisites
+   - Implement quest categories and tags
+   - Add milestone tracking within quests
+   - Support for recurring or repeatable quests
 
 2. **Gameplay Integration**
-   - Link journal entries to game mechanics and progress
-   - Add automatic journaling for key game events
-   - Implement timeline view for chronological entry browsing
-   - Create relationship mapping between characters and locations
+   - Link quests to game mechanics and character progression
+   - Add automatic quest updates based on game events
+   - Implement quest suggestions based on character actions
+   - Create relationship mapping between quests, characters, and locations
 
 3. **Export/Import Functionality**
-   - Add ability to export journal entries as markdown or PDF
-   - Support for sharing journal content between players
+   - Add ability to export quest logs as markdown or PDF
+   - Support for sharing quest content between players
    - Implement backup and restore functionality
    - Add printing support for physical copies
 
 ## Active Decisions and Considerations
+
+### Quest System Design
+- **Current Approach**: Tab-based organization with status filtering
+- **Considerations**:
+  - Tab-based UI provides clear separation between quest statuses
+  - Character-based filtering allows focusing on specific character quests
+  - Progress bar visualization provides clear progress tracking
+  - Status changes (complete, forsake) move quests between tabs
+- **Decision**: Implement a tab-based UI with character filtering and progress tracking
+
+### Quest Progress Tracking
+- **Current Approach**: 10-segment progress bar with manual adjustment and progress rolls
+- **Considerations**:
+  - 10-segment progress aligns with game mechanics
+  - Manual adjustment allows flexibility
+  - Progress rolls integrate with game mechanics
+  - Visual feedback on progress is important for user engagement
+- **Decision**: Use a 10-segment progress bar with both manual adjustment and progress rolls
+
+### Quest-Journal Integration
+- **Current Approach**: Automatic journal entries for quest status changes
+- **Considerations**:
+  - Automatic entries provide a record of quest progress
+  - Manual entries allow for more detailed storytelling
+  - Integration enhances the narrative experience
+  - Balance between automation and manual control
+- **Decision**: Create automatic journal entries for significant quest events while allowing manual entries
 
 ### Rich Text Editor Approach
 - **Current Approach**: Custom implementation with markdown-style formatting
@@ -152,16 +193,23 @@ This work enhances the journaling system to provide a more intuitive and feature
 
 ## Open Questions
 
-1. **Rich Text Persistence**: What's the most efficient way to store and retrieve rich text content?
-2. **Autocompletion UX**: How can we make the autocompletion experience more intuitive without being intrusive?
-3. **Image Handling**: What's the best approach for handling and storing embedded images?
-4. **Performance Limits**: How can we ensure good performance with large journal entries and many references?
-5. **Mobile Experience**: How can we optimize the rich text editor for smaller touch screens?
+1. **Quest Complexity**: How can we balance quest complexity with usability?
+2. **Progress Visualization**: What's the most intuitive way to visualize quest progress?
+3. **Quest Dependencies**: Should we implement quest dependencies and prerequisites?
+4. **Quest Rewards**: How should quest completion rewards be handled?
+5. **Rich Text Persistence**: What's the most efficient way to store and retrieve rich text content?
+6. **Autocompletion UX**: How can we make the autocompletion experience more intuitive without being intrusive?
+7. **Image Handling**: What's the best approach for handling and storing embedded images?
+8. **Performance Limits**: How can we ensure good performance with large journal entries and many references?
+9. **Mobile Experience**: How can we optimize the rich text editor for smaller touch screens?
 
 ## Current Challenges
 
-1. **Text Editor Complexity**: Balancing feature richness with simplicity and usability
-2. **Reference Management**: Ensuring references remain valid even when characters or locations are renamed
-3. **Performance**: Maintaining smooth performance with complex journal entries and many references
-4. **Intuitive Interaction**: Making the editor interaction intuitive for users of all experience levels
-5. **Cross-platform Consistency**: Ensuring consistent behavior across different platforms and screen sizes
+1. **Quest Management Complexity**: Balancing feature richness with simplicity and usability
+2. **Progress Tracking**: Ensuring progress tracking is intuitive and aligns with game mechanics
+3. **Status Transitions**: Making quest status changes clear and intuitive
+4. **Text Editor Complexity**: Balancing feature richness with simplicity and usability
+5. **Reference Management**: Ensuring references remain valid even when characters or locations are renamed
+6. **Performance**: Maintaining smooth performance with complex journal entries and many references
+7. **Intuitive Interaction**: Making the editor interaction intuitive for users of all experience levels
+8. **Cross-platform Consistency**: Ensuring consistent behavior across different platforms and screen sizes

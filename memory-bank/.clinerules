@@ -21,6 +21,7 @@
 - **Singleton Pattern**: Used for services like `LoggingService`
 - **Factory Pattern**: Used in model classes for JSON serialization/deserialization
 - **Observer Pattern**: Implemented via `ChangeNotifier` and `Consumer` widgets
+- **State Pattern**: Used in the Quest model to manage different quest states
 
 ### Error Handling
 - Use try-catch blocks for operations that might fail
@@ -79,7 +80,7 @@
 - Toolbar with formatting options (bold, italic, headings, lists)
 - Support for character and location references using @ and # syntax
 - Image embedding support
-- Keyboard shortcuts for common actions (Ctrl+M for Move, Ctrl+O for Oracle)
+- Keyboard shortcuts for common actions (Ctrl+M for Move, Ctrl+O for Oracle, Ctrl+Q for Quests)
 
 ### Autocompletion
 - Show suggestions after typing @ or # plus one character
@@ -99,6 +100,37 @@
 - Interactive elements to view details of linked items
 - Visual presentation with color coding for move outcomes
 
+## Quest System
+
+### Quest Model
+- Implemented in `lib/models/quest.dart`
+- Properties include title, rank, progress, status, and notes
+- Associated with specific characters
+- Status can be Ongoing, Completed, or Forsaken
+- Progress tracked on a 10-segment scale
+
+### Quest Screen Organization
+- Tab-based UI with three tabs: Ongoing, Completed, Forsaken
+- Quests automatically move between tabs based on status changes
+- FloatingActionButton for creating new quests
+- Card-based UI for displaying quest details
+
+### Quest Progress Tracking
+- 10-segment progress bar using ProgressTrackWidget
+- Manual adjustment with buttons to increase/decrease progress
+- Progress rolls similar to other game mechanics
+- Visual feedback on progress changes
+
+### Quest-Journal Integration
+- Automatic journal entries for quest status changes
+- Quest events recorded in the journal for narrative continuity
+- Character association for quest ownership
+
+### Quest Navigation
+- Available from bottom navigation bar between Locations and Moves
+- Keyboard shortcut (Ctrl+Q) from Journal Entry screen
+- Character filtering for focusing on specific character quests
+
 ## Known Challenges
 
 ### Technical Challenges
@@ -108,6 +140,7 @@
 - **Error Handling**: Balancing comprehensive logging with performance
 - **Rich Text Persistence**: Storing and retrieving complex formatted text efficiently
 - **Image Handling**: Managing embedded images effectively
+- **Quest Filtering**: Performance may degrade with large numbers of quests
 
 ### UX Challenges
 - **Navigation Complexity**: Many screens and features to navigate
@@ -116,10 +149,12 @@
 - **Error Messaging**: Providing helpful error messages without technical jargon
 - **Autocompletion UX**: Making suggestions helpful without being intrusive
 - **Mobile Text Editing**: Optimizing the rich text editor for touch screens
+- **Quest Management**: Balancing quest complexity with usability
 
 ## Project Evolution
 
 ### Recent Focus
+- Implementing the Quest system with tabs for different quest statuses
 - Enhancing the journal entry system with rich text editing
 - Implementing character handle/short name support
 - Adding autocompletion for character and location references
@@ -127,14 +162,18 @@
 - Improving search functionality in Moves and Oracles screens
 
 ### Current Direction
+- Testing and refining the Quest system features
+- Optimizing performance for large numbers of quests
+- Improving the quest card visualization
 - Testing and refining the journal entry features
 - Optimizing performance for complex journal entries
 - Improving the mobile experience for text editing
-- Enhancing the visual design of the rich text editor
 
 ### Future Considerations
 - Moving to a database solution for larger datasets
 - Implementing more robust error handling
+- Adding quest dependencies and prerequisites
+- Implementing quest categories and tags
 - Adding more advanced features (multimedia, cloud sync)
 - Enhancing the user experience with UI refinements
 

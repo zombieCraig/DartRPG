@@ -2,9 +2,9 @@
 
 ## Current Status
 
-The DartRPG application is in active development with core functionality implemented and working. The application provides a digital companion for Ironsworn-based RPG systems, with a focus on the Fe-Runners hacking-themed game. Recent work has focused on enhancing the journal entry system with rich text editing capabilities and improving character referencing with the addition of character handles.
+The DartRPG application is in active development with core functionality implemented and working. The application provides a digital companion for Ironsworn-based RPG systems, with a focus on the Fe-Runners hacking-themed game. Recent work has focused on implementing a Quest viewer system and enhancing the journal entry system with rich text editing capabilities.
 
-**Overall Progress**: ~85% complete towards initial release
+**Overall Progress**: ~90% complete towards initial release
 
 ## What Works
 
@@ -15,6 +15,7 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Session management and journal entries
 - ✅ Move and oracle consultation
 - ✅ Dice rolling mechanics
+- ✅ Quest tracking and management
 - ✅ Basic navigation and UI flow
 
 ### Data Management
@@ -23,6 +24,7 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Import/export functionality for game data
 - ✅ Settings persistence
 - ✅ Location connection management and persistence
+- ✅ Quest data persistence and status tracking
 
 ### User Interface
 - ✅ Game selection screen
@@ -31,26 +33,30 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Character screen
 - ✅ Location screen with graph and list views
 - ✅ Moves and oracles screens
+- ✅ Quests screen with tabs for different quest statuses
 - ✅ Settings screen with customization options
 - ✅ Dark mode support
 - ✅ Font size and family customization
 - ✅ Comprehensive logging system and log viewer
 
 ### Recently Completed
+- ✅ Quest viewer with tabs for Ongoing, Completed, and Forsaken quests
+- ✅ Quest creation and management functionality
+- ✅ Quest progress tracking with 10-segment progress bar
+- ✅ Quest status changes (complete, forsake)
+- ✅ Keyboard shortcuts for quick navigation (CTRL+Q for Quests)
 - ✅ Enhanced journal entry screen with rich text editing
 - ✅ Character handle/short name support for easier referencing
 - ✅ Autocompletion for character and location references
 - ✅ Linked items summary for journal entries
 - ✅ Improved navigation flow based on character creation status
-- ✅ Keyboard shortcuts for common actions
-- ✅ Image embedding support in journal entries
-- ✅ Comprehensive unit tests for journal entry features
 
 ## What's Left to Build
 
 ### High Priority
+- ⬜ Testing for Quest system features
 - ⬜ Performance optimization for complex journal entries
-- ⬜ UI refinements for the rich text editor
+- ⬜ UI refinements for the rich text editor and quest cards
 - ⬜ Mobile-friendly interaction improvements for text editing
 
 ### Medium Priority
@@ -59,6 +65,7 @@ The DartRPG application is in active development with core functionality impleme
 - ⬜ Full-text search across journal entries
 - ⬜ Better linking between journal entries and game elements
 - ⬜ Relationship mapping between characters and locations
+- ⬜ Quest dependencies and prerequisites
 
 ### Low Priority
 - ⬜ In-app help and tutorials
@@ -66,6 +73,7 @@ The DartRPG application is in active development with core functionality impleme
 - ⬜ Data backup and cloud sync options
 - ⬜ Advanced multimedia support in journal entries (audio, video)
 - ⬜ Journal entry templates and presets
+- ⬜ Quest categories and tags
 
 ## Known Issues
 
@@ -82,6 +90,7 @@ The DartRPG application is in active development with core functionality impleme
 - **UI Responsiveness**: Some screens may become sluggish with large amounts of data
 - **Graph Layout**: Auto-layout algorithm may not produce optimal results in all cases
 - **Image Handling**: Embedded images may have display issues on some devices
+- **Quest Filtering**: Performance may degrade with large numbers of quests
 
 ### Low Priority
 - **Visual Polish**: Some UI elements could use refinement
@@ -91,7 +100,7 @@ The DartRPG application is in active development with core functionality impleme
 ### Recently Fixed Issues
 - ✅ **Navigation Flow**: Improved navigation patterns, especially for game screen with main character
 - ✅ **Autocompletion Accuracy**: Enhanced character/location matching with inline suggestions
-- ✅ **Keyboard Shortcuts**: Added support for tab completion and move/oracle shortcuts
+- ✅ **Keyboard Shortcuts**: Added support for tab completion and move/oracle/quest shortcuts
 - ✅ **Journal Entry Bugs**: Fixed duplicate entry creation and entry opening issues
 - ✅ **Journal Content Loading**: Fixed bug where journal entry content wasn't loading in the editor
 - ✅ **Dark Mode Readability**: Improved text contrast in dark mode for Asset Cards
@@ -103,6 +112,15 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Journal Navigation**: Added "Jump to last entry" button on journal screen when entries are scrollable
 
 ## Recent Milestones
+
+### Milestone: Quest System Implementation (March 2025)
+- ✅ Created Quest model with title, rank, progress, status, and notes
+- ✅ Implemented QuestsScreen with tabs for Ongoing, Completed, and Forsaken quests
+- ✅ Added quest management methods to GameProvider
+- ✅ Implemented progress tracking with 10-segment progress bar
+- ✅ Added quest status changes (complete, forsake)
+- ✅ Integrated with keyboard shortcuts (CTRL+Q)
+- ✅ Connected quest system with journal entries
 
 ### Milestone: Journal Entry Improvements (March 2025)
 - ✅ Implemented rich text editor with formatting toolbar
@@ -133,6 +151,13 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Integrated moves and oracles
 
 ## Upcoming Milestones
+
+### Milestone: Quest System Enhancements (April 2025)
+- ⬜ Add unit tests for Quest model methods
+- ⬜ Implement widget tests for QuestsScreen
+- ⬜ Enhance quest filtering and sorting
+- ⬜ Improve quest card visualization
+- ⬜ Optimize quest data persistence
 
 ### Milestone: Journal System Enhancements (April 2025)
 - ⬜ Rich text editor improvements and bug fixes
@@ -175,8 +200,8 @@ The DartRPG application is in active development with core functionality impleme
 ## Testing Status
 
 ### Automated Testing
-- **Unit Tests**: Limited coverage, primarily for utility functions
-- **Widget Tests**: Not yet implemented
+- **Unit Tests**: Moderate coverage, primarily for utility functions and model classes
+- **Widget Tests**: Limited coverage, focused on critical UI components
 - **Integration Tests**: Not yet implemented
 
 ### Manual Testing
@@ -189,9 +214,9 @@ The DartRPG application is in active development with core functionality impleme
 
 The immediate focus will be on:
 
-1. **Testing Journal Entry Features**: Ensuring autocompletion, tab-completion, and image embedding work correctly
-2. **Rich Text Editor Refinements**: Improving the visual design and interaction of the editor
-3. **Performance Optimization**: Addressing potential performance issues with complex journal entries
+1. **Testing Quest System Features**: Ensuring quest creation, progress tracking, and status changes work correctly
+2. **Quest UI Refinements**: Improving the visual design and interaction of quest cards
+3. **Performance Optimization**: Addressing potential performance issues with large numbers of quests
 4. **Mobile Experience**: Enhancing the touch interaction for mobile devices
 
-Following this, the focus will shift to enhancing the user experience and adding more advanced features such as full-text search across journal entries and relationship mapping between characters and locations.
+Following this, the focus will shift to enhancing the user experience and adding more advanced features such as quest dependencies, full-text search across journal entries, and relationship mapping between characters, locations, and quests.

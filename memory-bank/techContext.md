@@ -18,6 +18,8 @@
 ### UI Components
 - **Material Design**: UI design language and component library
 - **Custom Widgets**: Specialized widgets for game-specific functionality
+- **TabBar/TabBarView**: Used for organizing content into tabs (e.g., quest statuses)
+- **ProgressTrackWidget**: Custom widget for displaying progress bars with segments
 
 ### Utilities
 - **Logging Service**: Custom logging implementation for debugging and error tracking
@@ -55,6 +57,7 @@
 - **Memory Usage**: Large game datasets may impact memory usage
 - **Serialization Overhead**: JSON serialization/deserialization can be CPU-intensive
 - **UI Responsiveness**: Complex UI updates may affect frame rate
+- **Quest Filtering**: Performance may degrade with large numbers of quests
 
 ### Security Considerations
 - **Local Storage Security**: Data stored locally is not encrypted
@@ -99,6 +102,7 @@ dart_rpg/
 │   │   ├── location.dart
 │   │   ├── move.dart
 │   │   ├── oracle.dart
+│   │   ├── quest.dart        # Quest model
 │   │   └── session.dart
 │   ├── providers/            # State management
 │   │   ├── datasworn_provider.dart
@@ -117,17 +121,136 @@ dart_rpg/
 │   │   ├── moves_screen.dart
 │   │   ├── new_game_screen.dart
 │   │   ├── oracles_screen.dart
+│   │   ├── quests_screen.dart # Quest management screen
 │   │   └── settings_screen.dart
 │   ├── utils/                # Utility functions
 │   │   ├── datasworn_parser.dart
 │   │   ├── dice_roller.dart
 │   │   └── logging_service.dart
 │   └── widgets/              # Reusable UI components
+│       ├── asset_card_widget.dart
+│       ├── character_stats_card.dart
+│       ├── gradient_edge_painter.dart
+│       ├── hacker_grid_painter.dart
+│       ├── impact_toggle_widget.dart
+│       ├── location_edge_painter.dart
+│       ├── location_graph_widget.dart
+│       ├── progress_track_widget.dart # Used for quest progress
+│       ├── stat_adjuster_widget.dart
+│       └── journal/
 ├── assets/                   # Static assets
 │   ├── data/                 # Game data files
 │   └── images/               # Image assets
 ├── test/                     # Test files
 └── pubspec.yaml              # Project configuration
+```
+
+## Quest System Implementation
+
+### Quest Model
+The `Quest` model is implemented in `lib/models/quest.dart` and includes:
+
+```dart
+class Quest {
+  final String id;
+  final String characterId;
+  String title;
+  QuestRank rank;
+  int progress;
+  QuestStatus status;
+  String notes;
+  DateTime createdAt;
+  DateTime updatedAt;
+  
+  // Constructor, factory methods, and serialization methods
+  // Methods for quest status management and progress tracking
+}
+
+enum QuestRank {
+  troublesome,
+  dangerous,
+  formidable,
+  extreme,
+  epic
+}
+
+enum QuestStatus {
+  ongoing,
+  completed,
+  forsaken
+}
+```
+
+### Quest Screen
+The `QuestsScreen` is implemented in `lib/screens/quests_screen.dart` and includes:
+
+- TabBar with three tabs: Ongoing, Completed, and Forsaken
+- TabBarView with filtered lists of quests based on status
+- FloatingActionButton for creating new quests
+- Quest cards with title, rank, progress bar, and action buttons
+
+### GameProvider Extensions
+The `GameProvider` class has been extended with methods for quest management:
+
+```dart
+// In game_provider.dart
+class GameProvider extends ChangeNotifier {
+  // Existing methods...
+  
+  // Quest management methods
+  Quest createQuest(String characterId, String title, QuestRank rank, {String notes = ''});
+  void updateQuest(Quest quest);
+  void deleteQuest(String questId);
+  void completeQuest(String questId);
+  void forsakeQuest(String questId);
+  void increaseQuestProgress(String questId, [int amount = 1]);
+  void decreaseQuestProgress(String questId, [int amount = 1]);
+  MoveRoll makeQuestProgressRoll(String questId);
+  
+  // Quest retrieval methods
+  List<Quest> getQuestsForCharacter(String characterId, {QuestStatus? status});
+  Quest? getQuestById(String questId);
+}
+```
+
+### Progress Tracking Widget
+The `ProgressTrackWidget` is used for displaying and interacting with quest progress:
+
+```dart
+// In progress_track_widget.dart
+class ProgressTrackWidget extends StatelessWidget {
+  final String label;
+  final int value;
+  final int maxValue;
+  final Function(int)? onChanged;
+  final bool isEditable;
+  
+  // Constructor and build method
+}
+```
+
+### Keyboard Shortcuts
+Keyboard shortcuts are implemented in the `JournalEntryScreen` for quick navigation:
+
+```dart
+// In journal_entry_screen.dart
+// Inside build method
+Shortcuts(
+  shortcuts: {
+    LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyQ): 
+        const OpenQuestsIntent(),
+    // Other shortcuts...
+  },
+  child: Actions(
+    actions: {
+      OpenQuestsIntent: CallbackAction<OpenQuestsIntent>(
+        onInvoke: (intent) => _navigateToQuests(context),
+      ),
+      // Other actions...
+    },
+    child: // Rest of the UI
+  ),
+)
 ```
 
 ## API Integrations
@@ -143,11 +266,13 @@ The application is primarily offline and does not integrate with external APIs. 
 - **Data Size**: SharedPreferences has limitations for storing large amounts of data
 - **Error Handling**: Some areas have basic error handling that could be improved
 - **Test Coverage**: Limited automated tests
+- **Quest Filtering**: Performance may degrade with large numbers of quests
 
 ### Known Technical Debt
 - **Model Serialization**: Manual JSON serialization could be replaced with code generation
 - **Provider Usage**: Some providers have multiple responsibilities that could be separated
 - **UI Responsiveness**: Some screens may need optimization for better performance
+- **Quest Dependencies**: No support for quest dependencies or prerequisites
 
 ### Improvement Opportunities
 - **Database Integration**: Replace SharedPreferences with SQLite for better data handling
@@ -155,6 +280,7 @@ The application is primarily offline and does not integrate with external APIs. 
 - **State Management**: Refine provider implementation or consider alternatives like Bloc
 - **Testing**: Increase unit and widget test coverage
 - **Error Handling**: Implement more robust error handling and recovery mechanisms
+- **Quest System Enhancements**: Add support for quest categories, tags, and dependencies
 
 ## Development Workflow
 

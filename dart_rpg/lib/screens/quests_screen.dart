@@ -332,7 +332,7 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
   }
 }
 
-class QuestCardWidget extends StatelessWidget {
+class QuestCardWidget extends StatefulWidget {
   final Quest quest;
   final Character character;
   final Function(int) onProgressChanged;
@@ -355,6 +355,36 @@ class QuestCardWidget extends StatelessWidget {
   }) : super(key: key);
   
   @override
+  _QuestCardWidgetState createState() => _QuestCardWidgetState();
+}
+
+class _QuestCardWidgetState extends State<QuestCardWidget> {
+  late TextEditingController _notesController;
+  
+  @override
+  void initState() {
+    super.initState();
+    _notesController = TextEditingController(text: widget.quest.notes);
+  }
+  
+  @override
+  void didUpdateWidget(QuestCardWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Only update the controller text if the quest notes have changed
+    // and the controller text is different (to avoid cursor jumping)
+    if (widget.quest.notes != oldWidget.quest.notes && 
+        widget.quest.notes != _notesController.text) {
+      _notesController.text = widget.quest.notes;
+    }
+  }
+  
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
+  
+  @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 2,
@@ -362,7 +392,7 @@ class QuestCardWidget extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: quest.rank.color.withOpacity(0.5),
+          color: widget.quest.rank.color.withOpacity(0.5),
           width: 2,
         ),
       ),
@@ -374,11 +404,11 @@ class QuestCardWidget extends StatelessWidget {
             // Header with title and rank
             Row(
               children: [
-                Icon(quest.rank.icon, color: quest.rank.color),
+                Icon(widget.quest.rank.icon, color: widget.quest.rank.color),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    quest.title,
+                    widget.quest.title,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
@@ -396,7 +426,7 @@ class QuestCardWidget extends StatelessWidget {
                   const Icon(Icons.person, size: 16),
                   const SizedBox(width: 4),
                   Text(
-                    'Character: ${character.name}',
+                    'Character: ${widget.character.name}',
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 14,
@@ -414,9 +444,9 @@ class QuestCardWidget extends StatelessWidget {
                   const Icon(Icons.star, size: 16),
                   const SizedBox(width: 4),
                   Text(
-                    'Rank: ${quest.rank.displayName}',
+                    'Rank: ${widget.quest.rank.displayName}',
                     style: TextStyle(
-                      color: quest.rank.color,
+                      color: widget.quest.rank.color,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -429,22 +459,22 @@ class QuestCardWidget extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: ProgressTrackWidget(
                 label: 'Progress',
-                value: quest.progress,
-                ticks: quest.progressTicks,
+                value: widget.quest.progress,
+                ticks: widget.quest.progressTicks,
                 maxValue: 10,
-                onBoxChanged: quest.status == QuestStatus.ongoing 
-                    ? onProgressChanged 
+                onBoxChanged: widget.quest.status == QuestStatus.ongoing 
+                    ? widget.onProgressChanged 
                     : null,
-                onTickChanged: quest.status == QuestStatus.ongoing
-                    ? (ticks) => onProgressChanged(ticks ~/ 4)
+                onTickChanged: widget.quest.status == QuestStatus.ongoing
+                    ? (ticks) => widget.onProgressChanged(ticks ~/ 4)
                     : null,
-                isEditable: quest.status == QuestStatus.ongoing,
+                isEditable: widget.quest.status == QuestStatus.ongoing,
                 showTicks: true,
               ),
             ),
             
             // Progress buttons (only for ongoing quests)
-            if (quest.status == QuestStatus.ongoing)
+            if (widget.quest.status == QuestStatus.ongoing)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -454,7 +484,7 @@ class QuestCardWidget extends StatelessWidget {
                     onPressed: () {
                       // Use the GameProvider method to remove ticks based on quest rank
                       Provider.of<GameProvider>(context, listen: false)
-                          .removeQuestTicksForRank(quest.id);
+                          .removeQuestTicksForRank(widget.quest.id);
                     },
                   ),
                   ElevatedButton.icon(
@@ -463,13 +493,13 @@ class QuestCardWidget extends StatelessWidget {
                     onPressed: () {
                       // Use the GameProvider method to add ticks based on quest rank
                       Provider.of<GameProvider>(context, listen: false)
-                          .addQuestTicksForRank(quest.id);
+                          .addQuestTicksForRank(widget.quest.id);
                     },
                   ),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.casino),
                     label: const Text('Progress Roll'),
-                    onPressed: onProgressRoll,
+                    onPressed: widget.onProgressRoll,
                   ),
                 ],
               ),
@@ -483,21 +513,22 @@ class QuestCardWidget extends StatelessWidget {
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 3,
-                controller: TextEditingController(text: quest.notes),
-                onChanged: onNotesChanged,
-                enabled: quest.status == QuestStatus.ongoing,
+                controller: _notesController,
+                onChanged: widget.onNotesChanged,
+                enabled: widget.quest.status == QuestStatus.ongoing,
+                textDirection: TextDirection.ltr, // Ensure left-to-right text direction
               ),
             ),
             
             // Status buttons (only for ongoing quests)
-            if (quest.status == QuestStatus.ongoing)
+            if (widget.quest.status == QuestStatus.ongoing)
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton.icon(
                     icon: const Icon(Icons.cancel),
                     label: const Text('Forsake'),
-                    onPressed: onForsake,
+                    onPressed: widget.onForsake,
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.orange,
                     ),
@@ -506,7 +537,7 @@ class QuestCardWidget extends StatelessWidget {
                   TextButton.icon(
                     icon: const Icon(Icons.check_circle),
                     label: const Text('Complete'),
-                    onPressed: onComplete,
+                    onPressed: widget.onComplete,
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.green,
                     ),
@@ -520,7 +551,7 @@ class QuestCardWidget extends StatelessWidget {
               child: TextButton.icon(
                 icon: const Icon(Icons.delete),
                 label: const Text('Delete'),
-                onPressed: onDelete,
+                onPressed: widget.onDelete,
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.red,
                 ),
@@ -655,6 +686,7 @@ class _CreateQuestDialogState extends State<CreateQuestDialog> {
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 3,
+                textDirection: TextDirection.ltr, // Ensure left-to-right text direction
               ),
             ],
           ),

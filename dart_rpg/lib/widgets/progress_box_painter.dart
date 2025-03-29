@@ -59,6 +59,10 @@ class ProgressBoxPainter extends CustomPainter {
       canvas.drawRect(rect, paint);
     }
 
+    // Apply clipping to ensure ticks stay within the box
+    canvas.save();
+    canvas.clipRect(rect);
+    
     // Draw the ticks based on count
     if (ticks > 0) {
       paint
@@ -66,9 +70,9 @@ class ProgressBoxPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3.0; // Thicker lines for better visibility
 
-    final center = Offset(size.width / 2, size.height / 2);
-    // Use an even smaller radius to ensure lines stay within the box
-    final radius = size.width * 0.22;
+      final center = Offset(size.width / 2, size.height / 2);
+      // We can keep the current radius since we're using clipping
+      final radius = size.width * 0.22;
 
       if (ticks >= 1) {
         // First tick: diagonal line (/)
@@ -97,6 +101,9 @@ class ProgressBoxPainter extends CustomPainter {
         );
       }
     }
+    
+    // Restore the canvas state (remove clipping)
+    canvas.restore();
   }
 
   @override

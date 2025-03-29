@@ -101,10 +101,15 @@ class Character {
   bool impactOverheated;
   bool impactInfected;
   
-  // Legacies as progress tracks (0-10)
+  // Legacies as progress tracks (0-10 for boxes, 0-40 for ticks)
   int legacyQuests;
   int legacyBonds;
   int legacyDiscoveries;
+  
+  // Legacies as ticks (0-40)
+  int legacyQuestsTicks;
+  int legacyBondsTicks;
+  int legacyDiscoveriesTicks;
   
   // Additional notes separate from bio
   String? gameNotes;
@@ -137,11 +142,17 @@ class Character {
     this.legacyQuests = 0,
     this.legacyBonds = 0,
     this.legacyDiscoveries = 0,
+    this.legacyQuestsTicks = 0,
+    this.legacyBondsTicks = 0,
+    this.legacyDiscoveriesTicks = 0,
     this.gameNotes,
   })  : id = id ?? const Uuid().v4(),
         stats = stats ?? [],
         assets = assets ?? [],
-        notes = notes ?? [];
+        notes = notes ?? [] {
+    // Ensure tick values are initialized from box values for backward compatibility
+    syncLegacyBoxesToTicks();
+  }
 
   // Helper methods for impacts and momentum
   int get totalImpacts => [
@@ -208,6 +219,35 @@ class Character {
         return null;
     }
   }
+  
+  // Helper methods for legacy ticks and boxes
+  void updateLegacyQuestsTicks(int ticks) {
+    legacyQuestsTicks = ticks.clamp(0, 40);
+    legacyQuests = (legacyQuestsTicks / 4).floor();
+  }
+  
+  void updateLegacyBondsTicks(int ticks) {
+    legacyBondsTicks = ticks.clamp(0, 40);
+    legacyBonds = (legacyBondsTicks / 4).floor();
+  }
+  
+  void updateLegacyDiscoveriesTicks(int ticks) {
+    legacyDiscoveriesTicks = ticks.clamp(0, 40);
+    legacyDiscoveries = (legacyDiscoveriesTicks / 4).floor();
+  }
+  
+  // Sync box values to tick values (for backward compatibility)
+  void syncLegacyBoxesToTicks() {
+    if (legacyQuestsTicks == 0 && legacyQuests > 0) {
+      legacyQuestsTicks = legacyQuests * 4;
+    }
+    if (legacyBondsTicks == 0 && legacyBonds > 0) {
+      legacyBondsTicks = legacyBonds * 4;
+    }
+    if (legacyDiscoveriesTicks == 0 && legacyDiscoveries > 0) {
+      legacyDiscoveriesTicks = legacyDiscoveries * 4;
+    }
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -238,6 +278,9 @@ class Character {
       'legacyQuests': legacyQuests,
       'legacyBonds': legacyBonds,
       'legacyDiscoveries': legacyDiscoveries,
+      'legacyQuestsTicks': legacyQuestsTicks,
+      'legacyBondsTicks': legacyBondsTicks,
+      'legacyDiscoveriesTicks': legacyDiscoveriesTicks,
       'gameNotes': gameNotes,
     };
   }
@@ -275,6 +318,9 @@ class Character {
       legacyQuests: json['legacyQuests'] ?? 0,
       legacyBonds: json['legacyBonds'] ?? 0,
       legacyDiscoveries: json['legacyDiscoveries'] ?? 0,
+      legacyQuestsTicks: json['legacyQuestsTicks'] ?? 0,
+      legacyBondsTicks: json['legacyBondsTicks'] ?? 0,
+      legacyDiscoveriesTicks: json['legacyDiscoveriesTicks'] ?? 0,
       gameNotes: json['gameNotes'],
     );
   }

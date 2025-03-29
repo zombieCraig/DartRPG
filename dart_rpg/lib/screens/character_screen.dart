@@ -872,11 +872,13 @@ class CharacterScreen extends StatelessWidget {
                         ProgressTrackWidget(
                           label: 'Quests',
                           value: character.legacyQuests,
+                          ticks: character.legacyQuestsTicks,
                           maxValue: 10,
                           isEditable: isEditing,
-                          onBoxChanged: (newValue) {
+                          showTicks: true,
+                          onTickChanged: (newValue) {
                             setState(() {
-                              character.legacyQuests = newValue;
+                              character.updateLegacyQuestsTicks(newValue);
                             });
                           },
                         ),
@@ -884,11 +886,13 @@ class CharacterScreen extends StatelessWidget {
                         ProgressTrackWidget(
                           label: 'Bonds',
                           value: character.legacyBonds,
+                          ticks: character.legacyBondsTicks,
                           maxValue: 10,
                           isEditable: isEditing,
-                          onBoxChanged: (newValue) {
+                          showTicks: true,
+                          onTickChanged: (newValue) {
                             setState(() {
-                              character.legacyBonds = newValue;
+                              character.updateLegacyBondsTicks(newValue);
                             });
                           },
                         ),
@@ -896,11 +900,13 @@ class CharacterScreen extends StatelessWidget {
                         ProgressTrackWidget(
                           label: 'Discoveries',
                           value: character.legacyDiscoveries,
+                          ticks: character.legacyDiscoveriesTicks,
                           maxValue: 10,
                           isEditable: isEditing,
-                          onBoxChanged: (newValue) {
+                          showTicks: true,
+                          onTickChanged: (newValue) {
                             setState(() {
-                              character.legacyDiscoveries = newValue;
+                              character.updateLegacyDiscoveriesTicks(newValue);
                             });
                           },
                         ),

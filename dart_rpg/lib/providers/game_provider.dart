@@ -515,7 +515,7 @@ class GameProvider extends ChangeNotifier {
     return quest;
   }
   
-  // Update quest progress
+  // Update quest progress in boxes (0-10)
   Future<void> updateQuestProgress(String questId, int progress) async {
     if (_currentGame == null) {
       throw Exception('No game selected');
@@ -529,6 +529,92 @@ class GameProvider extends ChangeNotifier {
     // Ensure progress is within bounds
     final newProgress = progress.clamp(0, 10);
     quest.updateProgress(newProgress);
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  
+  // Update quest progress in ticks (0-40)
+  Future<void> updateQuestProgressTicks(String questId, int ticks) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    final quest = _currentGame!.quests.firstWhere(
+      (q) => q.id == questId,
+      orElse: () => throw Exception('Quest not found'),
+    );
+    
+    quest.updateProgressTicks(ticks);
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Add a single tick to quest progress
+  Future<void> addQuestTick(String questId) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    final quest = _currentGame!.quests.firstWhere(
+      (q) => q.id == questId,
+      orElse: () => throw Exception('Quest not found'),
+    );
+    
+    quest.addTick();
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Remove a single tick from quest progress
+  Future<void> removeQuestTick(String questId) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    final quest = _currentGame!.quests.firstWhere(
+      (q) => q.id == questId,
+      orElse: () => throw Exception('Quest not found'),
+    );
+    
+    quest.removeTick();
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Add ticks based on quest rank
+  Future<void> addQuestTicksForRank(String questId) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    final quest = _currentGame!.quests.firstWhere(
+      (q) => q.id == questId,
+      orElse: () => throw Exception('Quest not found'),
+    );
+    
+    quest.addTicksForRank();
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Remove ticks based on quest rank
+  Future<void> removeQuestTicksForRank(String questId) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    final quest = _currentGame!.quests.firstWhere(
+      (q) => q.id == questId,
+      orElse: () => throw Exception('Quest not found'),
+    );
+    
+    quest.removeTicksForRank();
     
     await _saveGames();
     notifyListeners();
@@ -636,6 +722,7 @@ class GameProvider extends ChangeNotifier {
       orElse: () => throw Exception('Quest not found'),
     );
     
+    // Only full boxes (progress) count for progress rolls
     final result = DiceRoller.rollProgressMove(progressValue: quest.progress);
     
     // Create a journal entry for the roll result
@@ -647,7 +734,7 @@ class GameProvider extends ChangeNotifier {
       
       _currentSession!.createNewEntry(
         'Progress roll for quest "${quest.title}" by ${character.name}.\n'
-        'Progress: ${quest.progress}/10\n'
+        'Progress: ${quest.progress}/10 (${quest.progressTicks} ticks)\n'
         'Challenge Dice: ${result['challengeDice'][0]}, ${result['challengeDice'][1]}\n'
         'Outcome: ${result['outcome']}'
       );

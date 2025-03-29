@@ -132,6 +132,22 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   Future<Map<String, dynamic>> makeQuestProgressRoll(String questId) async {
     return {'outcome': 'miss', 'challengeDice': [5, 5]};
   }
+  
+  // New methods for tick-based progress
+  @override
+  Future<void> updateQuestProgressTicks(String questId, int ticks) async {}
+  
+  @override
+  Future<void> addQuestTick(String questId) async {}
+  
+  @override
+  Future<void> removeQuestTick(String questId) async {}
+  
+  @override
+  Future<void> addQuestTicksForRank(String questId) async {}
+  
+  @override
+  Future<void> removeQuestTicksForRank(String questId) async {}
 }
 
 void main() {

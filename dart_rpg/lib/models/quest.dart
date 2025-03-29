@@ -107,7 +107,7 @@ class Quest {
   String title;
   final String characterId;
   QuestRank rank;
-  int progress;
+  int _progressTicks; // Internal storage as ticks (0-40)
   QuestStatus status;
   String notes;
   final DateTime createdAt;
@@ -120,7 +120,8 @@ class Quest {
     required this.title,
     required this.characterId,
     required this.rank,
-    this.progress = 0,
+    int progress = 0,
+    int? progressTicks,
     this.status = QuestStatus.ongoing,
     this.notes = '',
     DateTime? createdAt,
@@ -128,10 +129,51 @@ class Quest {
     this.forsakenAt,
   }) : 
     id = id ?? const Uuid().v4(),
+    _progressTicks = progressTicks ?? (progress * 4), // Convert from boxes to ticks if needed
     createdAt = createdAt ?? DateTime.now();
+    
+  /// Get the progress in boxes (0-10)
+  int get progress => (_progressTicks / 4).floor();
+  
+  /// Get the total number of ticks (0-40)
+  int get progressTicks => _progressTicks;
+  
+  /// Get the number of ticks in a specific box (0-4)
+  int getTicksInBox(int boxIndex) {
+    if (boxIndex < progress) {
+      return 4; // Full box
+    } else if (boxIndex == progress && _progressTicks % 4 > 0) {
+      return _progressTicks % 4; // Partially filled box
+    } else {
+      return 0; // Empty box
+    }
+  }
+  
+  /// Check if a box is full (has 4 ticks)
+  bool isBoxFull(int boxIndex) => getTicksInBox(boxIndex) >= 4;
+  
+  /// Get the number of ticks to add based on quest rank
+  int getTicksForRank() {
+    switch (rank) {
+      case QuestRank.troublesome:
+        return 12; // 3 boxes
+      case QuestRank.dangerous:
+        return 8;  // 2 boxes
+      case QuestRank.formidable:
+        return 4;  // 1 box
+      case QuestRank.extreme:
+        return 2;  // 2 ticks
+      case QuestRank.epic:
+        return 1;  // 1 tick
+    }
+  }
   
   /// Create a quest from JSON
   factory Quest.fromJson(Map<String, dynamic> json) {
+    // Handle both new format (with progressTicks) and old format (with progress)
+    final progressTicks = json['progressTicks'];
+    final progress = json['progress'];
+    
     return Quest(
       id: json['id'],
       title: json['title'],
@@ -140,7 +182,7 @@ class Quest {
         (r) => r.name == json['rank'],
         orElse: () => QuestRank.troublesome,
       ),
-      progress: json['progress'] ?? 0,
+      progressTicks: progressTicks ?? (progress != null ? progress * 4 : 0),
       status: QuestStatus.values.firstWhere(
         (s) => s.name == json['status'],
         orElse: () => QuestStatus.ongoing,
@@ -165,7 +207,8 @@ class Quest {
       'title': title,
       'characterId': characterId,
       'rank': rank.name,
-      'progress': progress,
+      'progressTicks': _progressTicks,
+      'progress': progress, // Include for backward compatibility
       'status': status.name,
       'notes': notes,
       'createdAt': createdAt.toIso8601String(),
@@ -186,10 +229,42 @@ class Quest {
     forsakenAt = DateTime.now();
   }
   
-  /// Update the progress of the quest
+  /// Update the progress of the quest in boxes (0-10)
   void updateProgress(int newProgress) {
-    // Ensure progress is between 0 and 10
-    progress = newProgress.clamp(0, 10);
+    // Ensure progress is between 0 and 10, then convert to ticks
+    _progressTicks = (newProgress.clamp(0, 10) * 4);
+  }
+  
+  /// Update the progress of the quest in ticks (0-40)
+  void updateProgressTicks(int newTicks) {
+    // Ensure ticks are between 0 and 40
+    _progressTicks = newTicks.clamp(0, 40);
+  }
+  
+  /// Add a single tick to the progress
+  void addTick() {
+    if (_progressTicks < 40) {
+      _progressTicks++;
+    }
+  }
+  
+  /// Remove a single tick from the progress
+  void removeTick() {
+    if (_progressTicks > 0) {
+      _progressTicks--;
+    }
+  }
+  
+  /// Add ticks based on the quest rank
+  void addTicksForRank() {
+    final ticksToAdd = getTicksForRank();
+    _progressTicks = (_progressTicks + ticksToAdd).clamp(0, 40);
+  }
+  
+  /// Remove ticks based on the quest rank
+  void removeTicksForRank() {
+    final ticksToRemove = getTicksForRank();
+    _progressTicks = (_progressTicks - ticksToRemove).clamp(0, 40);
   }
   
   /// Clone the quest
@@ -199,7 +274,7 @@ class Quest {
       title: title,
       characterId: characterId,
       rank: rank,
-      progress: progress,
+      progressTicks: _progressTicks,
       status: status,
       notes: notes,
       createdAt: createdAt,

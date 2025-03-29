@@ -874,7 +874,7 @@ class CharacterScreen extends StatelessWidget {
                           value: character.legacyQuests,
                           maxValue: 10,
                           isEditable: isEditing,
-                          onChanged: (newValue) {
+                          onBoxChanged: (newValue) {
                             setState(() {
                               character.legacyQuests = newValue;
                             });
@@ -886,7 +886,7 @@ class CharacterScreen extends StatelessWidget {
                           value: character.legacyBonds,
                           maxValue: 10,
                           isEditable: isEditing,
-                          onChanged: (newValue) {
+                          onBoxChanged: (newValue) {
                             setState(() {
                               character.legacyBonds = newValue;
                             });
@@ -898,7 +898,7 @@ class CharacterScreen extends StatelessWidget {
                           value: character.legacyDiscoveries,
                           maxValue: 10,
                           isEditable: isEditing,
-                          onChanged: (newValue) {
+                          onBoxChanged: (newValue) {
                             setState(() {
                               character.legacyDiscoveries = newValue;
                             });

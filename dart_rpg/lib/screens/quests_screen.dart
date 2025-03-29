@@ -430,11 +430,16 @@ class QuestCardWidget extends StatelessWidget {
               child: ProgressTrackWidget(
                 label: 'Progress',
                 value: quest.progress,
+                ticks: quest.progressTicks,
                 maxValue: 10,
-                onChanged: quest.status == QuestStatus.ongoing 
+                onBoxChanged: quest.status == QuestStatus.ongoing 
                     ? onProgressChanged 
                     : null,
+                onTickChanged: quest.status == QuestStatus.ongoing
+                    ? (ticks) => onProgressChanged(ticks ~/ 4)
+                    : null,
                 isEditable: quest.status == QuestStatus.ongoing,
+                showTicks: true,
               ),
             ),
             
@@ -446,12 +451,20 @@ class QuestCardWidget extends StatelessWidget {
                   ElevatedButton.icon(
                     icon: const Icon(Icons.remove),
                     label: const Text('Decrease'),
-                    onPressed: () => onProgressChanged(quest.progress - 1),
+                    onPressed: () {
+                      // Use the GameProvider method to remove ticks based on quest rank
+                      Provider.of<GameProvider>(context, listen: false)
+                          .removeQuestTicksForRank(quest.id);
+                    },
                   ),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.add),
                     label: const Text('Advance'),
-                    onPressed: () => onProgressChanged(quest.progress + 1),
+                    onPressed: () {
+                      // Use the GameProvider method to add ticks based on quest rank
+                      Provider.of<GameProvider>(context, listen: false)
+                          .addQuestTicksForRank(quest.id);
+                    },
                   ),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.casino),

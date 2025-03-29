@@ -40,6 +40,9 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Comprehensive logging system and log viewer
 
 ### Recently Completed
+- ✅ Quest button in journal editor toolbar for direct access to Quest Screen
+- ✅ Fixed GameScreen to respect initialTabIndex when explicitly provided
+- ✅ Enhanced keyboard shortcut handling for CTRL+Q in the editor
 - ✅ Quest viewer with tabs for Ongoing, Completed, and Forsaken quests
 - ✅ Quest creation and management functionality
 - ✅ Quest progress tracking with 10-segment progress bar

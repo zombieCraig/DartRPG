@@ -70,6 +70,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   void _navigateToQuests(BuildContext context) {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     if (gameProvider.currentGame != null) {
+      // Use pushReplacement to ensure we go directly to the Quests screen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -890,6 +891,9 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                       },
                       onOracleRequested: () {
                         _showRollOracleDialog(context);
+                      },
+                      onQuestRequested: () {
+                        _navigateToQuests(context);
                       },
                     )
                   : JournalEntryViewer(

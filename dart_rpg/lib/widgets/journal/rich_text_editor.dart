@@ -14,6 +14,7 @@ class RichTextEditor extends StatefulWidget {
   final Function(String imageUrl)? onImageAdded;
   final Function()? onMoveRequested;
   final Function()? onOracleRequested;
+  final Function()? onQuestRequested;
   
   // Controller for external access
   final TextEditingController? controller;
@@ -29,6 +30,7 @@ class RichTextEditor extends StatefulWidget {
     this.onImageAdded,
     this.onMoveRequested,
     this.onOracleRequested,
+    this.onQuestRequested,
     this.controller,
   });
   
@@ -110,6 +112,15 @@ class _RichTextEditorState extends State<RichTextEditor> {
         (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) &&
         widget.onOracleRequested != null) {
       widget.onOracleRequested!();
+      return KeyEventResult.handled;
+    }
+    
+    // Check for Ctrl+Q for Quests
+    if (event is KeyDownEvent && 
+        event.logicalKey == LogicalKeyboardKey.keyQ && 
+        (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) &&
+        widget.onQuestRequested != null) {
+      widget.onQuestRequested!();
       return KeyEventResult.handled;
     }
     
@@ -443,6 +454,15 @@ class _RichTextEditorState extends State<RichTextEditor> {
                   child: IconButton(
                     icon: const Icon(Icons.casino),
                     onPressed: widget.onOracleRequested,
+                  ),
+                ),
+                
+                // Quest button
+                Tooltip(
+                  message: 'Quests (Ctrl+Q)',
+                  child: IconButton(
+                    icon: const Icon(Icons.task_alt),
+                    onPressed: widget.onQuestRequested,
                   ),
                 ),
               ],

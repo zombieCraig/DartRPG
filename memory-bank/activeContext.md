@@ -19,6 +19,12 @@ This work enhances both the quest management system and the journaling system to
 
 ## Recent Changes
 
+### Journal Editor Toolbar Enhancement (March 2025)
+- Added a Quest button to the journal editor toolbar for quick access to the Quest Screen
+- Fixed GameScreen to respect initialTabIndex when explicitly provided
+- Enhanced keyboard shortcut handling for CTRL+Q to work directly from the editor
+- Updated navigation to use pushReplacement for consistent behavior with other screens
+
 ### Quest System Implementation (March 2025)
 - Added Quest model with properties for title, rank, progress, status, and notes
 - Implemented QuestsScreen with three tabs (Ongoing, Completed, Forsaken)

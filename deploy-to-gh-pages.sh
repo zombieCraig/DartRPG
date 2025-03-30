@@ -4,6 +4,18 @@
 # Exit on error
 set -e
 
+echo "Checking Flutter and Dart versions..."
+DART_VERSION=$(dart --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+echo "Dart version: $DART_VERSION"
+
+# Check if Dart version meets the requirement
+if [ "$(printf '%s\n' "3.5.4" "$DART_VERSION" | sort -V | head -n1)" != "3.5.4" ]; then
+  echo "Error: Dart SDK version 3.5.4 or higher is required."
+  echo "Current version: $DART_VERSION"
+  echo "Please update your Flutter/Dart SDK and try again."
+  exit 1
+fi
+
 echo "Building Flutter web app..."
 cd dart_rpg
 flutter build web --release --base-href /DartRPG/

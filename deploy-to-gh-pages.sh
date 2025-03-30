@@ -12,7 +12,8 @@ echo "Dart version: $DART_VERSION"
 if [ "$(printf '%s\n' "3.5.4" "$DART_VERSION" | sort -V | head -n1)" != "3.5.4" ]; then
   echo "Error: Dart SDK version 3.5.4 or higher is required."
   echo "Current version: $DART_VERSION"
-  echo "Please update your Flutter/Dart SDK and try again."
+  echo "Please update your Flutter SDK to version 3.29.2 or higher and try again."
+  echo "You can update Flutter with: 'flutter upgrade' or download the latest version."
   exit 1
 fi
 

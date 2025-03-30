@@ -60,9 +60,14 @@ If your GitHub Pages site isn't reflecting the latest changes:
 
 If you encounter issues with the Flutter web build:
 
-1. Try building locally with `flutter build web --release --base-href /DartRPG/`
-2. Check for any Flutter web-specific issues in your code
-3. Ensure your Flutter version is compatible with web builds
+1. **Flutter Version Requirement**: This project requires Flutter 3.29.2 or higher (with Dart SDK 3.5.4+)
+   - Check your Flutter version with `flutter --version`
+   - Update Flutter with `flutter upgrade` if needed
+   - If you see a Dart SDK version error, make sure you're using Flutter 3.29.2+
+
+2. Try building locally with `flutter build web --release --base-href /DartRPG/`
+3. Check for any Flutter web-specific issues in your code
+4. Ensure your Flutter version is compatible with web builds
 
 ## Customizing the Deployment
 

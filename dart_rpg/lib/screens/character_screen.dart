@@ -4,6 +4,7 @@ import '../providers/game_provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../models/character.dart';
 import '../widgets/progress_track_widget.dart';
+import '../widgets/asset_card_widget.dart';
 
 class CharacterScreen extends StatelessWidget {
   final String gameId;
@@ -166,6 +167,64 @@ class CharacterScreen extends StatelessWidget {
                                               );
                                             }).toList(),
                                           ),
+                                        if (character.assets.isNotEmpty) ...[
+                                          const SizedBox(height: 4),
+                                          const Text(
+                                            'Assets:',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Expanded(
+                                            child: ListView.builder(
+                                              shrinkWrap: true,
+                                              physics: const NeverScrollableScrollPhysics(),
+                                              itemCount: character.assets.length,
+                                              itemBuilder: (context, assetIndex) {
+                                                final asset = character.assets[assetIndex];
+                                                return InkWell(
+                                                  onTap: () {
+                                                    _showAssetDetailsDialog(context, asset);
+                                                  },
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.only(bottom: 4),
+                                                    child: Row(
+                                                      children: [
+                                                        Container(
+                                                          width: 8,
+                                                          height: 16,
+                                                          color: _getAssetCategoryColor(asset.category),
+                                                          margin: const EdgeInsets.only(right: 4),
+                                                        ),
+                                                        Expanded(
+                                                          child: Text(
+                                                            asset.name,
+                                                            style: const TextStyle(
+                                                              fontSize: 11,
+                                                              decoration: TextDecoration.underline,
+                                                            ),
+                                                            maxLines: 1,
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                        Text(
+                                                          asset.category,
+                                                          style: TextStyle(
+                                                            fontSize: 10,
+                                                            color: _getAssetCategoryColor(asset.category),
+                                                            fontWeight: FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),
@@ -793,48 +852,18 @@ class CharacterScreen extends StatelessWidget {
                         if (character.assets.isEmpty)
                           const Text('No assets attached'),
                         ...character.assets.map((asset) {
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          asset.name,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(
-                                          asset.category,
-                                          style: TextStyle(
-                                            color: _getAssetCategoryColor(asset.category),
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        if (asset.description != null) ...[
-                                          const SizedBox(height: 4),
-                                          Text(asset.description!),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-                                  if (isEditing && asset.category.toLowerCase() != 'base rig')
-                                    IconButton(
-                                      icon: const Icon(Icons.delete),
-                                      onPressed: () {
-                                        setState(() {
-                                          character.assets.remove(asset);
-                                        });
-                                      },
-                                    ),
-                                ],
-                              ),
-                            ),
+                          return AssetCardWidget(
+                            asset: asset,
+                            onTap: () {
+                              _showAssetDetailsDialog(context, asset);
+                            },
+                            onRemove: isEditing && asset.category.toLowerCase() != 'base rig'
+                                ? () {
+                                    setState(() {
+                                      character.assets.remove(asset);
+                                    });
+                                  }
+                                : null,
                           );
                         }),
                         
@@ -1303,5 +1332,90 @@ class CharacterScreen extends StatelessWidget {
       default:
         return Colors.purple;
     }
+  }
+  
+  void _showAssetDetailsDialog(BuildContext context, Asset asset) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final color = _getAssetCategoryColor(asset.category);
+        
+        return AlertDialog(
+          title: Row(
+            children: [
+              Container(
+                width: 12,
+                height: 24,
+                color: color,
+                margin: const EdgeInsets.only(right: 8),
+              ),
+              Expanded(child: Text(asset.name)),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Asset category
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    border: Border.all(color: color),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    asset.category,
+                    style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Asset description
+                if (asset.description != null) ...[
+                  const Text(
+                    'Description:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(asset.description!),
+                  const SizedBox(height: 16),
+                ],
+                
+                // Asset status
+                Row(
+                  children: [
+                    const Text(
+                      'Status: ',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      asset.enabled ? 'Enabled' : 'Disabled',
+                      style: TextStyle(
+                        color: asset.enabled ? Colors.green : Colors.grey,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

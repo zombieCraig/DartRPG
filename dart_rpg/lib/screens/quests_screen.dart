@@ -10,9 +10,9 @@ class QuestsScreen extends StatefulWidget {
   final String gameId;
   
   const QuestsScreen({
-    Key? key,
+    super.key,
     required this.gameId,
-  }) : super(key: key);
+  });
   
   @override
   _QuestsScreenState createState() => _QuestsScreenState();
@@ -160,8 +160,8 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: () => _showCreateQuestDialog(context, charactersWithStats, gameProvider),
-            child: const Icon(Icons.add),
             tooltip: 'Create Quest',
+            child: const Icon(Icons.add),
           ),
         );
       },
@@ -321,10 +321,10 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
               Navigator.of(context).pop();
               gameProvider.deleteQuest(quest.id);
             },
-            child: const Text('Delete'),
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
             ),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -343,7 +343,7 @@ class QuestCardWidget extends StatefulWidget {
   final Function(String) onNotesChanged;
   
   const QuestCardWidget({
-    Key? key,
+    super.key,
     required this.quest,
     required this.character,
     required this.onProgressChanged,
@@ -352,7 +352,7 @@ class QuestCardWidget extends StatefulWidget {
     required this.onForsake,
     required this.onDelete,
     required this.onNotesChanged,
-  }) : super(key: key);
+  });
   
   @override
   _QuestCardWidgetState createState() => _QuestCardWidgetState();
@@ -568,9 +568,9 @@ class CreateQuestDialog extends StatefulWidget {
   final List<Character> characters;
   
   const CreateQuestDialog({
-    Key? key,
+    super.key,
     required this.characters,
-  }) : super(key: key);
+  });
   
   @override
   _CreateQuestDialogState createState() => _CreateQuestDialogState();

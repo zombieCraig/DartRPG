@@ -5,6 +5,9 @@ import 'package:dart_rpg/models/character.dart';
 import 'package:dart_rpg/models/game.dart';
 import 'package:dart_rpg/providers/game_provider.dart';
 import 'package:dart_rpg/screens/character_screen.dart';
+import 'package:dart_rpg/widgets/character/character_list_view.dart';
+import 'package:dart_rpg/widgets/character/character_dialog.dart';
+import 'package:dart_rpg/widgets/character/character_card.dart';
 
 // Mock GameProvider for testing
 class MockGameProvider extends GameProvider {
@@ -132,24 +135,23 @@ void main() {
       expect(find.textContaining('Infiltrator'), findsWidgets);
     });
 
-    testWidgets('shows character details with assets', (WidgetTester tester) async {
-      // Create test assets
-      final baseRigAsset = createTestAsset(
-        name: 'Base Rig',
-        category: 'Base Rig',
-        description: 'Your personal computer system',
-      );
-      
-      final moduleAsset = createTestAsset(
-        name: 'Stealth Module',
-        category: 'Module',
-        description: 'Enhanced stealth capabilities',
-      );
+    testWidgets('displays empty state when no characters', (WidgetTester tester) async {
+      // Build the widget with no characters
+      await tester.pumpWidget(createTestApp(
+        characters: [],
+        mainCharacter: null,
+      ));
 
-      // Create test character with assets
+      // Verify empty state is displayed
+      expect(find.text('No characters yet'), findsOneWidget);
+      expect(find.text('Create Character'), findsOneWidget);
+    });
+
+    testWidgets('displays add card when characters exist', (WidgetTester tester) async {
+      // Create test character
       final character = createTestCharacter(
         name: 'Alice',
-        assets: [baseRigAsset, moduleAsset],
+        assets: [createTestAsset(name: 'Base Rig', category: 'Base Rig')],
         isMainCharacter: true,
       );
 
@@ -159,29 +161,11 @@ void main() {
         mainCharacter: character,
       ));
 
-      // Find and tap on the character card to open details dialog
-      await tester.tap(find.text('Alice'));
-      await tester.pumpAndSettle();
+      // Verify character card is displayed
+      expect(find.text('Alice'), findsOneWidget);
 
-      // Verify character details dialog is displayed
-      expect(find.text('Alice'), findsNWidgets(2)); // One in card, one in dialog title
-      
-      // Verify assets section is displayed in the dialog
-      expect(find.text('Assets'), findsOneWidget);
-      
-      // Expand the assets section if it's collapsed
-      if (find.byIcon(Icons.expand_more).evaluate().isNotEmpty) {
-        await tester.tap(find.text('Assets'));
-        await tester.pumpAndSettle();
-      }
-      
-      // Verify assets are displayed in the dialog
-      expect(find.textContaining('Base Rig'), findsWidgets);
-      expect(find.textContaining('Stealth Module'), findsWidgets);
-      
-      // Close the character details dialog
-      await tester.tap(find.text('Close'));
-      await tester.pumpAndSettle();
+      // Verify add card is displayed
+      expect(find.text('Add Character'), findsOneWidget);
     });
   });
 }

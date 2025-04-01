@@ -40,6 +40,16 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Comprehensive logging system and log viewer
 
 ### Recently Completed
+- ✅ Restructured the Quest Management System into a more modular and maintainable architecture
+- ✅ Created specialized components for the quest system:
+  - ✅ QuestForm: Component for quest data entry
+  - ✅ QuestDialog: Component for quest creation and editing
+  - ✅ QuestProgressPanel: Component for progress tracking
+  - ✅ QuestTabList: Component for displaying quests by status
+  - ✅ QuestCard: Component for displaying individual quests
+  - ✅ QuestActionsPanel: Component for quest actions
+  - ✅ QuestService: Service for quest operations
+- ✅ Added tests for the new quest components
 - ✅ Restructured the Move functionality into a more modular and maintainable architecture
 - ✅ Created a dedicated MoveDialog class to encapsulate move selection and rolling logic
 - ✅ Separated move-related widgets into specialized components
@@ -96,12 +106,14 @@ The DartRPG application is in active development with core functionality impleme
   - ✅ Created specialized AutocompleteSystem component
   - ✅ Extracted LinkedItemsManager for handling references
   - ✅ Moved autosave logic to a dedicated service
-- ⬜ Quest Management System
-  - ⬜ Create a dedicated QuestDialog class for creation/editing
-  - ⬜ Extract QuestForm component for quest data entry
-  - ⬜ Create QuestProgressPanel for progress management
-  - ⬜ Extract QuestTabList for displaying quest lists by status
-  - ⬜ Create QuestCard component for individual quest display
+- ✅ Quest Management System
+  - ✅ Created a dedicated QuestDialog class for creation/editing
+  - ✅ Extracted QuestForm component for quest data entry
+  - ✅ Created QuestProgressPanel for progress management
+  - ✅ Extracted QuestTabList for displaying quest lists by status
+  - ✅ Created QuestCard component for individual quest display
+  - ✅ Created QuestActionsPanel for quest actions
+  - ✅ Created QuestService for quest operations
 - ⬜ Location Graph System
   - ⬜ Extract LocationDialog class for creation/editing
   - ⬜ Create LocationForm component for location data entry
@@ -169,6 +181,14 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Journal Navigation**: Added "Jump to last entry" button on journal screen when entries are scrollable
 
 ## Recent Milestones
+
+### Milestone: Quest Management System Restructuring (April 2025)
+- ✅ Restructured the Quest Management functionality into a more modular architecture
+- ✅ Created specialized components for different aspects of the quest system
+- ✅ Improved code organization and maintainability
+- ✅ Reduced risk of data loss by isolating changes to specific components
+- ✅ Enhanced the separation of concerns in the quest system
+- ✅ Added tests for the new components
 
 ### Milestone: Oracle Reference Processing Implementation (April 2025)
 - ✅ Enhanced DataswornLinkParser to handle both link formats for oracle references

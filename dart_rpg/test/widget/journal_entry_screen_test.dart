@@ -10,7 +10,7 @@ import 'package:dart_rpg/models/journal_entry.dart';
 import 'package:dart_rpg/models/move.dart';
 import 'package:dart_rpg/models/oracle.dart';
 import 'package:dart_rpg/models/character.dart';
-import 'package:dart_rpg/widgets/journal/rich_text_editor.dart';
+import 'package:dart_rpg/widgets/journal/journal_entry_editor.dart';
 import 'package:dart_rpg/widgets/journal/move_dialog.dart';
 import 'package:dart_rpg/widgets/journal/journal_entry_viewer.dart';
 
@@ -152,7 +152,7 @@ void main() {
       mockDataswornProvider.addTestOracles([testOracleCategory]);
     });
     
-    testWidgets('renders with RichTextEditor when creating new entry', (WidgetTester tester) async {
+    testWidgets('renders with JournalEntryEditor when creating new entry', (WidgetTester tester) async {
       // Build the widget
       await tester.pumpWidget(
         MaterialApp(
@@ -170,8 +170,8 @@ void main() {
         ),
       );
       
-      // Verify the RichTextEditor is rendered
-      expect(find.byType(RichTextEditor), findsOneWidget);
+      // Verify the JournalEntryEditor is rendered
+      expect(find.byType(JournalEntryEditor), findsOneWidget);
     });
     
     testWidgets('Oracle and Move buttons in toolbar are present', (WidgetTester tester) async {
@@ -234,7 +234,7 @@ void main() {
       await tester.pumpAndSettle();
       
       // Verify we're in edit mode
-      expect(find.byType(RichTextEditor), findsOneWidget);
+      expect(find.byType(JournalEntryEditor), findsOneWidget);
       
       // Switch back to view mode
       await tester.tap(find.byIcon(Icons.save));
@@ -273,17 +273,17 @@ void main() {
       await tester.pumpAndSettle();
       
       // Verify we're in edit mode
-      expect(find.byType(RichTextEditor), findsOneWidget);
+      expect(find.byType(JournalEntryEditor), findsOneWidget);
       
       // Skip the actual button tap since it's difficult to find in the test environment
       // The functionality is tested manually and works correctly
       
-      // Verify that the RichTextEditor is still present
-      expect(find.byType(RichTextEditor), findsOneWidget);
+      // Verify that the JournalEntryEditor is still present
+      expect(find.byType(JournalEntryEditor), findsOneWidget);
     });
     
     // Note: We can't fully test the Oracle dialog in this test because it requires
-    // a more complex setup with DataswornProvider. The RichTextEditor test already
+    // a more complex setup with DataswornProvider. The JournalEntryEditor test already
     // verifies that the Oracle button triggers the callback correctly.
   });
 }

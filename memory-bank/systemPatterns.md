@@ -332,12 +332,12 @@ The project follows a component extraction pattern for complex features to impro
 
 This pattern has been applied to:
 - **Move System**: MoveDialog, MoveList, MoveDetails, ActionRollPanel, ProgressRollPanel, NoRollPanel, RollResultView, RollService
-- **Planned for Oracle System**: OracleDialog, OracleCategoryList, OracleTableList, OracleRollPanel, OracleResultView, OracleService
+- **Oracle System**: OracleDialog, OracleCategoryList, OracleTableList, OracleRollPanel, OracleResultView, OracleService
+- **Journal Entry Editor System**: JournalEntryEditor, EditorToolbar, AutocompleteSystem, LinkedItemsManager, AutosaveService
+- **Quest Management System**: QuestDialog, QuestForm, QuestProgressPanel, QuestTabList, QuestCard, QuestActionsPanel, QuestService
+- **Location Graph System**: LocationDialog, LocationForm, ConnectionPanel, LocationNodeWidget, LocationService, LocationListView
 
 Future candidates for this pattern:
-- Journal Entry Editor System
-- Quest Management System
-- Location Graph System
 - Character Management System
 
 Benefits of this pattern:
@@ -403,6 +403,89 @@ The Journal Entry Editor system follows a modular architecture that separates co
    - **Testability**: Components can be tested in isolation
 
 This architecture serves as a model for other complex features in the application, demonstrating how to break down functionality into manageable, specialized components.
+
+## Location Graph System Architecture
+
+The Location Graph System follows a modular architecture that separates concerns and improves maintainability:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   LocationScreen                        │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              Search & View Toggle                │   │
+│  └───────────────────────┬─────────────────────────┘   │
+│                          │                             │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              LocationListView/GraphView          │   │
+│  └───────────────────────┬─────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                     LocationDialog                      │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │                 showCreateDialog()               │   │
+│  │                 showEditDialog()                 │   │
+│  │                 showDeleteConfirmation()         │   │
+│  └───────────────────────┬─────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                 Specialized Components                  │
+│                                                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
+│  │ LocationForm│  │ConnectionPanel│ │LocationNodeWidget│ │
+│  └─────────────┘  └─────────────┘  └─────────────┘     │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              LocationListView                    │   │
+│  └─────────────────────────────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                    LocationService                      │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │         createLocation()                         │   │
+│  │         updateLocation()                         │   │
+│  │         deleteLocation()                         │   │
+│  │         connectLocations()                       │   │
+│  │         disconnectLocations()                    │   │
+│  │         updateLocationPosition()                 │   │
+│  └─────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+```
+
+1. **Component Responsibilities**:
+   - `LocationScreen`: Container for the location management UI
+   - `LocationDialog`: A utility class that handles location creation, editing, and deletion
+   - `LocationForm`: Handles location data entry and validation
+   - `ConnectionPanel`: Manages connections between locations
+   - `LocationNodeWidget`: Renders individual location nodes in the graph
+   - `LocationListView`: Displays locations in a list format
+   - `LocationService`: Handles location-related business logic
+
+2. **Process Flow**:
+   - The LocationScreen provides search functionality and view toggling
+   - Users can view locations in either graph or list format
+   - When creating or editing a location, the LocationDialog is shown
+   - The LocationDialog uses LocationForm for data entry
+   - The ConnectionPanel manages connections between locations
+   - The LocationService handles all location operations
+   - The LocationNodeWidget renders individual nodes in the graph
+
+3. **Benefits of this Architecture**:
+   - **Separation of Concerns**: Each component has a specific responsibility
+   - **Modularity**: Components can be developed and tested independently
+   - **Reusability**: Components can be reused in different contexts
+   - **Maintainability**: Changes to one component don't affect others
+   - **Testability**: Components can be tested in isolation
+
+This architecture follows the same pattern as other refactored systems in the application, providing a consistent approach to component organization and interaction.
 
 ## Future Architectural Considerations
 

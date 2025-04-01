@@ -92,6 +92,7 @@ class OracleRoll {
   List<int> dice;
   String result;
   DateTime timestamp;
+  List<OracleRoll> nestedRolls; // For storing nested oracle rolls
 
   OracleRoll({
     String? id,
@@ -100,8 +101,10 @@ class OracleRoll {
     required this.dice,
     required this.result,
     DateTime? timestamp,
+    List<OracleRoll>? nestedRolls,
   })  : id = id ?? const Uuid().v4(),
-        timestamp = timestamp ?? DateTime.now();
+        timestamp = timestamp ?? DateTime.now(),
+        nestedRolls = nestedRolls ?? [];
 
   Map<String, dynamic> toJson() {
     return {
@@ -111,6 +114,7 @@ class OracleRoll {
       'dice': dice,
       'result': result,
       'timestamp': timestamp.toIso8601String(),
+      'nestedRolls': nestedRolls.map((roll) => roll.toJson()).toList(),
     };
   }
 
@@ -122,6 +126,12 @@ class OracleRoll {
       dice: (json['dice'] as List).cast<int>(),
       result: json['result'],
       timestamp: DateTime.parse(json['timestamp']),
+      nestedRolls: json['nestedRolls'] != null
+          ? (json['nestedRolls'] as List)
+              .map((roll) => OracleRoll.fromJson(roll))
+              .toList()
+              .cast<OracleRoll>()
+          : [],
     );
   }
   

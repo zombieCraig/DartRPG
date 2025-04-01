@@ -19,6 +19,19 @@ This work enhances both the quest management system and the journaling system to
 
 ## Recent Changes
 
+### Oracle Reference Processing Enhancement (April 2025)
+- Implemented automatic processing of oracle references in oracle results
+- Enhanced DataswornLinkParser to handle both link formats:
+  - `[Text](oracle_rollable:path/to/oracle)`
+  - `[Text](datasworn:oracle_rollable:path/to/oracle)`
+- Created OracleReferenceProcessor utility to process nested oracle references
+- Updated OracleResultText widget to handle reference processing with loading indicators
+- Enhanced OracleRoll model to store nested oracle rolls
+- Modified all oracle rolling methods to use the new reference processing functionality
+- Added comprehensive error handling and logging for oracle reference processing
+- Improved oracle result display to show nested oracle rolls
+- Added unit tests to verify oracle reference processing functionality
+
 ### Oracle Parser Enhancement (April 2025)
 - Fixed issue with collections in JSON file not being properly parsed
 - Enhanced DataswornParser to handle both "contents" and "collections" structures

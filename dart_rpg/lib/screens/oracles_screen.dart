@@ -167,10 +167,11 @@ class OracleCategoryScreen extends StatelessWidget {
             children: [
               Text('Roll: $total'),
               const SizedBox(height: 16),
-              // Use OracleResultText widget to display the result with clickable links
+              // Use OracleResultText widget to display the result with clickable links and processed references
               OracleResultText(
                 text: matchingRow.result,
                 style: const TextStyle(fontWeight: FontWeight.bold),
+                processReferences: true,
               ),
             ],
           ),
@@ -327,10 +328,11 @@ class OracleTableScreen extends StatelessWidget {
             children: [
               Text('Roll: $total'),
               const SizedBox(height: 16),
-              // Use OracleResultText widget to display the result with clickable links
+              // Use OracleResultText widget to display the result with clickable links and processed references
               OracleResultText(
                 text: matchingRow.result,
                 style: const TextStyle(fontWeight: FontWeight.bold),
+                processReferences: true,
               ),
             ],
           ),
@@ -786,10 +788,11 @@ class _OraclesScreenState extends State<OraclesScreen> {
             children: [
               Text('Roll: $total'),
               const SizedBox(height: 16),
-              // Use OracleResultText widget to display the result with clickable links
+              // Use OracleResultText widget to display the result with clickable links and processed references
               OracleResultText(
                 text: matchingRow.result,
                 style: const TextStyle(fontWeight: FontWeight.bold),
+                processReferences: true,
               ),
             ],
           ),

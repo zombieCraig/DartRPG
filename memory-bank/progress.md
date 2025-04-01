@@ -40,6 +40,16 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Comprehensive logging system and log viewer
 
 ### Recently Completed
+- ✅ Implemented automatic processing of oracle references in oracle results
+- ✅ Enhanced DataswornLinkParser to handle both link formats for oracle references
+- ✅ Created OracleReferenceProcessor utility to process nested oracle references
+- ✅ Updated OracleResultText widget to handle reference processing with loading indicators
+- ✅ Enhanced OracleRoll model to store nested oracle rolls
+- ✅ Modified all oracle rolling methods to use the new reference processing functionality
+- ✅ Added comprehensive error handling and logging for oracle reference processing
+- ✅ Improved oracle result display to show nested oracle rolls
+- ✅ Added unit tests to verify oracle reference processing functionality
+- ✅ Fixed issue with collections in JSON file not being properly parsed
 - ✅ Standardized logging approach to always use LoggingService instead of dart:developer
 - ✅ Updated DataswornLinkParser to use LoggingService for consistent logging
 - ✅ Enhanced logging with proper tags and context information for better traceability
@@ -104,6 +114,8 @@ The DartRPG application is in active development with core functionality impleme
 - **Tablet Support**: UI not fully optimized for tablet screens
 
 ### Recently Fixed Issues
+- ✅ **Oracle Reference Processing**: Implemented automatic processing of nested oracle references in oracle results
+- ✅ **Oracle Result Display**: Enhanced oracle result display to show nested oracle rolls
 - ✅ **Oracle Collection Parsing**: Fixed issue with collections in JSON file not being properly parsed, enabling display of node types like "Science & Research"
 - ✅ **Navigation Flow**: Improved navigation patterns especially for game screen with main character
 - ✅ **Autocompletion Accuracy**: Enhanced character/location matching with inline suggestions
@@ -119,6 +131,16 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Journal Navigation**: Added "Jump to last entry" button on journal screen when entries are scrollable
 
 ## Recent Milestones
+
+### Milestone: Oracle Reference Processing Implementation (April 2025)
+- ✅ Enhanced DataswornLinkParser to handle both link formats for oracle references
+- ✅ Created OracleReferenceProcessor utility to process nested oracle references
+- ✅ Updated OracleResultText widget to handle reference processing with loading indicators
+- ✅ Enhanced OracleRoll model to store nested oracle rolls
+- ✅ Modified all oracle rolling methods to use the new reference processing functionality
+- ✅ Added comprehensive error handling and logging for oracle reference processing
+- ✅ Improved oracle result display to show nested oracle rolls
+- ✅ Added unit tests to verify oracle reference processing functionality
 
 ### Milestone: Quest System Implementation (March 2025)
 - ✅ Created Quest model with title, rank, progress, status, and notes

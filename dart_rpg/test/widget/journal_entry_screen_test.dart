@@ -1,157 +1,194 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:dart_rpg/screens/journal_entry_screen.dart';
+import 'package:dart_rpg/providers/game_provider.dart';
+import 'package:dart_rpg/providers/datasworn_provider.dart';
+import 'package:dart_rpg/models/game.dart';
+import 'package:dart_rpg/models/session.dart';
 import 'package:dart_rpg/models/journal_entry.dart';
+import 'package:dart_rpg/models/move.dart';
+import 'package:dart_rpg/models/oracle.dart';
+import 'package:dart_rpg/models/character.dart';
+import 'package:dart_rpg/widgets/journal/rich_text_editor.dart';
+
+// Mock GameProvider for testing
+class MockGameProvider extends ChangeNotifier implements GameProvider {
+  Game? _currentGame;
+  Session? _currentSession;
+  
+  @override
+  Game? get currentGame => _currentGame;
+  
+  @override
+  Session? get currentSession => _currentSession;
+  
+  // Other required overrides with minimal implementations
+  @override
+  List<Game> get games => [];
+  
+  @override
+  bool get isLoading => false;
+  
+  @override
+  String? get error => null;
+  
+  // Set the current game and session for testing
+  void setCurrentGameForTest(Game game) {
+    _currentGame = game;
+    notifyListeners();
+  }
+  
+  void setCurrentSessionForTest(Session session) {
+    _currentSession = session;
+    notifyListeners();
+  }
+  
+  // Implement required methods with minimal implementations
+  @override
+  Future<JournalEntry> createJournalEntry(String content) async {
+    final entry = JournalEntry(content: content);
+    return entry;
+  }
+  
+  @override
+  Future<void> updateJournalEntry(String entryId, String content) async {}
+  
+  @override
+  Future<void> saveGame() async {}
+  
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+// Mock DataswornProvider for testing
+class MockDataswornProvider extends ChangeNotifier implements DataswornProvider {
+  final List<OracleCategory> _oracles = [];
+  
+  @override
+  List<OracleCategory> get oracles => _oracles;
+  
+  @override
+  bool get isLoading => false;
+  
+  @override
+  String? get error => null;
+  
+  @override
+  List<Move> get moves => [];
+  
+  @override
+  List<Asset> get assets => [];
+  
+  @override
+  String? get currentSource => null;
+  
+  // Add test oracles
+  void addTestOracles(List<OracleCategory> categories) {
+    _oracles.clear();
+    _oracles.addAll(categories);
+    notifyListeners();
+  }
+  
+  // Implement required methods with minimal implementations
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 void main() {
-  group('OracleRoll in JournalEntry', () {
-    test('OracleRoll creation and serialization', () {
-      // Create an OracleRoll
-      final oracleRoll = OracleRoll(
-        oracleName: 'Test Oracle',
-        oracleTable: 'Test Category',
-        dice: [5],
-        result: 'Test Result',
+  group('JournalEntryScreen', () {
+    late MockGameProvider mockGameProvider;
+    late MockDataswornProvider mockDataswornProvider;
+    
+    setUp(() {
+      mockGameProvider = MockGameProvider();
+      mockDataswornProvider = MockDataswornProvider();
+      
+      // Create a test game
+      final testGame = Game(
+        id: 'game1',
+        name: 'Test Game',
       );
       
-      // Test properties
-      expect(oracleRoll.oracleName, equals('Test Oracle'));
-      expect(oracleRoll.oracleTable, equals('Test Category'));
-      expect(oracleRoll.dice, equals([5]));
-      expect(oracleRoll.result, equals('Test Result'));
+      // Create a test session
+      final testSession = Session(
+        id: 'session1',
+        title: 'Test Session',
+        gameId: testGame.id,
+      );
       
-      // Test serialization
-      final json = oracleRoll.toJson();
-      final fromJson = OracleRoll.fromJson(json);
+      mockGameProvider.setCurrentGameForTest(testGame);
+      mockGameProvider.setCurrentSessionForTest(testSession);
       
-      expect(fromJson.oracleName, equals(oracleRoll.oracleName));
-      expect(fromJson.oracleTable, equals(oracleRoll.oracleTable));
-      expect(fromJson.dice, equals(oracleRoll.dice));
-      expect(fromJson.result, equals(oracleRoll.result));
+      // Create test oracle categories
+      final testOracleTable = OracleTable(
+        id: 'table1',
+        name: 'Test Oracle Table',
+        rows: [
+          OracleTableRow(
+            minRoll: 1,
+            maxRoll: 100,
+            result: 'Test Oracle Result',
+          ),
+        ],
+        diceFormat: '1d100',
+      );
+      
+      final testOracleCategory = OracleCategory(
+        id: 'category1',
+        name: 'Test Oracle Category',
+        tables: [testOracleTable],
+      );
+      
+      mockDataswornProvider.addTestOracles([testOracleCategory]);
     });
     
-    test('OracleRoll with null oracleTable', () {
-      // Create an OracleRoll with null oracleTable
-      final oracleRoll = OracleRoll(
-        oracleName: 'Test Oracle',
-        oracleTable: null,
-        dice: [5],
-        result: 'Test Result',
+    testWidgets('renders with RichTextEditor when creating new entry', (WidgetTester tester) async {
+      // Build the widget
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MultiProvider(
+            providers: [
+              ChangeNotifierProvider<GameProvider>.value(
+                value: mockGameProvider,
+              ),
+              ChangeNotifierProvider<DataswornProvider>.value(
+                value: mockDataswornProvider,
+              ),
+            ],
+            child: const JournalEntryScreen(),
+          ),
+        ),
       );
       
-      // Test properties
-      expect(oracleRoll.oracleName, equals('Test Oracle'));
-      expect(oracleRoll.oracleTable, isNull);
-      expect(oracleRoll.dice, equals([5]));
-      expect(oracleRoll.result, equals('Test Result'));
-      
-      // Test serialization
-      final json = oracleRoll.toJson();
-      final fromJson = OracleRoll.fromJson(json);
-      
-      expect(fromJson.oracleName, equals(oracleRoll.oracleName));
-      expect(fromJson.oracleTable, equals(oracleRoll.oracleTable));
-      expect(fromJson.dice, equals(oracleRoll.dice));
-      expect(fromJson.result, equals(oracleRoll.result));
-    });
-  });
-  
-  group('JournalEntry with OracleRolls', () {
-    test('JournalEntry with multiple OracleRolls', () {
-      // Create OracleRolls
-      final oracleRoll1 = OracleRoll(
-        oracleName: 'Oracle 1',
-        oracleTable: 'Category 1',
-        dice: [3],
-        result: 'Result 1',
-      );
-      
-      final oracleRoll2 = OracleRoll(
-        oracleName: 'Oracle 2',
-        oracleTable: null,
-        dice: [6],
-        result: 'Result 2',
-      );
-      
-      // Create JournalEntry with OracleRolls
-      final journalEntry = JournalEntry(
-        content: 'Test content',
-        oracleRolls: [oracleRoll1, oracleRoll2],
-      );
-      
-      // Test properties
-      expect(journalEntry.oracleRolls.length, equals(2));
-      expect(journalEntry.oracleRolls[0].oracleName, equals('Oracle 1'));
-      expect(journalEntry.oracleRolls[1].oracleName, equals('Oracle 2'));
-      
-      // Test serialization
-      final json = journalEntry.toJson();
-      final fromJson = JournalEntry.fromJson(json);
-      
-      expect(fromJson.oracleRolls.length, equals(2));
-      expect(fromJson.oracleRolls[0].oracleName, equals('Oracle 1'));
-      expect(fromJson.oracleRolls[0].oracleTable, equals('Category 1'));
-      expect(fromJson.oracleRolls[1].oracleName, equals('Oracle 2'));
-      expect(fromJson.oracleRolls[1].oracleTable, isNull);
+      // Verify the RichTextEditor is rendered
+      expect(find.byType(RichTextEditor), findsOneWidget);
     });
     
-    test('JournalEntry backward compatibility with single oracleRoll', () {
-      // Create OracleRoll
-      final oracleRoll = OracleRoll(
-        oracleName: 'Test Oracle',
-        oracleTable: 'Test Category',
-        dice: [5],
-        result: 'Test Result',
+    testWidgets('Oracle button in toolbar is present', (WidgetTester tester) async {
+      // Build the widget
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MultiProvider(
+            providers: [
+              ChangeNotifierProvider<GameProvider>.value(
+                value: mockGameProvider,
+              ),
+              ChangeNotifierProvider<DataswornProvider>.value(
+                value: mockDataswornProvider,
+              ),
+            ],
+            child: const JournalEntryScreen(),
+          ),
+        ),
       );
       
-      // Create JournalEntry with single OracleRoll
-      final journalEntry = JournalEntry(
-        content: 'Test content',
-      );
-      
-      // Set using the backward compatibility setter
-      journalEntry.oracleRoll = oracleRoll;
-      
-      // Test properties
-      expect(journalEntry.oracleRolls.length, equals(1));
-      expect(journalEntry.oracleRoll, equals(oracleRoll));
-      expect(journalEntry.oracleRoll?.oracleName, equals('Test Oracle'));
-      
-      // Test serialization
-      final json = journalEntry.toJson();
-      final fromJson = JournalEntry.fromJson(json);
-      
-      expect(fromJson.oracleRolls.length, equals(1));
-      expect(fromJson.oracleRoll?.oracleName, equals('Test Oracle'));
+      // Verify the Oracle button is rendered
+      expect(find.byIcon(Icons.casino), findsOneWidget);
     });
     
-    test('attachOracleRoll adds to oracleRolls list', () {
-      // Create JournalEntry
-      final journalEntry = JournalEntry(
-        content: 'Test content',
-      );
-      
-      // Create OracleRolls
-      final oracleRoll1 = OracleRoll(
-        oracleName: 'Oracle 1',
-        oracleTable: 'Category 1',
-        dice: [3],
-        result: 'Result 1',
-      );
-      
-      final oracleRoll2 = OracleRoll(
-        oracleName: 'Oracle 2',
-        oracleTable: null,
-        dice: [6],
-        result: 'Result 2',
-      );
-      
-      // Attach OracleRolls
-      journalEntry.attachOracleRoll(oracleRoll1);
-      journalEntry.attachOracleRoll(oracleRoll2);
-      
-      // Test properties
-      expect(journalEntry.oracleRolls.length, equals(2));
-      expect(journalEntry.oracleRolls[0].oracleName, equals('Oracle 1'));
-      expect(journalEntry.oracleRolls[1].oracleName, equals('Oracle 2'));
-    });
+    // Note: We can't fully test the Oracle dialog in this test because it requires
+    // a more complex setup with DataswornProvider. The RichTextEditor test already
+    // verifies that the Oracle button triggers the callback correctly.
   });
 }

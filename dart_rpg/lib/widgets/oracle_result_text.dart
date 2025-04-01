@@ -3,23 +3,99 @@ import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../models/oracle.dart';
+import '../models/journal_entry.dart';
 import '../utils/datasworn_link_parser.dart';
 import '../utils/dice_roller.dart';
 import '../utils/logging_service.dart';
+import '../utils/oracle_reference_processor.dart';
 import '../screens/oracles_screen.dart';
 import 'asset_detail_dialog.dart';
 
-class OracleResultText extends StatelessWidget {
+class OracleResultText extends StatefulWidget {
   final String text;
   final TextStyle? style;
   final Function(OracleTable, int)? onRollLinkedOracle;
+  final bool processReferences;
 
   const OracleResultText({
     super.key,
     required this.text,
     this.style,
     this.onRollLinkedOracle,
+    this.processReferences = false,
   });
+
+  @override
+  State<OracleResultText> createState() => _OracleResultTextState();
+}
+
+class _OracleResultTextState extends State<OracleResultText> {
+  String _processedText = '';
+  bool _isProcessing = false;
+  bool _hasProcessed = false;
+  List<OracleRoll> _oracleRolls = [];
+  
+  @override
+  void initState() {
+    super.initState();
+    _processedText = widget.text;
+    
+    // If we should process references, do it when the widget is initialized
+    if (widget.processReferences && DataswornLinkParser.containsLinks(widget.text)) {
+      _processOracleReferences();
+    }
+  }
+  
+  @override
+  void didUpdateWidget(OracleResultText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // If the text changed, reset the processed state
+    if (oldWidget.text != widget.text) {
+      _processedText = widget.text;
+      _hasProcessed = false;
+      _oracleRolls = [];
+      
+      // If we should process references, do it when the widget is updated
+      if (widget.processReferences && DataswornLinkParser.containsLinks(widget.text)) {
+        _processOracleReferences();
+      }
+    }
+  }
+  
+  Future<void> _processOracleReferences() async {
+    if (_isProcessing || _hasProcessed) return;
+    
+    setState(() {
+      _isProcessing = true;
+    });
+    
+    try {
+      final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+      
+      // Process oracle references using the new utility
+      final processResult = await OracleReferenceProcessor.processOracleReferences(
+        widget.text,
+        dataswornProvider,
+      );
+      
+      setState(() {
+        _processedText = processResult['processedText'] as String;
+        _oracleRolls = processResult['rolls'] as List<OracleRoll>;
+        _hasProcessed = true;
+      });
+    } catch (e) {
+      LoggingService().error(
+        'Error processing oracle references',
+        tag: 'OracleResultText',
+        error: e,
+      );
+    } finally {
+      setState(() {
+        _isProcessing = false;
+      });
+    }
+  }
   
   // Helper method to insert "collections" into a path before the last segment
   static String _insertCollectionsInPath(String path) {
@@ -35,33 +111,39 @@ class OracleResultText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // If we're processing references and still loading, show a loading indicator
+    if (widget.processReferences && _isProcessing) {
+      return const SizedBox(
+        height: 20,
+        width: 20,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
+    
+    // If we've processed references, use the processed text
+    final textToDisplay = widget.processReferences && _hasProcessed ? _processedText : widget.text;
+    
     // If the text doesn't contain any links, just display it as regular text
-    if (!DataswornLinkParser.containsLinks(text)) {
-      return Text(text, style: style);
+    if (!DataswornLinkParser.containsLinks(textToDisplay)) {
+      return Text(textToDisplay, style: widget.style);
     }
 
     // Parse the text to find any links
-    final links = DataswornLinkParser.parseLinks(text);
+    final links = DataswornLinkParser.parseLinks(textToDisplay);
     if (links.isEmpty) {
-      return Text(text, style: style);
+      return Text(textToDisplay, style: widget.style);
     }
 
     // Create a rich text widget with clickable links
     return Consumer<DataswornProvider>(
       builder: (context, dataswornProvider, _) {
         // Split the text by the links
-        final parts = text.split(DataswornLinkParser.linkPattern);
+        final parts = textToDisplay.split(DataswornLinkParser.linkPattern);
         final loggingService = LoggingService();
         loggingService.debug(
-          'OracleResultText: text="$text", parts=${parts.length}',
+          'OracleResultText: text="$textToDisplay", parts=${parts.length}',
           tag: 'OracleResultText',
         );
-        for (int i = 0; i < parts.length; i++) {
-          loggingService.debug(
-            '  Part $i: "${parts[i]}"',
-            tag: 'OracleResultText',
-          );
-        }
         
         final spans = <InlineSpan>[];
 
@@ -70,7 +152,7 @@ class OracleResultText extends StatelessWidget {
         for (int i = 0; i < parts.length; i++) {
           // Add the text part
           if (parts[i].isNotEmpty) {
-            spans.add(TextSpan(text: parts[i], style: style));
+            spans.add(TextSpan(text: parts[i], style: widget.style));
           }
 
           // Add the link if there's one for this position
@@ -201,7 +283,7 @@ class OracleResultText extends StatelessWidget {
 
         return RichText(
           text: TextSpan(
-            style: style ?? DefaultTextStyle.of(context).style,
+            style: widget.style ?? DefaultTextStyle.of(context).style,
             children: spans,
           ),
         );
@@ -251,180 +333,78 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
     });
 
     final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
-    final links = DataswornLinkParser.parseLinks(widget.result);
     
-    loggingService.info(
-      'Processing linked content',
-      tag: 'OracleResultDialog',
-      error: {
-        'result': widget.result,
-        'foundLinks': links.length,
-        'links': links.map((l) => {
-          'text': l.displayText, 
-          'path': l.path,
-          'type': l.linkType
-        }).toList(),
-      },
-    );
-    
-    if (links.isEmpty) {
-      setState(() {
-        _isLoading = false;
-        _linkError = 'No links found in the result text.';
-      });
-      loggingService.warning(
-        'No links found in result text',
-        tag: 'OracleResultDialog',
-        error: {'result': widget.result},
+    try {
+      // Process oracle references using the new utility
+      final processResult = await OracleReferenceProcessor.processOracleReferences(
+        widget.result,
+        dataswornProvider,
       );
-      return;
-    }
-
-    // Track if we found any links (either oracle or asset)
-    bool foundAnyLinks = false;
-
-    for (final link in links) {
-      // Skip asset links in the recursive processing - they'll be handled directly when clicked
-      if (link.linkType == 'asset') {
-        // Just verify the asset exists
-        final asset = DataswornLinkParser.findAssetByPath(
+      
+      final processedText = processResult['processedText'] as String;
+      final oracleRolls = processResult['rolls'] as List<OracleRoll>;
+      
+      // Convert OracleRoll objects to LinkedOracleResult objects
+      for (final roll in oracleRolls) {
+        // Find the oracle table for this roll
+        final oracle = DataswornLinkParser.findOracleByPath(
           dataswornProvider,
-          link.path,
+          roll.oracleTable ?? '',
         );
         
-        if (asset != null) {
-          foundAnyLinks = true;
-          // We don't add assets to the linked results, they'll be shown on demand
-        }
-        continue;
-      }
-      
-      // Process oracle links
-      final linkedOracle = DataswornLinkParser.findOracleByPath(
-        dataswornProvider,
-        link.path,
-      );
-
-      if (linkedOracle != null && linkedOracle.rows.isNotEmpty) {
-        foundAnyLinks = true;
-        
-        // Roll on the linked oracle
-        final rollResult = DiceRoller.rollOracle(linkedOracle.diceFormat);
-        final total = rollResult['total'] as int;
-
-        // Find the matching table entry
-        OracleTableRow? matchingRow;
-        for (final row in linkedOracle.rows) {
-          if (row.matchesRoll(total)) {
-            matchingRow = row;
-            break;
-          }
-        }
-
-        if (matchingRow != null) {
+        if (oracle != null) {
           _linkedResults.add(
             LinkedOracleResult(
-              table: linkedOracle,
-              roll: total,
-              result: matchingRow.result,
+              table: oracle,
+              roll: roll.dice.isNotEmpty ? roll.dice.first : 0,
+              result: roll.result,
             ),
           );
-
-          // Check if this result also contains links (recursive)
-          if (DataswornLinkParser.containsLinks(matchingRow.result)) {
-            // We'll only process one level of recursion to avoid infinite loops
-            final nestedLinks = DataswornLinkParser.parseLinks(matchingRow.result);
-            for (final nestedLink in nestedLinks) {
-              // Skip asset links in nested results
-              if (nestedLink.linkType == 'asset') {
-                continue;
-              }
-              
-              final nestedOracle = DataswornLinkParser.findOracleByPath(
-                dataswornProvider,
-                nestedLink.path,
-              );
-
-              if (nestedOracle != null && nestedOracle.rows.isNotEmpty) {
-                // Roll on the nested linked oracle
-                final nestedRollResult = DiceRoller.rollOracle(nestedOracle.diceFormat);
-                final nestedTotal = nestedRollResult['total'] as int;
-
-                // Find the matching table entry
-                OracleTableRow? nestedMatchingRow;
-                for (final row in nestedOracle.rows) {
-                  if (row.matchesRoll(nestedTotal)) {
-                    nestedMatchingRow = row;
-                    break;
-                  }
-                }
-
-                if (nestedMatchingRow != null) {
-                  _linkedResults.add(
-                    LinkedOracleResult(
-                      table: nestedOracle,
-                      roll: nestedTotal,
-                      result: nestedMatchingRow.result,
-                    ),
-                  );
-                }
-              }
-            }
-          }
         }
       }
-    }
-
-    // If we didn't find any linked results but we had links, show an error
-    if (!foundAnyLinks && links.isNotEmpty) {
-      // Get a list of all available tables and assets for debugging
-      final allTables = <Map<String, dynamic>>[];
-      for (final category in dataswornProvider.oracles) {
-        for (final table in category.tables) {
-          allTables.add({
-            'id': table.id,
-            'name': table.name,
-            'category': category.id,
+      
+      // If we didn't find any linked results but the text contains links, show an error
+      if (_linkedResults.isEmpty && DataswornLinkParser.containsLinks(widget.result)) {
+        final links = DataswornLinkParser.parseLinks(widget.result);
+        
+        // Check if there are any oracle_rollable links
+        final hasOracleLinks = links.any((link) => link.linkType == 'oracle_rollable');
+        
+        if (hasOracleLinks) {
+          // Log detailed error information
+          loggingService.error(
+            'Could not find referenced oracles',
+            tag: 'OracleResultDialog',
+            error: {
+              'result': widget.result,
+              'links': links.map((l) => {
+                'text': l.displayText, 
+                'path': l.path,
+                'type': l.linkType
+              }).toList(),
+            },
+          );
+          
+          setState(() {
+            _linkError = 'Found oracle references, but could not find the referenced content.';
           });
         }
       }
-      
-      final allAssets = <Map<String, dynamic>>[];
-      for (final asset in dataswornProvider.assets) {
-        allAssets.add({
-          'id': asset.id,
-          'name': asset.name,
-          'category': asset.category,
-        });
-      }
-      
-      // Log detailed error information
+    } catch (e) {
       loggingService.error(
-        'Could not find referenced content',
+        'Error processing oracle references',
         tag: 'OracleResultDialog',
-        error: {
-          'links': links.map((l) => {
-            'text': l.displayText, 
-            'path': l.path,
-            'type': l.linkType
-          }).toList(),
-          'availableCategories': dataswornProvider.oracles.map((c) => c.id).toList(),
-          'availableAssets': dataswornProvider.assets.map((a) => a.id).toList(),
-          'allTables': allTables,
-          'allAssets': allAssets,
-        },
+        error: e,
       );
       
       setState(() {
-        _isLoading = false;
-        _linkError = 'Found ${links.length} links, but could not find the referenced content.';
+        _linkError = 'Error processing oracle references: $e';
       });
-      return;
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
-
-    setState(() {
-      _isLoading = false;
-    });
   }
 
   @override
@@ -439,10 +419,11 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
             Text('Roll: ${widget.roll}'),
             const SizedBox(height: 16),
             
-            // Main result with clickable links
+            // Main result with clickable links and processed references
             OracleResultText(
               text: widget.result,
               style: const TextStyle(fontWeight: FontWeight.bold),
+              processReferences: true,
             ),
             
             // Show linked oracle results section if we searched for links
@@ -473,6 +454,7 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
                         OracleResultText(
                           text: linkedResult.result,
                           style: const TextStyle(fontWeight: FontWeight.bold),
+                          processReferences: true,
                         ),
                       ],
                     ),

@@ -19,9 +19,10 @@ class DataswornLinkParser {
   static final LoggingService _logger = LoggingService();
   
   // Regular expression to match markdown links with datasworn protocol
-  // Updated to handle oracle_collection, oracle_rollable, asset, and move links
+  // Updated to handle both formats:
+  // [Text](datasworn:oracle_rollable:path/to/oracle) and [Text](oracle_rollable:path/to/oracle)
   static final RegExp linkPattern = RegExp(
-    r'\[(.*?)\]\(datasworn:(oracle_collection|oracle_rollable|asset|move):(.*?)\)',
+    r'\[(.*?)\]\((datasworn:)?(oracle_collection|oracle_rollable|asset|move):(.*?)\)',
     caseSensitive: false,
   );
 
@@ -30,8 +31,9 @@ class DataswornLinkParser {
     final matches = linkPattern.allMatches(text);
     final links = matches.map((match) {
       final displayText = match.group(1) ?? '';
-      final linkType = match.group(2) ?? 'oracle_collection'; // Default to oracle_collection
-      final path = match.group(3) ?? '';
+      // Group 2 is the optional "datasworn:" prefix
+      final linkType = match.group(3) ?? 'oracle_collection'; // Default to oracle_collection
+      final path = match.group(4) ?? '';
       
       _logger.debug(
         'Match groups: ${match.groupCount} groups',

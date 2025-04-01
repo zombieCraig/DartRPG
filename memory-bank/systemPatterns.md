@@ -45,6 +45,9 @@ DartRPG follows a Provider-based architecture pattern, which is a state manageme
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
 │  │ DiceRoller  │  │DataswornParser│ │LoggingService│    │
 │  └─────────────┘  └─────────────┘  └─────────────┘     │
+│  ┌─────────────────┐  ┌───────────────────────────┐    │
+│  │DataswornLinkParser│ │OracleReferenceProcessor  │    │
+│  └─────────────────┘  └───────────────────────────┘    │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -248,6 +251,83 @@ The Quest system follows these key architectural patterns:
 - Pagination for lists of games, characters, quests, etc.
 - More efficient serialization/deserialization
 - Optimized quest filtering and sorting for large datasets
+
+### Oracle Reference Processing System
+
+The Oracle Reference Processing system is designed to handle nested oracle references in oracle results. This system follows these key architectural patterns:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                OracleResultText Widget                  │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              processReferences=true              │   │
+│  └───────────────────────┬─────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│              OracleReferenceProcessor                   │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │         processOracleReferences()               │   │
+│  └───────────────────────┬─────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│               DataswornLinkParser                       │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │             parseLinks()                         │   │
+│  └───────────────────────┬─────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                 DataswornProvider                       │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │             getOracleTable()                     │   │
+│  └───────────────────────┬─────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                   OracleRoll Model                      │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │             nestedRolls[]                        │   │
+│  └─────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+```
+
+1. **Component Responsibilities**:
+   - `OracleResultText`: A StatefulWidget that displays oracle results and processes references
+   - `OracleReferenceProcessor`: A utility class that processes oracle references in text
+   - `DataswornLinkParser`: A utility class that parses Datasworn links in text
+   - `DataswornProvider`: Provides access to oracle tables
+   - `OracleRoll`: A model class that represents an oracle roll, including nested rolls
+
+2. **Process Flow**:
+   - When an oracle is rolled, the result is displayed using the `OracleResultText` widget
+   - If `processReferences=true`, the widget uses `OracleReferenceProcessor` to process references
+   - `OracleReferenceProcessor` uses `DataswornLinkParser` to find and parse oracle references
+   - For each reference, it rolls on the referenced oracle using `DataswornProvider`
+   - The results are stored in the `OracleRoll` object's `nestedRolls` array
+   - The processed text with references replaced by actual results is displayed
+
+3. **Recursive Processing**:
+   - The system supports recursive processing of nested references
+   - If a referenced oracle result contains further references, those are processed as well
+   - Each level of nesting is tracked and stored in the `OracleRoll` hierarchy
+
+4. **Error Handling**:
+   - Comprehensive error handling for invalid references
+   - Logging of reference processing errors
+   - Graceful fallback to original text if processing fails
+
+This architecture ensures a clean separation of concerns while providing a seamless user experience for oracle consultation.
 
 ### Technical Debt Areas
 - Improve test coverage

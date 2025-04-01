@@ -130,12 +130,16 @@ class OracleCategory {
   final String name;
   final String? description;
   final List<OracleTable> tables;
+  final List<OracleCategory> subcategories;
+  final bool isNodeType; // Flag to identify if this is a node type collection
 
   OracleCategory({
     required this.id,
     required this.name,
     this.description,
     required this.tables,
+    this.subcategories = const [],
+    this.isNodeType = false,
   });
 
   factory OracleCategory.fromJson(Map<String, dynamic> json) {
@@ -146,6 +150,12 @@ class OracleCategory {
       tables: (json['tables'] as List)
           .map((t) => OracleTable.fromJson(t))
           .toList(),
+      subcategories: json['subcategories'] != null
+          ? (json['subcategories'] as List)
+              .map((c) => OracleCategory.fromJson(c))
+              .toList()
+          : [],
+      isNodeType: json['isNodeType'] ?? false,
     );
   }
 
@@ -155,6 +165,8 @@ class OracleCategory {
       'name': name,
       'description': description,
       'tables': tables.map((t) => t.toJson()).toList(),
+      'subcategories': subcategories.map((c) => c.toJson()).toList(),
+      'isNodeType': isNodeType,
     };
   }
 
@@ -164,11 +176,15 @@ class OracleCategory {
     final String? description = json['summary'];
     
     List<OracleTable> tables = [];
+    List<OracleCategory> subcategories = [];
     
     if (json['contents'] != null) {
-      json['contents'].forEach((tableId, tableJson) {
-        if (tableJson['type'] == 'oracle_rollable') {
-          tables.add(OracleTable.fromDatasworn(tableJson, tableId));
+      json['contents'].forEach((contentId, contentJson) {
+        if (contentJson['type'] == 'oracle_rollable') {
+          tables.add(OracleTable.fromDatasworn(contentJson, contentId));
+        } else if (contentJson['type'] == 'oracle_collection') {
+          // This is a subcategory
+          subcategories.add(OracleCategory.fromDatasworn(contentJson, contentId));
         }
       });
     }
@@ -178,6 +194,16 @@ class OracleCategory {
       name: name,
       description: description,
       tables: tables,
+      subcategories: subcategories,
     );
+  }
+  
+  // Get all tables from this category and its subcategories
+  List<OracleTable> getAllTables() {
+    List<OracleTable> allTables = List.from(tables);
+    for (final subcategory in subcategories) {
+      allTables.addAll(subcategory.getAllTables());
+    }
+    return allTables;
   }
 }

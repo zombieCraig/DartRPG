@@ -220,6 +220,7 @@ The Quest system follows these key architectural patterns:
 - In-app log viewer for debugging with filterable log levels
 - Try-catch blocks around critical operations with proper error logging
 - User-friendly error messages for end users
+- Detailed logging in DataswornParser for better debugging of oracle parsing issues
 
 ### UI Architecture
 - Screen-based navigation using Flutter's `Navigator`

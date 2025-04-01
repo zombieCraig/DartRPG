@@ -18,41 +18,100 @@ class OracleCategoryScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(category.name),
       ),
-      body: ListView.builder(
+      body: ListView(
         padding: const EdgeInsets.all(16),
-        itemCount: category.tables.length,
-        itemBuilder: (context, index) {
-          final table = category.tables[index];
-          
-          return Card(
-            margin: const EdgeInsets.only(bottom: 8),
-            child: ListTile(
-              title: Text(table.name),
-              subtitle: table.description != null
-                  ? Text(
-                      table.description!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    )
-                  : null,
-              trailing: IconButton(
-                icon: const Icon(Icons.casino),
-                tooltip: 'Roll on this oracle',
-                onPressed: () {
-                  _rollOnOracleFromCategory(context, table);
+        children: [
+          // Display subcategories if any
+          if (category.subcategories.isNotEmpty) ...[
+            const Padding(
+              padding: EdgeInsets.only(bottom: 8.0),
+              child: Text(
+                'Subcategories',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+            ...category.subcategories.map((subcategory) => Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                title: Text(subcategory.name),
+                subtitle: subcategory.description != null
+                    ? Text(
+                        subcategory.description!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      )
+                    : null,
+                trailing: const Icon(Icons.arrow_forward_ios),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => OracleCategoryScreen(category: subcategory),
+                    ),
+                  );
                 },
               ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => OracleTableScreen(table: table),
+            )),
+            
+            if (category.tables.isNotEmpty)
+              const Divider(height: 32),
+          ],
+          
+          // Display tables if any
+          if (category.tables.isNotEmpty) ...[
+            if (category.subcategories.isNotEmpty)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 8.0),
+                child: Text(
+                  'Tables',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
                   ),
-                );
-              },
+                ),
+              ),
+            ...category.tables.map((table) => Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                title: Text(table.name),
+                subtitle: table.description != null
+                    ? Text(
+                        table.description!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      )
+                    : null,
+                trailing: IconButton(
+                  icon: const Icon(Icons.casino),
+                  tooltip: 'Roll on this oracle',
+                  onPressed: () {
+                    _rollOnOracleFromCategory(context, table);
+                  },
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => OracleTableScreen(table: table),
+                    ),
+                  );
+                },
+              ),
+            )),
+          ],
+          
+          // Show a message if no content
+          if (category.tables.isEmpty && category.subcategories.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text('No oracle tables or subcategories available'),
+              ),
             ),
-          );
-        },
+        ],
       ),
     );
   }
@@ -110,7 +169,7 @@ class OracleCategoryScreen extends StatelessWidget {
               const SizedBox(height: 16),
               // Use OracleResultText widget to display the result with clickable links
               OracleResultText(
-                text: matchingRow!.result,
+                text: matchingRow.result,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
@@ -270,7 +329,7 @@ class OracleTableScreen extends StatelessWidget {
               const SizedBox(height: 16),
               // Use OracleResultText widget to display the result with clickable links
               OracleResultText(
-                text: matchingRow!.result,
+                text: matchingRow.result,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
@@ -341,12 +400,25 @@ class _OraclesScreenState extends State<OraclesScreen> {
         List<OracleTable> filteredTables = [];
         if (_searchQuery.isNotEmpty) {
           for (final category in categories) {
+            // Add tables from this category
             filteredTables.addAll(
               category.tables.where((table) => 
                 table.name.toLowerCase().contains(_searchQuery) ||
                 (table.description?.toLowerCase().contains(_searchQuery) ?? false)
               )
             );
+            
+            // Add tables from subcategories
+            if (category.subcategories.isNotEmpty) {
+              for (final subcategory in category.subcategories) {
+                filteredTables.addAll(
+                  subcategory.tables.where((table) => 
+                    table.name.toLowerCase().contains(_searchQuery) ||
+                    (table.description?.toLowerCase().contains(_searchQuery) ?? false)
+                  )
+                );
+              }
+            }
           }
         }
         
@@ -395,17 +467,54 @@ class _OraclesScreenState extends State<OraclesScreen> {
       itemBuilder: (context, index) {
         final category = categories[index];
         
+        // Determine if we can roll on this category
+        final bool canRoll = category.tables.isNotEmpty;
+        
+        // Get a rollable table from this category or its subcategories
+        OracleTable? getRollableTable() {
+          if (category.tables.isNotEmpty) {
+            return category.tables.first;
+          }
+          
+          // Try to find a table in subcategories
+          for (final subcategory in category.subcategories) {
+            if (subcategory.tables.isNotEmpty) {
+              return subcategory.tables.first;
+            }
+          }
+          
+          return null;
+        }
+        
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             title: Text(category.name),
-            trailing: IconButton(
-              icon: const Icon(Icons.casino),
-              tooltip: 'Roll on this category',
-              onPressed: () {
-                _rollOnOracle(context, category.tables.first);
-              },
-            ),
+            subtitle: category.description != null
+                ? Text(
+                    category.description!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                : null,
+            trailing: canRoll
+                ? IconButton(
+                    icon: const Icon(Icons.casino),
+                    tooltip: 'Roll on this category',
+                    onPressed: () {
+                      final table = getRollableTable();
+                      if (table != null) {
+                        _rollOnOracle(context, table);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('No rollable tables found in this category'),
+                          ),
+                        );
+                      }
+                    },
+                  )
+                : const Icon(Icons.arrow_forward_ios),
             onTap: () {
               // Show the tables for this category
               setState(() {
@@ -679,7 +788,7 @@ class _OraclesScreenState extends State<OraclesScreen> {
               const SizedBox(height: 16),
               // Use OracleResultText widget to display the result with clickable links
               OracleResultText(
-                text: matchingRow!.result,
+                text: matchingRow.result,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],

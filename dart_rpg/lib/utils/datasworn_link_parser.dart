@@ -5,7 +5,7 @@ import '../utils/logging_service.dart';
 
 class DataswornLink {
   final String displayText;
-  final String linkType; // 'oracle_collection', 'asset', or 'move'
+  final String linkType; // 'oracle_collection', 'oracle_rollable', 'asset', or 'move'
   final String path;
 
   DataswornLink({
@@ -19,9 +19,9 @@ class DataswornLinkParser {
   static final LoggingService _logger = LoggingService();
   
   // Regular expression to match markdown links with datasworn protocol
-  // Updated to handle oracle_collection, asset, and move links
+  // Updated to handle oracle_collection, oracle_rollable, asset, and move links
   static final RegExp linkPattern = RegExp(
-    r'\[(.*?)\]\(datasworn:(oracle_collection|asset|move):(.*?)\)',
+    r'\[(.*?)\]\(datasworn:(oracle_collection|oracle_rollable|asset|move):(.*?)\)',
     caseSensitive: false,
   );
 
@@ -30,7 +30,7 @@ class DataswornLinkParser {
     final matches = linkPattern.allMatches(text);
     final links = matches.map((match) {
       final displayText = match.group(1) ?? '';
-      final linkType = match.group(2) ?? 'oracle_collection'; // Default to oracle
+      final linkType = match.group(2) ?? 'oracle_collection'; // Default to oracle_collection
       final path = match.group(3) ?? '';
       
       _logger.debug(
@@ -163,8 +163,8 @@ class DataswornLinkParser {
       }
     }
     
-    // Third attempt: If the path contains "oracle_collection", try to find it under "oracles"
-    if (result == null && path.contains('oracle_collection')) {
+    // Third attempt: If the path contains "oracle_collection" or "oracle_rollable", try to find it under "oracles"
+    if (result == null && (path.contains('oracle_collection') || path.contains('oracle_rollable'))) {
       // For paths like "fe_runners/node_type/social", look for "oracles/social"
       result = _findTableUnderOracles(provider, tableId);
       if (result != null && debugLogging) {

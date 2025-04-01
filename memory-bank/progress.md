@@ -104,7 +104,8 @@ The DartRPG application is in active development with core functionality impleme
 - **Tablet Support**: UI not fully optimized for tablet screens
 
 ### Recently Fixed Issues
-- ✅ **Navigation Flow**: Improved navigation patterns, especially for game screen with main character
+- ✅ **Oracle Collection Parsing**: Fixed issue with collections in JSON file not being properly parsed, enabling display of node types like "Science & Research"
+- ✅ **Navigation Flow**: Improved navigation patterns especially for game screen with main character
 - ✅ **Autocompletion Accuracy**: Enhanced character/location matching with inline suggestions
 - ✅ **Keyboard Shortcuts**: Added support for tab completion and move/oracle/quest shortcuts
 - ✅ **Journal Entry Bugs**: Fixed duplicate entry creation and entry opening issues

@@ -29,6 +29,10 @@
   - Formats logs with timestamps, levels, and optional tags
 - **Dice Roller**: Utility for simulating dice rolls for game mechanics
 - **Datasworn Parser**: Utility for parsing Ironsworn game data
+  - Handles both "contents" and "collections" structures in JSON
+  - Parses nested oracle collections with subcategories
+  - Supports complex data structures like node types with multiple tables
+  - Includes detailed logging for debugging parsing issues
 
 ## Development Environment
 

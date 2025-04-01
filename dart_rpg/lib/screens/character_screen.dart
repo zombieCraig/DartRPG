@@ -1293,7 +1293,7 @@ class CharacterScreen extends StatelessWidget {
                                               h2: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                                               h3: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                                               code: TextStyle(
-                                                backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                                                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                                                 fontSize: 12,
                                               ),
                                             ),
@@ -1395,7 +1395,7 @@ class CharacterScreen extends StatelessWidget {
                         h2: Theme.of(context).textTheme.titleMedium,
                         h3: Theme.of(context).textTheme.titleSmall,
                         code: TextStyle(
-                          backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                          backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                           fontFamily: 'monospace',
                         ),
                       ),

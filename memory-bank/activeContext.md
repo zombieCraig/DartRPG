@@ -19,6 +19,13 @@ This work enhances both the quest management system and the journaling system to
 
 ## Recent Changes
 
+### Oracle Parser Enhancement (April 2025)
+- Fixed issue with collections in JSON file not being properly parsed
+- Enhanced DataswornParser to handle both "contents" and "collections" structures
+- Added support for nested oracle collections like "node_type" with subcategories
+- Created unit tests to ensure proper parsing of collection structures
+- Improved logging for better debugging of oracle parsing issues
+
 ### Logging Standardization (March 2025)
 - Established standard to always use the custom LoggingService instead of dart:developer or print statements
 - Updated DataswornLinkParser to use LoggingService for consistent logging

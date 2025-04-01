@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/quest.dart';
 import '../models/character.dart';
-import '../models/game.dart';
 import '../providers/game_provider.dart';
 import '../widgets/progress_track_widget.dart';
 

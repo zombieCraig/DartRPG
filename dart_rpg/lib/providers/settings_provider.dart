@@ -24,7 +24,7 @@ class SettingsProvider extends ChangeNotifier {
     _isDarkMode = prefs.getBool('isDarkMode') ?? false;
     _fontSize = prefs.getDouble('fontSize') ?? 16.0;
     _fontFamily = prefs.getString('fontFamily') ?? 'Roboto';
-    _logLevel = prefs.getInt('logLevel') ?? 1; // Default to INFO level
+    _logLevel = prefs.getInt('logLevel') ?? 0; // Default to DEBUG level for troubleshooting
     
     // Apply log level to the logging service
     LoggingService().setLogLevel(_logLevel);

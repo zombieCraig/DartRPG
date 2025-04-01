@@ -3,7 +3,6 @@ import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../models/oracle.dart';
-import '../models/character.dart';
 import '../utils/datasworn_link_parser.dart';
 import '../utils/dice_roller.dart';
 import '../utils/logging_service.dart';

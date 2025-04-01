@@ -3,6 +3,7 @@ import '../models/move.dart';
 import '../models/oracle.dart';
 import '../models/character.dart';
 import '../utils/datasworn_parser.dart';
+import '../utils/logging_service.dart';
 
 class DataswornProvider extends ChangeNotifier {
   List<Move> _moves = [];
@@ -21,21 +22,54 @@ class DataswornProvider extends ChangeNotifier {
 
   // Load data from a Datasworn JSON file
   Future<void> loadDatasworn(String assetPath) async {
+    final loggingService = LoggingService();
+    loggingService.debug('Loading Datasworn data from: $assetPath', tag: 'DataswornProvider');
+    
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
       final datasworn = await DataswornParser.loadDataswornJson(assetPath);
+      loggingService.debug('Successfully loaded JSON data', tag: 'DataswornProvider');
       
       _moves = DataswornParser.parseMoves(datasworn);
+      loggingService.debug('Parsed ${_moves.length} moves', tag: 'DataswornProvider');
+      
       _oracles = DataswornParser.parseOracles(datasworn);
+      loggingService.debug('Parsed ${_oracles.length} oracle categories', tag: 'DataswornProvider');
+      
+      // Log oracle categories and their tables
+      for (final category in _oracles) {
+        loggingService.debug('Oracle category: ${category.name} with ${category.tables.length} tables and ${category.subcategories.length} subcategories', tag: 'DataswornProvider');
+        
+        // Log subcategories if any
+        for (final subcategory in category.subcategories) {
+          loggingService.debug('  Subcategory: ${subcategory.name} with ${subcategory.tables.length} tables', tag: 'DataswornProvider');
+          
+          // Log tables in subcategory
+          for (final table in subcategory.tables) {
+            loggingService.debug('    Table: ${table.name}', tag: 'DataswornProvider');
+          }
+        }
+        
+        // Log tables in category
+        for (final table in category.tables) {
+          loggingService.debug('  Table: ${table.name}', tag: 'DataswornProvider');
+        }
+      }
+      
       _assets = DataswornParser.parseAssets(datasworn);
+      loggingService.debug('Parsed ${_assets.length} assets', tag: 'DataswornProvider');
+      
       _currentSource = assetPath;
       
       _isLoading = false;
       notifyListeners();
+      
+      loggingService.debug('Datasworn data loaded successfully', tag: 'DataswornProvider');
     } catch (e) {
+      loggingService.error('Failed to load Datasworn data: ${e.toString()}', tag: 'DataswornProvider');
       _isLoading = false;
       _error = 'Failed to load Datasworn data: ${e.toString()}';
       notifyListeners();
@@ -83,13 +117,32 @@ class DataswornProvider extends ChangeNotifier {
 
   // Find an oracle table by ID
   OracleTable? findOracleTableById(String id) {
+    final loggingService = LoggingService();
+    loggingService.debug('Finding oracle table by ID: $id', tag: 'DataswornProvider');
+    
+    // First, search in top-level categories
     for (final category in _oracles) {
       try {
-        return category.tables.firstWhere((table) => table.id == id);
+        final table = category.tables.firstWhere((table) => table.id == id);
+        loggingService.debug('Found table in category ${category.name}', tag: 'DataswornProvider');
+        return table;
       } catch (e) {
         // Continue to next category
       }
+      
+      // Search in subcategories
+      for (final subcategory in category.subcategories) {
+        try {
+          final table = subcategory.tables.firstWhere((table) => table.id == id);
+          loggingService.debug('Found table in subcategory ${subcategory.name}', tag: 'DataswornProvider');
+          return table;
+        } catch (e) {
+          // Continue to next subcategory
+        }
+      }
     }
+    
+    loggingService.debug('Oracle table not found with ID: $id', tag: 'DataswornProvider');
     return null;
   }
 

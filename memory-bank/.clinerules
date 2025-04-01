@@ -7,6 +7,8 @@
 - **Create dedicated dialog classes**: For complex dialogs that handle significant logic, create a dedicated class (e.g., `MoveDialog`, `OracleDialog`)
 - **Group related widgets in subdirectories**: Place related widgets in subdirectories (e.g., `widgets/moves/`, `widgets/journal/`)
 - **Extract reusable components**: Identify and extract components that can be reused across the application
+- **Create service classes for business logic**: Extract business logic into dedicated service classes (e.g., `AutosaveService`, `OracleService`)
+- **Use manager classes for state management**: Create manager classes to handle state for specific features (e.g., `LinkedItemsManager`)
 
 ### Naming Conventions
 - **Files**: snake_case for file names (e.g., `game_provider.dart`, `logging_service.dart`)
@@ -82,6 +84,16 @@
 - Performance optimization for mobile devices
 
 ## Journal Entry System
+
+### Journal Entry Editor Architecture
+- Modular architecture with specialized components
+- JournalEntryEditor as the core component for editing
+- EditorToolbar for formatting actions
+- AutocompleteSystem for character and location references
+- LinkedItemsManager for tracking linked items
+- AutosaveService for automatic saving
+- JournalEntryViewer for displaying entries
+- LinkedItemsSummary for showing linked items
 
 ### Rich Text Editor
 - Custom implementation with markdown-style formatting
@@ -162,6 +174,7 @@
 ## Project Evolution
 
 ### Recent Focus
+- Restructuring the Journal Entry Editor System into specialized components
 - Implementing the Quest system with tabs for different quest statuses
 - Enhancing the journal entry system with rich text editing
 - Implementing character handle/short name support
@@ -170,10 +183,11 @@
 - Improving search functionality in Moves and Oracles screens
 
 ### Current Direction
+- Applying the component extraction pattern to other complex features
+- Testing and refining the Journal Entry Editor System
 - Testing and refining the Quest system features
 - Optimizing performance for large numbers of quests
 - Improving the quest card visualization
-- Testing and refining the journal entry features
 - Optimizing performance for complex journal entries
 - Improving the mobile experience for text editing
 

@@ -347,6 +347,63 @@ Benefits of this pattern:
 - **Enhanced User Experience**: More consistent UI and behavior
 - **Easier Future Enhancements**: New features can be added to specific components
 
+## Journal Entry Editor System Architecture
+
+The Journal Entry Editor system follows a modular architecture that separates concerns and improves maintainability:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   JournalEntryScreen                    │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              JournalEntryEditor                  │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │   EditorToolbar │  │  AutocompleteSystem │   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  │                                                  │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │LinkedItemsManager│  │   AutosaveService  │   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  └──────────────────────────────────────────────────┘   │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              JournalEntryViewer                 │   │
+│  └─────────────────────────────────────────────────┘   │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              LinkedItemsSummary                 │   │
+│  └─────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+```
+
+1. **Component Responsibilities**:
+   - `JournalEntryScreen`: Container for the editor and viewer components
+   - `JournalEntryEditor`: Core component for editing journal entries
+   - `EditorToolbar`: Handles formatting actions and quick access buttons
+   - `AutocompleteSystem`: Manages character and location autocompletion
+   - `LinkedItemsManager`: Tracks and manages linked items (characters, locations, etc.)
+   - `AutosaveService`: Handles automatic saving of journal entries
+   - `JournalEntryViewer`: Displays journal entries with clickable references
+   - `LinkedItemsSummary`: Shows a summary of linked items in the journal entry
+
+2. **Process Flow**:
+   - When creating or editing a journal entry, the JournalEntryScreen uses JournalEntryEditor
+   - The JournalEntryEditor uses EditorToolbar for formatting actions
+   - As the user types, AutocompleteSystem checks for character and location references
+   - LinkedItemsManager tracks linked items as they are added
+   - AutosaveService periodically saves the entry to prevent data loss
+   - When viewing an entry, JournalEntryViewer displays the content with clickable references
+   - LinkedItemsSummary shows a summary of all linked items
+
+3. **Benefits of this Architecture**:
+   - **Separation of Concerns**: Each component has a specific responsibility
+   - **Modularity**: Components can be developed and tested independently
+   - **Reusability**: Components can be reused in different contexts
+   - **Maintainability**: Changes to one component don't affect others
+   - **Testability**: Components can be tested in isolation
+
+This architecture serves as a model for other complex features in the application, demonstrating how to break down functionality into manageable, specialized components.
+
 ## Future Architectural Considerations
 
 ### Potential Refactorings

@@ -2,22 +2,34 @@
 
 ## Current Work Focus
 
-The current development focus is on enhancing the game management features with quest tracking capabilities and continuing to improve the journal entry system. This includes:
+The current development focus is on restructuring the application's components to improve maintainability, testability, and reduce the risk of data loss. This includes:
 
-1. Implementing a Quest viewer with tabs for Ongoing, Completed, and Forsaken quests
-2. Adding quest creation and management functionality
-3. Integrating quest progress tracking with a 10-segment progress bar
-4. Implementing quest status changes (complete, forsake)
-5. Adding keyboard shortcuts for quick navigation (CTRL+Q for Quests)
-6. Enhancing the journal entry screen with rich text editing capabilities
-7. Adding character handle/short name support for easier referencing
-8. Implementing autocompletion for character and location references
-9. Creating a linked items summary for journal entries
-10. Improving navigation flow based on character creation status
+1. Restructuring the Oracle functionality into a more modular architecture (completed)
+2. Restructuring the Move functionality into a more modular architecture (completed)
+3. Restructuring the Journal Entry Editor System into specialized components (completed)
+4. Planning for future restructuring of the Quest Management System
+5. Planning for future restructuring of the Location Graph System
+6. Planning for future restructuring of the Character Management System
+7. Enhancing test coverage for restructured components
+8. Improving performance for complex journal entries and large datasets
+9. Refining UI for better user experience
+10. Documenting the restructured architecture
 
-This work enhances both the quest management system and the journaling system to provide a more intuitive and feature-rich experience for players, making it easier to track progress and document their game journey.
+This work enhances the overall architecture of the application, making it more maintainable and reducing the risk of data loss when making changes to complex features.
 
 ## Recent Changes
+
+### Journal Entry Editor System Restructuring (April 2025)
+- Restructured the Journal Entry Editor functionality into a more modular and maintainable architecture
+- Created specialized components for different aspects of the journal entry system:
+  - JournalEntryEditor: Core component for editing journal entries
+  - EditorToolbar: Component for formatting actions
+  - AutocompleteSystem: Component for handling character and location autocompletion
+  - LinkedItemsManager: Component for managing linked items (characters, locations, etc.)
+- Created AutosaveService to handle automatic saving of journal entries
+- Improved code organization and maintainability
+- Reduced risk of data loss by isolating changes to specific components
+- Enhanced the separation of concerns in the journal entry system
 
 ### Oracle Dialog System Restructuring (April 2025)
 - Restructured the Oracle functionality into a more modular and maintainable architecture

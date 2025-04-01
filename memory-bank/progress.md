@@ -90,12 +90,12 @@ The DartRPG application is in active development with core functionality impleme
 - ⬜ Mobile-friendly interaction improvements for text editing
 
 ### Future Restructuring Candidates
-- ⬜ Journal Entry Editor System
-  - ⬜ Create a dedicated JournalEntryEditor component
-  - ⬜ Extract EditorToolbar component for formatting actions
-  - ⬜ Create specialized AutocompleteSystem component
-  - ⬜ Extract LinkedItemsManager for handling references
-  - ⬜ Move autosave logic to a dedicated service
+- ✅ Journal Entry Editor System
+  - ✅ Created a dedicated JournalEntryEditor component
+  - ✅ Extracted EditorToolbar component for formatting actions
+  - ✅ Created specialized AutocompleteSystem component
+  - ✅ Extracted LinkedItemsManager for handling references
+  - ✅ Moved autosave logic to a dedicated service
 - ⬜ Quest Management System
   - ⬜ Create a dedicated QuestDialog class for creation/editing
   - ⬜ Extract QuestForm component for quest data entry

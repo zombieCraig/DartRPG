@@ -11,14 +11,12 @@ import '../models/location.dart';
 import '../models/move.dart';
 import '../models/oracle.dart';
 import '../utils/logging_service.dart';
-import '../utils/dice_roller.dart';
-import '../utils/datasworn_link_parser.dart';
-import '../utils/oracle_reference_processor.dart';
-import '../widgets/journal/rich_text_editor.dart';
+import '../services/autosave_service.dart';
+import '../widgets/journal/journal_entry_editor.dart';
+import '../widgets/journal/linked_items_manager.dart';
 import '../widgets/journal/linked_items_summary.dart';
 import '../widgets/journal/journal_entry_viewer.dart';
 import '../widgets/journal/move_dialog.dart';
-import '../widgets/oracle_result_text.dart';
 import '../widgets/oracles/oracle_dialog.dart';
 import 'game_screen.dart';
 
@@ -784,7 +782,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         });
       },
       onInsertText: (text) {
-        RichTextEditor.insertTextAtCursor(_editorController, text);
+        JournalEntryEditor.insertTextAtCursor(_editorController, text);
         
         // Update the content
         setState(() {
@@ -819,7 +817,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         });
       },
       onInsertText: (text) {
-        RichTextEditor.insertTextAtCursor(_editorController, text);
+        JournalEntryEditor.insertTextAtCursor(_editorController, text);
         
         // Update the content
         setState(() {
@@ -898,7 +896,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: _isEditing
-                  ? RichTextEditor(
+                  ? JournalEntryEditor(
                       initialText: _content,
                       initialRichText: _richContent,
                       readOnly: false,

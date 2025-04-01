@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../providers/game_provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../models/character.dart';
 import '../widgets/progress_track_widget.dart';
 import '../widgets/asset_card_widget.dart';
+import '../utils/asset_utils.dart';
 
 class CharacterScreen extends StatelessWidget {
   final String gameId;
@@ -1281,10 +1283,23 @@ class CharacterScreen extends StatelessWidget {
                                       ),
                                       if (asset.description != null) ...[
                                         const SizedBox(height: 4),
-                                        Text(
-                                          asset.description!,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
+                                        SizedBox(
+                                          height: 40,
+                                          child: MarkdownBody(
+                                            data: asset.description!,
+                                            styleSheet: MarkdownStyleSheet(
+                                              p: const TextStyle(fontSize: 12),
+                                              h1: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                              h2: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                                              h3: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                              code: TextStyle(
+                                                backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                            shrinkWrap: true,
+                                            softLineBreak: true,
+                                          ),
                                         ),
                                       ],
                                     ],
@@ -1320,18 +1335,7 @@ class CharacterScreen extends StatelessWidget {
   }
   
   Color _getAssetCategoryColor(String category) {
-    switch (category.toLowerCase()) {
-      case 'base rig':
-        return Colors.black;
-      case 'module':
-        return Colors.blue;
-      case 'path':
-        return Colors.orange;
-      case 'companion':
-        return Colors.amber;
-      default:
-        return Colors.purple;
-    }
+    return getAssetCategoryColor(category);
   }
   
   void _showAssetDetailsDialog(BuildContext context, Asset asset) {
@@ -1376,16 +1380,28 @@ class CharacterScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 
-                // Asset description
-                if (asset.description != null) ...[
-                  const Text(
-                    'Description:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(asset.description!),
-                  const SizedBox(height: 16),
-                ],
+                  // Asset description
+                  if (asset.description != null) ...[
+                    const Text(
+                      'Description:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    MarkdownBody(
+                      data: asset.description!,
+                      styleSheet: MarkdownStyleSheet(
+                        p: Theme.of(context).textTheme.bodyMedium,
+                        h1: Theme.of(context).textTheme.titleLarge,
+                        h2: Theme.of(context).textTheme.titleMedium,
+                        h3: Theme.of(context).textTheme.titleSmall,
+                        code: TextStyle(
+                          backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 
                 // Asset status
                 Row(

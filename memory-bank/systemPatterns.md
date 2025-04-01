@@ -214,11 +214,12 @@ The Quest system follows these key architectural patterns:
 - Structured storage keys for organizing data
 - Quest data is serialized as part of the Game object
 
-### Error Handling Approach
-- Comprehensive logging system with different log levels
-- In-app log viewer for debugging
-- Try-catch blocks around critical operations
-- User-friendly error messages
+### Error Handling and Logging Approach
+- Comprehensive logging system with different log levels (debug, info, warning, error)
+- Always use the custom LoggingService instead of dart:developer or print statements
+- In-app log viewer for debugging with filterable log levels
+- Try-catch blocks around critical operations with proper error logging
+- User-friendly error messages for end users
 
 ### UI Architecture
 - Screen-based navigation using Flutter's `Navigator`

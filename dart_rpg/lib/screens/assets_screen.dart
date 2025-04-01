@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../providers/datasworn_provider.dart';
 import '../providers/game_provider.dart';
 import '../models/character.dart' show Asset;
+import '../utils/asset_utils.dart';
 
 class AssetsScreen extends StatefulWidget {
   const AssetsScreen({super.key});
@@ -98,13 +100,13 @@ class _AssetsScreenState extends State<AssetsScreen> {
               children: [
                 // Asset header
                 Container(
-                  color: Theme.of(context).colorScheme.primaryContainer,
+                  color: getAssetCategoryColor(asset.category),
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
                     asset.name,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      color: Colors.white,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -117,11 +119,28 @@ class _AssetsScreenState extends State<AssetsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          asset.description ?? 'No description available',
-                          style: const TextStyle(fontSize: 12),
-                          maxLines: 4,
-                          overflow: TextOverflow.ellipsis,
+                        SizedBox(
+                          height: 80, // Fixed height for consistent card sizing
+                          child: asset.description != null
+                              ? MarkdownBody(
+                                  data: asset.description!,
+                                  styleSheet: MarkdownStyleSheet(
+                                    p: const TextStyle(fontSize: 12),
+                                    h1: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                    h2: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                                    h3: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                    code: TextStyle(
+                                      backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  shrinkWrap: true,
+                                  softLineBreak: true,
+                                )
+                              : const Text(
+                                  'No description available',
+                                  style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                                ),
                         ),
                         const Spacer(),
                         // Asset enabled status
@@ -204,8 +223,8 @@ class _AssetsScreenState extends State<AssetsScreen> {
                   Text(
                     asset.category,
                     style: TextStyle(
-                      color: Colors.grey[600],
-                      fontStyle: FontStyle.italic,
+                      color: getAssetCategoryColor(asset.category),
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   
@@ -213,9 +232,18 @@ class _AssetsScreenState extends State<AssetsScreen> {
                   
                   // Asset description
                   if (asset.description != null) ...[
-                    Text(
-                      asset.description!,
-                      style: Theme.of(context).textTheme.bodyMedium,
+                    MarkdownBody(
+                      data: asset.description!,
+                      styleSheet: MarkdownStyleSheet(
+                        p: Theme.of(context).textTheme.bodyMedium,
+                        h1: Theme.of(context).textTheme.titleLarge,
+                        h2: Theme.of(context).textTheme.titleMedium,
+                        h3: Theme.of(context).textTheme.titleSmall,
+                        code: TextStyle(
+                          backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 16),
                   ],

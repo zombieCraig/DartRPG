@@ -3,10 +3,12 @@ import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../models/oracle.dart';
+import '../models/character.dart';
 import '../utils/datasworn_link_parser.dart';
 import '../utils/dice_roller.dart';
 import '../utils/logging_service.dart';
 import '../screens/oracles_screen.dart';
+import 'asset_detail_dialog.dart';
 
 class OracleResultText extends StatelessWidget {
   final String text;
@@ -50,6 +52,18 @@ class OracleResultText extends StatelessWidget {
       builder: (context, dataswornProvider, _) {
         // Split the text by the links
         final parts = text.split(DataswornLinkParser.linkPattern);
+        final loggingService = LoggingService();
+        loggingService.debug(
+          'OracleResultText: text="$text", parts=${parts.length}',
+          tag: 'OracleResultText',
+        );
+        for (int i = 0; i < parts.length; i++) {
+          loggingService.debug(
+            '  Part $i: "${parts[i]}"',
+            tag: 'OracleResultText',
+          );
+        }
+        
         final spans = <InlineSpan>[];
 
         // Add the text parts and links alternately
@@ -73,68 +87,111 @@ class OracleResultText extends StatelessWidget {
                 ),
                 recognizer: TapGestureRecognizer()
                   ..onTap = () {
-                    // Find the oracle table by path
-                    final linkedOracle = DataswornLinkParser.findOracleByPath(
-                      dataswornProvider,
-                      link.path,
-                    );
-
-                    if (linkedOracle != null) {
-                      // Navigate to the linked oracle
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => OracleTableScreen(table: linkedOracle),
-                        ),
-                      );
-                    } else {
-                      // Log detailed error information
-                      final loggingService = LoggingService();
-                      
-                      // Get a list of all available tables for debugging
-                      final allTables = <Map<String, dynamic>>[];
-                      for (final category in dataswornProvider.oracles) {
-                        for (final table in category.tables) {
-                          allTables.add({
-                            'id': table.id,
-                            'name': table.name,
-                            'category': category.id,
-                          });
-                        }
-                      }
-                      
-                      loggingService.error(
-                        'Oracle not found',
-                        tag: 'OracleResultText',
-                        error: {
-                          'displayText': link.displayText,
-                          'path': link.path,
-                          'availableCategories': dataswornProvider.oracles.map((c) => c.id).toList(),
-                          'suggestedPaths': [
-                            link.path,
-                            '${link.path}/area',
-                            '${link.path}/feature',
-                            'oracles/${link.path.split('/').last}',
-                            _insertCollectionsInPath(link.path),
-                            '${_insertCollectionsInPath(link.path)}/area',
-                          ],
-                          'allTables': allTables,
-                        },
+                    final loggingService = LoggingService();
+                    
+                    // Handle different link types
+                    if (link.linkType == 'asset') {
+                      // Find the asset by path
+                      final asset = DataswornLinkParser.findAssetByPath(
+                        dataswornProvider,
+                        link.path,
                       );
                       
-                      // Show a more detailed error if the oracle wasn't found
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Oracle not found: "${link.displayText}" (${link.path})'),
-                          duration: const Duration(seconds: 4),
-                          action: SnackBarAction(
-                            label: 'Dismiss',
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                            },
+                      if (asset != null) {
+                        // Show asset detail dialog
+                        showDialog(
+                          context: context,
+                          builder: (context) => AssetDetailDialog(asset: asset),
+                        );
+                      } else {
+                        // Log error information
+                        loggingService.error(
+                          'Asset not found',
+                          tag: 'OracleResultText',
+                          error: {
+                            'displayText': link.displayText,
+                            'path': link.path,
+                            'linkType': link.linkType,
+                            'availableAssets': dataswornProvider.assets.map((a) => a.id).toList(),
+                          },
+                        );
+                        
+                        // Show error message
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Asset not found: "${link.displayText}" (${link.path})'),
+                            duration: const Duration(seconds: 4),
+                            action: SnackBarAction(
+                              label: 'Dismiss',
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                              },
+                            ),
                           ),
-                        ),
+                        );
+                      }
+                    } else {
+                      // Handle oracle links (default)
+                      final linkedOracle = DataswornLinkParser.findOracleByPath(
+                        dataswornProvider,
+                        link.path,
                       );
+
+                      if (linkedOracle != null) {
+                        // Navigate to the linked oracle
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => OracleTableScreen(table: linkedOracle),
+                          ),
+                        );
+                      } else {
+                        // Log detailed error information
+                        final allTables = <Map<String, dynamic>>[];
+                        for (final category in dataswornProvider.oracles) {
+                          for (final table in category.tables) {
+                            allTables.add({
+                              'id': table.id,
+                              'name': table.name,
+                              'category': category.id,
+                            });
+                          }
+                        }
+                        
+                        loggingService.error(
+                          'Oracle not found',
+                          tag: 'OracleResultText',
+                          error: {
+                            'displayText': link.displayText,
+                            'path': link.path,
+                            'linkType': link.linkType,
+                            'availableCategories': dataswornProvider.oracles.map((c) => c.id).toList(),
+                            'suggestedPaths': [
+                              link.path,
+                              '${link.path}/area',
+                              '${link.path}/feature',
+                              'oracles/${link.path.split('/').last}',
+                              _insertCollectionsInPath(link.path),
+                              '${_insertCollectionsInPath(link.path)}/area',
+                            ],
+                            'allTables': allTables,
+                          },
+                        );
+                        
+                        // Show a more detailed error if the oracle wasn't found
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Oracle not found: "${link.displayText}" (${link.path})'),
+                            duration: const Duration(seconds: 4),
+                            action: SnackBarAction(
+                              label: 'Dismiss',
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                              },
+                            ),
+                          ),
+                        );
+                      }
                     }
                   },
               ),
@@ -198,12 +255,16 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
     final links = DataswornLinkParser.parseLinks(widget.result);
     
     loggingService.info(
-      'Processing linked oracles',
+      'Processing linked content',
       tag: 'OracleResultDialog',
       error: {
         'result': widget.result,
         'foundLinks': links.length,
-        'links': links.map((l) => {'text': l.displayText, 'path': l.path}).toList(),
+        'links': links.map((l) => {
+          'text': l.displayText, 
+          'path': l.path,
+          'type': l.linkType
+        }).toList(),
       },
     );
     
@@ -220,13 +281,34 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
       return;
     }
 
+    // Track if we found any links (either oracle or asset)
+    bool foundAnyLinks = false;
+
     for (final link in links) {
+      // Skip asset links in the recursive processing - they'll be handled directly when clicked
+      if (link.linkType == 'asset') {
+        // Just verify the asset exists
+        final asset = DataswornLinkParser.findAssetByPath(
+          dataswornProvider,
+          link.path,
+        );
+        
+        if (asset != null) {
+          foundAnyLinks = true;
+          // We don't add assets to the linked results, they'll be shown on demand
+        }
+        continue;
+      }
+      
+      // Process oracle links
       final linkedOracle = DataswornLinkParser.findOracleByPath(
         dataswornProvider,
         link.path,
       );
 
       if (linkedOracle != null && linkedOracle.rows.isNotEmpty) {
+        foundAnyLinks = true;
+        
         // Roll on the linked oracle
         final rollResult = DiceRoller.rollOracle(linkedOracle.diceFormat);
         final total = rollResult['total'] as int;
@@ -254,6 +336,11 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
             // We'll only process one level of recursion to avoid infinite loops
             final nestedLinks = DataswornLinkParser.parseLinks(matchingRow.result);
             for (final nestedLink in nestedLinks) {
+              // Skip asset links in nested results
+              if (nestedLink.linkType == 'asset') {
+                continue;
+              }
+              
               final nestedOracle = DataswornLinkParser.findOracleByPath(
                 dataswornProvider,
                 nestedLink.path,
@@ -290,8 +377,8 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
     }
 
     // If we didn't find any linked results but we had links, show an error
-    if (_linkedResults.isEmpty && links.isNotEmpty) {
-      // Get a list of all available tables for debugging
+    if (!foundAnyLinks && links.isNotEmpty) {
+      // Get a list of all available tables and assets for debugging
       final allTables = <Map<String, dynamic>>[];
       for (final category in dataswornProvider.oracles) {
         for (final table in category.tables) {
@@ -303,28 +390,35 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
         }
       }
       
+      final allAssets = <Map<String, dynamic>>[];
+      for (final asset in dataswornProvider.assets) {
+        allAssets.add({
+          'id': asset.id,
+          'name': asset.name,
+          'category': asset.category,
+        });
+      }
+      
       // Log detailed error information
       loggingService.error(
-        'Could not find referenced oracles',
+        'Could not find referenced content',
         tag: 'OracleResultDialog',
         error: {
-          'links': links.map((l) => {'text': l.displayText, 'path': l.path}).toList(),
+          'links': links.map((l) => {
+            'text': l.displayText, 
+            'path': l.path,
+            'type': l.linkType
+          }).toList(),
           'availableCategories': dataswornProvider.oracles.map((c) => c.id).toList(),
-          'suggestedPaths': links.map((l) => [
-            l.path,
-            '${l.path}/area',
-            '${l.path}/feature',
-            'oracles/${l.path.split('/').last}',
-            OracleResultText._insertCollectionsInPath(l.path),
-            '${OracleResultText._insertCollectionsInPath(l.path)}/area',
-          ]).toList(),
+          'availableAssets': dataswornProvider.assets.map((a) => a.id).toList(),
           'allTables': allTables,
+          'allAssets': allAssets,
         },
       );
       
       setState(() {
         _isLoading = false;
-        _linkError = 'Found ${links.length} links, but could not find the referenced oracles.';
+        _linkError = 'Found ${links.length} links, but could not find the referenced content.';
       });
       return;
     }

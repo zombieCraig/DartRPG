@@ -51,11 +51,13 @@
 5. Add appropriate error handling and logging
 
 ### Logging Best Practices
-1. Use appropriate log levels based on message importance
-2. Include contextual information (tag, method name)
-3. Log exceptions with stack traces
-4. Keep log messages clear and informative
-5. Avoid logging sensitive information
+1. Always use the custom LoggingService instead of dart:developer or print statements
+2. Use appropriate log levels based on message importance (debug, info, warning, error)
+3. Include contextual information (tag, method name) to make logs more traceable
+4. Log exceptions with stack traces for better debugging
+5. Keep log messages clear and informative
+6. Avoid logging sensitive information
+7. Use the LogViewerScreen for reviewing logs during development and testing
 
 ## User Preferences
 

@@ -23,6 +23,10 @@
 
 ### Utilities
 - **Logging Service**: Custom logging implementation for debugging and error tracking
+  - Provides debug, info, warning, and error log levels
+  - Stores logs in memory for viewing in the LogViewerScreen
+  - Should always be used instead of dart:developer or print statements
+  - Formats logs with timestamps, levels, and optional tags
 - **Dice Roller**: Utility for simulating dice rolls for game mechanics
 - **Datasworn Parser**: Utility for parsing Ironsworn game data
 

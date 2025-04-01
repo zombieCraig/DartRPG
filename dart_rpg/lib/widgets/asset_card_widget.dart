@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../models/character.dart';
+import '../utils/asset_utils.dart';
 
 class AssetCardWidget extends StatelessWidget {
   final Asset asset;
@@ -15,19 +17,7 @@ class AssetCardWidget extends StatelessWidget {
 
   Color _getAssetColor(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
-    switch (asset.category.toLowerCase()) {
-      case 'base rig':
-        return isDarkMode ? Colors.white : Colors.black;
-      case 'module':
-        return Colors.blue.shade500;
-      case 'path':
-        return Colors.orange.shade500;
-      case 'companion':
-        return isDarkMode ? Colors.amber.shade300 : Colors.amber.shade700;
-      default:
-        return Colors.purple.shade500;
-    }
+    return getAssetCategoryColor(asset.category, isDarkMode: isDarkMode);
   }
 
   @override
@@ -78,11 +68,23 @@ class AssetCardWidget extends StatelessWidget {
                 ),
                 if (asset.description != null && asset.description!.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Text(
-                    asset.description!,
-                    style: const TextStyle(fontSize: 12),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  SizedBox(
+                    height: 40, // Fixed height for consistent card sizing
+                    child: MarkdownBody(
+                      data: asset.description!,
+                      styleSheet: MarkdownStyleSheet(
+                        p: const TextStyle(fontSize: 12),
+                        h1: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                        h2: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                        h3: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        code: TextStyle(
+                          backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                          fontSize: 12,
+                        ),
+                      ),
+                      shrinkWrap: true,
+                      softLineBreak: true,
+                    ),
                   ),
                 ],
               ],

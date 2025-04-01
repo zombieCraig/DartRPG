@@ -19,6 +19,12 @@ This work enhances both the quest management system and the journaling system to
 
 ## Recent Changes
 
+### Logging Standardization (March 2025)
+- Established standard to always use the custom LoggingService instead of dart:developer or print statements
+- Updated DataswornLinkParser to use LoggingService for consistent logging
+- Enhanced logging with proper tags and context information for better traceability
+- Documented logging best practices in memory bank files
+
 ### Journal Editor Toolbar Enhancement (March 2025)
 - Added a Quest button to the journal editor toolbar for quick access to the Quest Screen
 - Fixed GameScreen to respect initialTabIndex when explicitly provided

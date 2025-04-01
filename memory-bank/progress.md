@@ -40,6 +40,9 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Comprehensive logging system and log viewer
 
 ### Recently Completed
+- ✅ Standardized logging approach to always use LoggingService instead of dart:developer
+- ✅ Updated DataswornLinkParser to use LoggingService for consistent logging
+- ✅ Enhanced logging with proper tags and context information for better traceability
 - ✅ Quest button in journal editor toolbar for direct access to Quest Screen
 - ✅ Fixed GameScreen to respect initialTabIndex when explicitly provided
 - ✅ Enhanced keyboard shortcut handling for CTRL+Q in the editor

@@ -4,6 +4,8 @@ import '../providers/datasworn_provider.dart';
 import '../providers/game_provider.dart';
 import '../models/oracle.dart';
 import '../utils/dice_roller.dart';
+import '../utils/logging_service.dart';
+import '../widgets/oracle_result_text.dart';
 
 class OracleCategoryScreen extends StatelessWidget {
   final OracleCategory category;
@@ -91,6 +93,13 @@ class OracleCategoryScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) {
+        // Log the result for debugging
+        final loggingService = LoggingService();
+        loggingService.debug(
+          'Oracle result: ${matchingRow!.result}',
+          tag: 'OracleCategoryScreen',
+        );
+        
         return AlertDialog(
           title: Text('${table.name} Result'),
           content: Column(
@@ -99,8 +108,9 @@ class OracleCategoryScreen extends StatelessWidget {
             children: [
               Text('Roll: $total'),
               const SizedBox(height: 16),
-              Text(
-                matchingRow!.result,
+              // Use OracleResultText widget to display the result with clickable links
+              OracleResultText(
+                text: matchingRow!.result,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
@@ -191,7 +201,9 @@ class OracleTableScreen extends StatelessWidget {
                               
                               // Result
                               Expanded(
-                                child: Text(row.result),
+                                child: OracleResultText(
+                                  text: row.result,
+                                ),
                               ),
                             ],
                           ),
@@ -241,6 +253,13 @@ class OracleTableScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) {
+        // Log the result for debugging
+        final loggingService = LoggingService();
+        loggingService.debug(
+          'Oracle result: ${matchingRow!.result}',
+          tag: 'OracleTableScreen',
+        );
+        
         return AlertDialog(
           title: Text('${table.name} Result'),
           content: Column(
@@ -249,8 +268,9 @@ class OracleTableScreen extends StatelessWidget {
             children: [
               Text('Roll: $total'),
               const SizedBox(height: 16),
-              Text(
-                matchingRow!.result,
+              // Use OracleResultText widget to display the result with clickable links
+              OracleResultText(
+                text: matchingRow!.result,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
@@ -591,7 +611,9 @@ class _OraclesScreenState extends State<OraclesScreen> {
                             
                             // Result
                             Expanded(
-                              child: Text(row.result),
+                              child: OracleResultText(
+                                text: row.result,
+                              ),
                             ),
                           ],
                         ),
@@ -640,6 +662,13 @@ class _OraclesScreenState extends State<OraclesScreen> {
     showDialog(
       context: context,
       builder: (context) {
+        // Log the result for debugging
+        final loggingService = LoggingService();
+        loggingService.debug(
+          'Oracle result: ${matchingRow!.result}',
+          tag: 'OraclesScreen',
+        );
+        
         return AlertDialog(
           title: Text('${table.name} Result'),
           content: Column(
@@ -648,8 +677,9 @@ class _OraclesScreenState extends State<OraclesScreen> {
             children: [
               Text('Roll: $total'),
               const SizedBox(height: 16),
-              Text(
-                matchingRow!.result,
+              // Use OracleResultText widget to display the result with clickable links
+              OracleResultText(
+                text: matchingRow!.result,
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],

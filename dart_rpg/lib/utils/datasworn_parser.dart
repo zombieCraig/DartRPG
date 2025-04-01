@@ -182,13 +182,10 @@ class DataswornParser {
     
     final nodeTypeJson = datasworn['oracles']['node_type'];
     
-    // Find the Core Segment Node Type table
-    OracleTable? coreSegmentNodeTypeTable;
     
     if (nodeTypeJson['contents'] != null) {
       nodeTypeJson['contents'].forEach((tableId, tableJson) {
         if (tableId == 'core_segment_node_type') {
-          coreSegmentNodeTypeTable = OracleTable.fromDatasworn(tableJson, tableId);
         }
       });
     }

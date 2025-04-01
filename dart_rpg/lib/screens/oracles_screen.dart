@@ -148,48 +148,25 @@ class OracleCategoryScreen extends StatelessWidget {
       return;
     }
     
-    // Show the result
+    // We've already checked that matchingRow is not null above
+    final row = matchingRow!;
+    
+    // Log the result for debugging
+    final loggingService = LoggingService();
+    loggingService.debug(
+      'Oracle result: ${row.result}, text2: ${row.text2}',
+      tag: 'OracleCategoryScreen',
+    );
+    
+    // Show the result using OracleResultDialog
     showDialog(
       context: context,
       builder: (context) {
-        // Log the result for debugging
-        final loggingService = LoggingService();
-        loggingService.debug(
-          'Oracle result: ${matchingRow!.result}',
-          tag: 'OracleCategoryScreen',
-        );
-        
-        return AlertDialog(
-          title: Text('${table.name} Result'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Roll: $total'),
-              const SizedBox(height: 16),
-              // Use OracleResultText widget to display the result with clickable links and processed references
-              OracleResultText(
-                text: matchingRow.result,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-                processReferences: true,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Close'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _rollOnOracleFromCategory(context, table);
-              },
-              child: const Text('Roll Again'),
-            ),
-          ],
+        return OracleResultDialog(
+          table: table,
+          roll: total,
+          result: row.result,
+          text2: row.text2,
         );
       },
     );
@@ -245,26 +222,58 @@ class OracleTableScreen extends StatelessWidget {
                         margin: const EdgeInsets.only(bottom: 4),
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: Row(
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Roll range
-                              SizedBox(
-                                width: 60,
-                                child: Text(
-                                  row.minRoll == row.maxRoll
-                                      ? '${row.minRoll}'
-                                      : '${row.minRoll}-${row.maxRoll}',
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Roll range
+                                  SizedBox(
+                                    width: 60,
+                                    child: Text(
+                                      row.minRoll == row.maxRoll
+                                          ? '${row.minRoll}'
+                                          : '${row.minRoll}-${row.maxRoll}',
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                  
+                                  // Result
+                                  Expanded(
+                                    child: OracleResultText(
+                                      text: row.result,
+                                    ),
+                                  ),
+                                ],
                               ),
                               
-                              // Result
-                              Expanded(
-                                child: OracleResultText(
-                                  text: row.result,
+                              // Display text2 if available
+                              if (row.text2 != null && table.text2Label != null) ...[
+                                const SizedBox(height: 4),
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 60.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${table.text2Label}:',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      OracleResultText(
+                                        text: row.text2!,
+                                        style: const TextStyle(
+                                          fontStyle: FontStyle.italic,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
+                              ],
                             ],
                           ),
                         ),
@@ -309,48 +318,25 @@ class OracleTableScreen extends StatelessWidget {
       return;
     }
     
-    // Show the result
+    // We've already checked that matchingRow is not null above
+    final row = matchingRow!;
+    
+    // Log the result for debugging
+    final loggingService = LoggingService();
+    loggingService.debug(
+      'Oracle result: ${row.result}, text2: ${row.text2}',
+      tag: 'OracleTableScreen',
+    );
+    
+    // Show the result using OracleResultDialog
     showDialog(
       context: context,
       builder: (context) {
-        // Log the result for debugging
-        final loggingService = LoggingService();
-        loggingService.debug(
-          'Oracle result: ${matchingRow!.result}',
-          tag: 'OracleTableScreen',
-        );
-        
-        return AlertDialog(
-          title: Text('${table.name} Result'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Roll: $total'),
-              const SizedBox(height: 16),
-              // Use OracleResultText widget to display the result with clickable links and processed references
-              OracleResultText(
-                text: matchingRow.result,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-                processReferences: true,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Close'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _rollOnOracleTable(context, table);
-              },
-              child: const Text('Roll Again'),
-            ),
-          ],
+        return OracleResultDialog(
+          table: table,
+          roll: total,
+          result: row.result,
+          text2: row.text2,
         );
       },
     );
@@ -706,26 +692,58 @@ class _OraclesScreenState extends State<OraclesScreen> {
                       margin: const EdgeInsets.only(bottom: 4),
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: Row(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Roll range
-                            SizedBox(
-                              width: 60,
-                              child: Text(
-                                row.minRoll == row.maxRoll
-                                    ? '${row.minRoll}'
-                                    : '${row.minRoll}-${row.maxRoll}',
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Roll range
+                                SizedBox(
+                                  width: 60,
+                                  child: Text(
+                                    row.minRoll == row.maxRoll
+                                        ? '${row.minRoll}'
+                                        : '${row.minRoll}-${row.maxRoll}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                
+                                // Result
+                                Expanded(
+                                  child: OracleResultText(
+                                    text: row.result,
+                                  ),
+                                ),
+                              ],
                             ),
                             
-                            // Result
-                            Expanded(
-                              child: OracleResultText(
-                                text: row.result,
+                            // Display text2 if available
+                            if (row.text2 != null && table.text2Label != null) ...[
+                              const SizedBox(height: 4),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 60.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${table.text2Label}:',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    OracleResultText(
+                                      text: row.text2!,
+                                      style: const TextStyle(
+                                        fontStyle: FontStyle.italic,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
+                            ],
                           ],
                         ),
                       ),
@@ -769,48 +787,25 @@ class _OraclesScreenState extends State<OraclesScreen> {
       return;
     }
     
-    // Show the result
+    // We've already checked that matchingRow is not null above
+    final row = matchingRow!;
+    
+    // Log the result for debugging
+    final loggingService = LoggingService();
+    loggingService.debug(
+      'Oracle result: ${row.result}, text2: ${row.text2}',
+      tag: 'OraclesScreen',
+    );
+    
+    // Show the result using OracleResultDialog
     showDialog(
       context: context,
       builder: (context) {
-        // Log the result for debugging
-        final loggingService = LoggingService();
-        loggingService.debug(
-          'Oracle result: ${matchingRow!.result}',
-          tag: 'OraclesScreen',
-        );
-        
-        return AlertDialog(
-          title: Text('${table.name} Result'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Roll: $total'),
-              const SizedBox(height: 16),
-              // Use OracleResultText widget to display the result with clickable links and processed references
-              OracleResultText(
-                text: matchingRow.result,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-                processReferences: true,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Close'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _rollOnOracle(context, table);
-              },
-              child: const Text('Roll Again'),
-            ),
-          ],
+        return OracleResultDialog(
+          table: table,
+          roll: total,
+          result: row.result,
+          text2: row.text2,
         );
       },
     );

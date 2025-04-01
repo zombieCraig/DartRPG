@@ -296,12 +296,14 @@ class OracleResultDialog extends StatefulWidget {
   final OracleTable table;
   final int roll;
   final String result;
+  final String? text2; // Additional information for table_text2 oracle type
 
   const OracleResultDialog({
     super.key,
     required this.table,
     required this.roll,
     required this.result,
+    this.text2, // Optional field
   });
 
   @override
@@ -409,6 +411,20 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // Add logging to debug text2 display issue
+    final loggingService = LoggingService();
+    loggingService.debug(
+      'OracleResultDialog.build: table=${widget.table.id}, oracleType=${widget.table.oracleType}, text2Label=${widget.table.text2Label}, text2=${widget.text2}',
+      tag: 'OracleResultDialog',
+    );
+    
+    // Log the condition for displaying text2
+    final shouldShowText2 = widget.text2 != null && widget.table.text2Label != null;
+    loggingService.debug(
+      'OracleResultDialog.build: shouldShowText2=$shouldShowText2 (text2 != null: ${widget.text2 != null}, text2Label != null: ${widget.table.text2Label != null})',
+      tag: 'OracleResultDialog',
+    );
+    
     return AlertDialog(
       title: Text('${widget.table.name} Result'),
       content: SingleChildScrollView(
@@ -425,6 +441,21 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
               style: const TextStyle(fontWeight: FontWeight.bold),
               processReferences: true,
             ),
+            
+            // Show text2 field if available
+            if (widget.text2 != null && widget.table.text2Label != null) ...[
+              const SizedBox(height: 16),
+              Text(
+                '${widget.table.text2Label}:',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              OracleResultText(
+                text: widget.text2!,
+                style: const TextStyle(fontStyle: FontStyle.italic),
+                processReferences: true,
+              ),
+            ],
             
             // Show linked oracle results section if we searched for links
             if (_searchedForLinks) ...[
@@ -537,6 +568,13 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
       return;
     }
     
+    // Log the row data for debugging
+    final loggingService = LoggingService();
+    loggingService.debug(
+      'OracleResultDialog._rollOnOracle: table=${table.id}, oracleType=${table.oracleType}, text2Label=${table.text2Label}, matchingRow.text2=${matchingRow.text2}',
+      tag: 'OracleResultDialog',
+    );
+    
     // Show the result
     showDialog(
       context: context,
@@ -545,6 +583,7 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
           table: table,
           roll: total,
           result: matchingRow!.result,
+          text2: matchingRow.text2, // Pass the text2 field
         );
       },
     );

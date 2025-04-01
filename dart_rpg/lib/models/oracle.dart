@@ -1,12 +1,16 @@
+import '../utils/logging_service.dart';
+
 class OracleTableRow {
   final int minRoll;
   final int maxRoll;
   final String result;
+  final String? text2; // Additional information for table_text2 oracle type
 
   OracleTableRow({
     required this.minRoll,
     required this.maxRoll,
     required this.result,
+    this.text2, // Optional field
   });
 
   factory OracleTableRow.fromJson(Map<String, dynamic> json) {
@@ -14,6 +18,7 @@ class OracleTableRow {
       minRoll: json['minRoll'],
       maxRoll: json['maxRoll'],
       result: json['result'],
+      text2: json['text2'],
     );
   }
 
@@ -22,6 +27,7 @@ class OracleTableRow {
       'minRoll': minRoll,
       'maxRoll': maxRoll,
       'result': result,
+      'text2': text2,
     };
   }
 
@@ -37,6 +43,8 @@ class OracleTable {
   final String? description;
   final List<OracleTableRow> rows;
   final String diceFormat; // e.g., "1d100", "2d10", etc.
+  final String? text2Label; // Label for the text2 column in table_text2 oracle type
+  final String? oracleType; // Type of oracle table (table_text, table_text2, etc.)
 
   OracleTable({
     required this.id,
@@ -44,6 +52,8 @@ class OracleTable {
     this.description,
     required this.rows,
     required this.diceFormat,
+    this.text2Label,
+    this.oracleType,
   });
 
   factory OracleTable.fromJson(Map<String, dynamic> json) {
@@ -55,6 +65,8 @@ class OracleTable {
           .map((r) => OracleTableRow.fromJson(r))
           .toList(),
       diceFormat: json['diceFormat'],
+      text2Label: json['text2Label'],
+      oracleType: json['oracleType'],
     );
   }
 
@@ -65,6 +77,8 @@ class OracleTable {
       'description': description,
       'rows': rows.map((r) => r.toJson()).toList(),
       'diceFormat': diceFormat,
+      'text2Label': text2Label,
+      'oracleType': oracleType,
     };
   }
 
@@ -82,17 +96,50 @@ class OracleTable {
   factory OracleTable.fromDatasworn(Map<String, dynamic> json, String tableId) {
     final String name = json['name'] ?? 'Unknown Oracle';
     final String? description = json['summary'];
+    final String oracleType = json['oracle_type'] ?? 'table_text';
+    String? text2Label;
+    
+    // Add logging to debug text2 display issue
+    final loggingService = LoggingService();
+    loggingService.debug(
+      'OracleTable.fromDatasworn: tableId=$tableId, name=$name, oracleType=$oracleType',
+      tag: 'OracleTable',
+    );
     
     List<OracleTableRow> rows = [];
     String diceFormat = '1d100'; // Default
     
-    if (json['oracle_type'] == 'table_text' && json['rows'] != null) {
+    // Extract column labels if present
+    if (json['column_labels'] != null) {
+      final columnLabels = json['column_labels'];
+      loggingService.debug(
+        'OracleTable.fromDatasworn: columnLabels=${columnLabels.toString()}',
+        tag: 'OracleTable',
+      );
+      
+      if (columnLabels['text2'] != null) {
+        text2Label = columnLabels['text2'];
+        loggingService.debug(
+          'OracleTable.fromDatasworn: text2Label=$text2Label',
+          tag: 'OracleTable',
+        );
+      }
+    } else {
+      loggingService.debug(
+        'OracleTable.fromDatasworn: No column_labels found in JSON',
+        tag: 'OracleTable',
+      );
+    }
+    
+    // Handle both table_text and table_text2 oracle types
+    if ((oracleType == 'table_text' || oracleType == 'table_text2') && json['rows'] != null) {
       rows = (json['rows'] as List).map((rowJson) {
         final roll = rowJson['roll'];
         return OracleTableRow(
           minRoll: roll['min'],
           maxRoll: roll['max'],
           result: rowJson['text'] ?? '',
+          text2: rowJson['text2'], // Add text2 field from the row
         );
       }).toList();
       
@@ -115,13 +162,23 @@ class OracleTable {
       }
     }
 
-    return OracleTable(
+    final table = OracleTable(
       id: tableId,
       name: name,
       description: description,
       rows: rows,
       diceFormat: diceFormat,
+      text2Label: text2Label,
+      oracleType: oracleType,
     );
+    
+    // Log the created table
+    loggingService.debug(
+      'OracleTable.fromDatasworn: Created table with id=$tableId, oracleType=${table.oracleType}, text2Label=${table.text2Label}, rows=${table.rows.length}',
+      tag: 'OracleTable',
+    );
+    
+    return table;
   }
 }
 

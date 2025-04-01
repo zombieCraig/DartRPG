@@ -2,6 +2,12 @@
 
 ## Project Patterns
 
+### Component Organization
+- **Break down complex features into specialized components**: When a feature becomes too complex or a file becomes too large, break it down into smaller, specialized components
+- **Create dedicated dialog classes**: For complex dialogs that handle significant logic, create a dedicated class (e.g., `MoveDialog`, `OracleDialog`)
+- **Group related widgets in subdirectories**: Place related widgets in subdirectories (e.g., `widgets/moves/`, `widgets/journal/`)
+- **Extract reusable components**: Identify and extract components that can be reused across the application
+
 ### Naming Conventions
 - **Files**: snake_case for file names (e.g., `game_provider.dart`, `logging_service.dart`)
 - **Classes**: PascalCase for class names (e.g., `GameProvider`, `LoggingService`)

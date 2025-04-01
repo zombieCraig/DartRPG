@@ -33,7 +33,6 @@ class _OracleResultTextState extends State<OracleResultText> {
   String _processedText = '';
   bool _isProcessing = false;
   bool _hasProcessed = false;
-  List<OracleRoll> _oracleRolls = [];
   
   @override
   void initState() {
@@ -54,7 +53,6 @@ class _OracleResultTextState extends State<OracleResultText> {
     if (oldWidget.text != widget.text) {
       _processedText = widget.text;
       _hasProcessed = false;
-      _oracleRolls = [];
       
       // If we should process references, do it when the widget is updated
       if (widget.processReferences && DataswornLinkParser.containsLinks(widget.text)) {
@@ -81,7 +79,6 @@ class _OracleResultTextState extends State<OracleResultText> {
       
       setState(() {
         _processedText = processResult['processedText'] as String;
-        _oracleRolls = processResult['rolls'] as List<OracleRoll>;
         _hasProcessed = true;
       });
     } catch (e) {
@@ -343,7 +340,6 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
         dataswornProvider,
       );
       
-      final processedText = processResult['processedText'] as String;
       final oracleRolls = processResult['rolls'] as List<OracleRoll>;
       
       // Convert OracleRoll objects to LinkedOracleResult objects

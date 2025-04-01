@@ -149,7 +149,7 @@ class OracleCategoryScreen extends StatelessWidget {
     }
     
     // We've already checked that matchingRow is not null above
-    final row = matchingRow!;
+    final row = matchingRow;
     
     // Log the result for debugging
     final loggingService = LoggingService();
@@ -319,7 +319,7 @@ class OracleTableScreen extends StatelessWidget {
     }
     
     // We've already checked that matchingRow is not null above
-    final row = matchingRow!;
+    final row = matchingRow;
     
     // Log the result for debugging
     final loggingService = LoggingService();
@@ -788,7 +788,7 @@ class _OraclesScreenState extends State<OraclesScreen> {
     }
     
     // We've already checked that matchingRow is not null above
-    final row = matchingRow!;
+    final row = matchingRow;
     
     // Log the result for debugging
     final loggingService = LoggingService();

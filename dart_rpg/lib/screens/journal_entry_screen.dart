@@ -17,6 +17,7 @@ import '../utils/oracle_reference_processor.dart';
 import '../widgets/journal/rich_text_editor.dart';
 import '../widgets/journal/linked_items_summary.dart';
 import '../widgets/journal/journal_entry_viewer.dart';
+import '../widgets/journal/move_dialog.dart';
 import '../widgets/oracle_result_text.dart';
 import 'game_screen.dart';
 
@@ -750,25 +751,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     );
   }
   
-  void _rollActionMoveWithOption(BuildContext context, Move move, Map<String, dynamic> option, int modifier) {
-    // Implementation of _rollActionMoveWithOption
-    // This is a placeholder to fix the build error
-  }
-  
-  void _rollProgressMove(BuildContext context, Move move, int progressValue) {
-    // Implementation of _rollProgressMove
-    // This is a placeholder to fix the build error
-  }
-  
-  void _performNoRollMove(BuildContext context, Move move) {
-    // Implementation of _performNoRollMove
-    // This is a placeholder to fix the build error
-  }
-  
-  void _rollActionMove(BuildContext context, Move move, String stat, int modifier) {
-    // Implementation of _rollActionMove
-    // This is a placeholder to fix the build error
-  }
+  // Move-related methods have been moved to the MoveDialog class
   
   void _rollOracleTable(BuildContext context, OracleTable table) {
     // Implementation of _rollOracleTable
@@ -781,8 +764,37 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   }
   
   void _showRollMoveDialog(BuildContext context) {
-    // Implementation of _showRollMoveDialog
-    // This is a placeholder to fix the build error
+    // Only show the dialog if we're in editing mode
+    if (!_isEditing) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You must be in edit mode to roll moves'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    MoveDialog.show(
+      context,
+      onMoveRollAdded: (moveRoll) {
+        setState(() {
+          _moveRolls.add(moveRoll);
+        });
+      },
+      onInsertText: (text) {
+        RichTextEditor.insertTextAtCursor(_editorController, text);
+        
+        // Update the content
+        setState(() {
+          _content = _editorController.text;
+        });
+        
+        // Start auto-save timer
+        _startAutoSaveTimer();
+      },
+      isEditing: true, // Always true since we check above
+    );
   }
   
   void _showRollOracleDialog(BuildContext context) {
@@ -843,7 +855,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                 
                 return AlertDialog(
                   title: const Text('Oracle Tables'),
-                  content: Container(
+                  content: SizedBox(
                     width: double.maxFinite,
                     height: 500,
                     child: Column(

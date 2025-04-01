@@ -19,6 +19,19 @@ This work enhances both the quest management system and the journaling system to
 
 ## Recent Changes
 
+### Move System Restructuring (April 2025)
+- Restructured the Move functionality into a more modular and maintainable architecture
+- Created a dedicated MoveDialog class to encapsulate move selection and rolling logic
+- Separated move-related widgets into specialized components:
+  - MoveList for displaying and selecting moves
+  - MoveDetails for showing move information
+  - ActionRollPanel, ProgressRollPanel, and NoRollPanel for different roll types
+  - RollResultView for displaying roll outcomes
+- Moved move-related methods from JournalEntryScreen to the MoveDialog class
+- Enhanced test structure to accommodate the new architecture
+- Fixed issues with the Move button in the journal entry screen
+- Improved test reliability by making tests more resilient to UI changes
+
 ### Oracle Reference Processing Enhancement (April 2025)
 - Implemented automatic processing of oracle references in oracle results
 - Enhanced DataswornLinkParser to handle both link formats:

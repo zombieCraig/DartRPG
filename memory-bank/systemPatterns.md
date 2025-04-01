@@ -238,6 +238,87 @@ The Quest system follows these key architectural patterns:
 - Responsive layouts that adapt to different screen sizes
 - Keyboard shortcuts with platform-specific modifiers
 
+## Move System Architecture
+
+The Move system follows a modular architecture that separates concerns and improves maintainability:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   JournalEntryScreen                    │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              onMoveRequested()                   │   │
+│  └───────────────────────┬─────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                     MoveDialog                          │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │                 show()                           │   │
+│  └───────────────────────┬─────────────────────────┘   │
+│                          │                             │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │           _rollActionMove()                      │   │
+│  │           _rollProgressMove()                    │   │
+│  │           _performNoRollMove()                   │   │
+│  └─────────────────────────────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                 Specialized Components                  │
+│                                                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
+│  │  MoveList   │  │ MoveDetails │  │RollResultView│    │
+│  └─────────────┘  └─────────────┘  └─────────────┘     │
+│                                                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
+│  │ActionRollPanel│ │ProgressRollPanel│ │NoRollPanel│    │
+│  └─────────────┘  └─────────────┘  └─────────────┘     │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                    RollService                          │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │         performActionRoll()                      │   │
+│  │         performProgressRoll()                    │   │
+│  │         performNoRollMove()                      │   │
+│  └─────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+```
+
+1. **Component Responsibilities**:
+   - `JournalEntryScreen`: Provides the entry point for move rolling via the Move button
+   - `MoveDialog`: A utility class that handles move selection and rolling logic
+   - `MoveList`: Displays a list of available moves for selection
+   - `MoveDetails`: Shows detailed information about a selected move
+   - `ActionRollPanel`, `ProgressRollPanel`, `NoRollPanel`: Specialized components for different roll types
+   - `RollResultView`: Displays the results of a move roll
+   - `RollService`: Handles the actual dice rolling and outcome determination
+
+2. **Process Flow**:
+   - When the Move button is clicked in the JournalEntryScreen, it calls `_showRollMoveDialog`
+   - This method calls `MoveDialog.show()` with appropriate callbacks
+   - The MoveDialog displays a list of moves using the MoveList component
+   - When a move is selected, it shows the move details using the MoveDetails component
+   - Based on the move type, it displays the appropriate roll panel
+   - When a roll is performed, it uses the RollService to determine the outcome
+   - The result is displayed using the RollResultView component
+   - The roll can be added to the journal entry via the provided callbacks
+
+3. **Benefits of this Architecture**:
+   - **Separation of Concerns**: Each component has a specific responsibility
+   - **Modularity**: Components can be developed and tested independently
+   - **Reusability**: Components can be reused in different contexts
+   - **Maintainability**: Changes to one component don't affect others
+   - **Testability**: Components can be tested in isolation
+
+This architecture serves as a model for other complex features in the application, demonstrating how to break down functionality into manageable, specialized components.
+
 ## Future Architectural Considerations
 
 ### Potential Refactorings

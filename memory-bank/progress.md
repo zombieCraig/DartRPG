@@ -40,6 +40,13 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Comprehensive logging system and log viewer
 
 ### Recently Completed
+- ✅ Restructured the Move functionality into a more modular and maintainable architecture
+- ✅ Created a dedicated MoveDialog class to encapsulate move selection and rolling logic
+- ✅ Separated move-related widgets into specialized components
+- ✅ Moved move-related methods from JournalEntryScreen to the MoveDialog class
+- ✅ Enhanced test structure to accommodate the new architecture
+- ✅ Fixed issues with the Move button in the journal entry screen
+- ✅ Improved test reliability by making tests more resilient to UI changes
 - ✅ Implemented automatic processing of oracle references in oracle results
 - ✅ Enhanced DataswornLinkParser to handle both link formats for oracle references
 - ✅ Created OracleReferenceProcessor utility to process nested oracle references

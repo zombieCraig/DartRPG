@@ -66,7 +66,6 @@ class _RichTextEditorState extends State<RichTextEditor> {
   bool _showLocationSuggestions = false;
   String _currentSearchText = '';
   List<dynamic> _filteredSuggestions = [];
-  final LayerLink _layerLink = LayerLink();
   
   @override
   void initState() {

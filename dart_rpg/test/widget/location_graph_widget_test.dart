@@ -209,7 +209,6 @@ void main() {
     });
     
     testWidgets('renders correctly with locations', (WidgetTester tester) async {
-      String? tappedLocationId;
       
       await tester.pumpWidget(
         MaterialApp(
@@ -219,7 +218,6 @@ void main() {
               child: LocationGraphWidget(
                 locations: testLocations,
                 onLocationTap: (id) {
-                  tappedLocationId = id;
                 },
                 onLocationMoved: (id, x, y) {},
                 onScaleChanged: (scale) {},
@@ -242,7 +240,6 @@ void main() {
     });
     
     testWidgets('handles location tap', (WidgetTester tester) async {
-      String? tappedLocationId;
       
       await tester.pumpWidget(
         MaterialApp(
@@ -252,7 +249,6 @@ void main() {
               child: LocationGraphWidget(
                 locations: testLocations,
                 onLocationTap: (id) {
-                  tappedLocationId = id;
                 },
                 onLocationMoved: (id, x, y) {},
                 onScaleChanged: (scale) {},

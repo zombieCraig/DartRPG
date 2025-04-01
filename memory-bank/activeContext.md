@@ -19,6 +19,20 @@ This work enhances both the quest management system and the journaling system to
 
 ## Recent Changes
 
+### Oracle Dialog System Restructuring (April 2025)
+- Restructured the Oracle functionality into a more modular and maintainable architecture
+- Created a dedicated OracleDialog class to encapsulate oracle selection and rolling logic
+- Separated oracle-related widgets into specialized components:
+  - OracleCategoryList for displaying oracle categories
+  - OracleTableList for displaying oracle tables
+  - OracleRollPanel for rolling on oracles
+  - OracleResultView for displaying results with nested rolls
+- Created OracleService to handle oracle rolling logic
+- Moved oracle-related methods from JournalEntryScreen to the OracleDialog class
+- Added tests for the new components
+- Improved code organization and maintainability
+- Reduced risk of data loss by isolating changes to specific components
+
 ### Move System Restructuring (April 2025)
 - Restructured the Move functionality into a more modular and maintainable architecture
 - Created a dedicated MoveDialog class to encapsulate move selection and rolling logic
@@ -138,23 +152,54 @@ This work enhances both the quest management system and the journaling system to
    - Test quest progress rolls and status changes
    - Verify integration with journal entry system
 
-2. **UI Refinements**
+3. **UI Refinements**
    - Improve the visual design of the quest cards
    - Enhance the progress bar visualization
    - Add animations for status changes
    - Optimize mobile experience for the quest screen
 
-3. **Performance Optimization**
+4. **Performance Optimization**
    - Optimize quest list rendering for large numbers of quests
    - Improve progress tracking and roll calculations
    - Enhance quest filtering and sorting
    - Optimize saving and loading of quest data
 
-4. **Testing Infrastructure**
+5. **Testing Infrastructure**
    - Expand test coverage to other critical components
    - Set up continuous integration for automated testing
    - Create test fixtures for common test scenarios
    - Implement integration tests for key user flows
+
+### Future Restructuring Candidates
+Following the successful pattern used in the Move dialog restructuring and planned Oracle dialog restructuring:
+
+1. **Journal Entry Editor System**
+   - Create a dedicated JournalEntryEditor component
+   - Extract EditorToolbar component for formatting actions
+   - Create specialized AutocompleteSystem component
+   - Extract LinkedItemsManager for handling references
+   - Move autosave logic to a dedicated service
+
+2. **Quest Management System**
+   - Create a dedicated QuestDialog class for creation/editing
+   - Extract QuestForm component for quest data entry
+   - Create QuestProgressPanel for progress management
+   - Extract QuestTabList for displaying quest lists by status
+   - Create QuestCard component for individual quest display
+
+3. **Location Graph System**
+   - Extract LocationDialog class for creation/editing
+   - Create LocationForm component for location data entry
+   - Create ConnectionPanel for managing connections
+   - Refine LocationGraphWidget to focus on graph rendering
+   - Create LocationNodeWidget for individual node display
+
+4. **Character Management System**
+   - Create a dedicated CharacterDialog class for creation/editing
+   - Extract CharacterForm component for character data entry
+   - Create StatPanel for stat management
+   - Create ConditionPanel for condition meters
+   - Extract CharacterList for displaying characters
 
 ### Medium-term Goals
 1. **Enhanced Quest Features**

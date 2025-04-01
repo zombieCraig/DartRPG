@@ -77,10 +77,41 @@ The DartRPG application is in active development with core functionality impleme
 ## What's Left to Build
 
 ### High Priority
+- ✅ Oracle Dialog System Restructuring
+  - ✅ Created OracleDialog class
+  - ✅ Extracted OracleCategoryList and OracleTableList components
+  - ✅ Created OracleRollPanel and OracleResultView components
+  - ✅ Moved oracle rolling logic to OracleService
+  - ✅ Updated JournalEntryScreen to use the new components
+  - ✅ Added tests for the new components
 - ⬜ Testing for Quest system features
 - ⬜ Performance optimization for complex journal entries
 - ⬜ UI refinements for the rich text editor and quest cards
 - ⬜ Mobile-friendly interaction improvements for text editing
+
+### Future Restructuring Candidates
+- ⬜ Journal Entry Editor System
+  - ⬜ Create a dedicated JournalEntryEditor component
+  - ⬜ Extract EditorToolbar component for formatting actions
+  - ⬜ Create specialized AutocompleteSystem component
+  - ⬜ Extract LinkedItemsManager for handling references
+  - ⬜ Move autosave logic to a dedicated service
+- ⬜ Quest Management System
+  - ⬜ Create a dedicated QuestDialog class for creation/editing
+  - ⬜ Extract QuestForm component for quest data entry
+  - ⬜ Create QuestProgressPanel for progress management
+  - ⬜ Extract QuestTabList for displaying quest lists by status
+  - ⬜ Create QuestCard component for individual quest display
+- ⬜ Location Graph System
+  - ⬜ Extract LocationDialog class for creation/editing
+  - ⬜ Create LocationForm component for location data entry
+  - ⬜ Create ConnectionPanel for managing connections
+  - ⬜ Refine LocationGraphWidget to focus on graph rendering
+- ⬜ Character Management System
+  - ⬜ Create a dedicated CharacterDialog class for creation/editing
+  - ⬜ Extract CharacterForm component for character data entry
+  - ⬜ Create StatPanel for stat management
+  - ⬜ Create ConditionPanel for condition meters
 
 ### Medium Priority
 - ⬜ Enhanced character progression tracking

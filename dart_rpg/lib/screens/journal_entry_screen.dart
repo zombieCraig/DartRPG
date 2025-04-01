@@ -19,6 +19,7 @@ import '../widgets/journal/linked_items_summary.dart';
 import '../widgets/journal/journal_entry_viewer.dart';
 import '../widgets/journal/move_dialog.dart';
 import '../widgets/oracle_result_text.dart';
+import '../widgets/oracles/oracle_dialog.dart';
 import 'game_screen.dart';
 
 // Custom intents for keyboard shortcuts
@@ -798,409 +799,37 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   }
   
   void _showRollOracleDialog(BuildContext context) {
-    final TextEditingController searchController = TextEditingController();
-    String searchQuery = '';
-    
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Consumer<DataswornProvider>(
-              builder: (context, dataswornProvider, _) {
-                final categories = dataswornProvider.oracles;
-                
-                if (categories.isEmpty) {
-                  return AlertDialog(
-                    title: const Text('Oracle Tables'),
-                    content: const Center(
-                      child: Text('No oracle categories available'),
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text('Close'),
-                      ),
-                    ],
-                  );
-                }
-                
-                // Filter oracles by search query if provided
-                List<OracleTable> filteredTables = [];
-                if (searchQuery.isNotEmpty) {
-                  for (final category in categories) {
-                    // Add tables from this category
-                    filteredTables.addAll(
-                      category.tables.where((table) => 
-                        table.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
-                        (table.description?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false)
-                      )
-                    );
-                    
-                    // Add tables from subcategories
-                    if (category.subcategories.isNotEmpty) {
-                      for (final subcategory in category.subcategories) {
-                        filteredTables.addAll(
-                          subcategory.tables.where((table) => 
-                            table.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
-                            (table.description?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false)
-                          )
-                        );
-                      }
-                    }
-                  }
-                }
-                
-                return AlertDialog(
-                  title: const Text('Oracle Tables'),
-                  content: SizedBox(
-                    width: double.maxFinite,
-                    height: 500,
-                    child: Column(
-                      children: [
-                        // Search bar
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child: TextField(
-                            controller: searchController,
-                            decoration: InputDecoration(
-                              labelText: 'Search Oracles',
-                              hintText: 'Enter oracle name or description',
-                              prefixIcon: const Icon(Icons.search),
-                              border: const OutlineInputBorder(),
-                              suffixIcon: searchQuery.isNotEmpty
-                                  ? IconButton(
-                                      icon: const Icon(Icons.clear),
-                                      onPressed: () {
-                                        searchController.clear();
-                                        setState(() {
-                                          searchQuery = '';
-                                        });
-                                      },
-                                    )
-                                  : null,
-                            ),
-                            onChanged: (value) {
-                              setState(() {
-                                searchQuery = value;
-                              });
-                            },
-                          ),
-                        ),
-                        
-                        // Oracle list
-                        Expanded(
-                          child: searchQuery.isNotEmpty
-                              ? _buildOracleTableList(context, filteredTables)
-                              : _buildOracleCategoryList(context, categories),
-                        ),
-                      ],
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: const Text('Close'),
-                    ),
-                  ],
-                );
-              },
-            );
-          },
-        );
-      },
-    );
-  }
-  
-  Widget _buildOracleCategoryList(BuildContext context, List<OracleCategory> categories) {
-    return ListView.builder(
-      itemCount: categories.length,
-      itemBuilder: (context, index) {
-        final category = categories[index];
-        
-        return ExpansionTile(
-          title: Text(category.name),
-          subtitle: category.description != null
-              ? Text(
-                  category.description!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                )
-              : null,
-          children: [
-            // Subcategories
-            if (category.subcategories.isNotEmpty)
-              ...category.subcategories.map((subcategory) => 
-                Padding(
-                  padding: const EdgeInsets.only(left: 16.0),
-                  child: ExpansionTile(
-                    title: Text(subcategory.name),
-                    subtitle: subcategory.description != null
-                        ? Text(
-                            subcategory.description!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          )
-                        : null,
-                    children: [
-                      ...subcategory.tables.map((table) => 
-                        ListTile(
-                          title: Text(table.name),
-                          subtitle: table.description != null
-                              ? Text(
-                                  table.description!,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                )
-                              : null,
-                          trailing: IconButton(
-                            icon: const Icon(Icons.casino),
-                            tooltip: 'Roll on this oracle',
-                            onPressed: () {
-                              _rollOnOracleTable(context, table);
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            
-            // Tables in this category
-            ...category.tables.map((table) => 
-              ListTile(
-                title: Text(table.name),
-                subtitle: table.description != null
-                    ? Text(
-                        table.description!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      )
-                    : null,
-                trailing: IconButton(
-                  icon: const Icon(Icons.casino),
-                  tooltip: 'Roll on this oracle',
-                  onPressed: () {
-                    _rollOnOracleTable(context, table);
-                  },
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-  
-  Widget _buildOracleTableList(BuildContext context, List<OracleTable> tables) {
-    if (tables.isEmpty) {
-      return const Center(
-        child: Text('No matching oracle tables found'),
-      );
-    }
-    
-    final sortedTables = List<OracleTable>.from(tables)..sort((a, b) => a.name.compareTo(b.name));
-    
-    return ListView.builder(
-      itemCount: sortedTables.length,
-      itemBuilder: (context, index) {
-        final table = sortedTables[index];
-        
-        return ListTile(
-          title: Text(table.name),
-          subtitle: table.description != null
-              ? Text(
-                  table.description!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                )
-              : null,
-          trailing: IconButton(
-            icon: const Icon(Icons.casino),
-            tooltip: 'Roll on this oracle',
-            onPressed: () {
-              _rollOnOracleTable(context, table);
-            },
-          ),
-        );
-      },
-    );
-  }
-  
-  void _rollOnOracleTable(BuildContext context, OracleTable table) async {
-    if (table.rows.isEmpty) {
+    // Only show the dialog if we're in editing mode
+    if (!_isEditing) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('This oracle has no table entries'),
+          content: Text('You must be in edit mode to roll oracles'),
+          backgroundColor: Colors.red,
         ),
       );
       return;
     }
     
-    // Roll on the oracle
-    final rollResult = DiceRoller.rollOracle(table.diceFormat);
-    final total = rollResult['total'] as int;
-    final dice = rollResult['dice'] as List<int>;
-    
-    // Find the matching table entry
-    OracleTableRow? matchingRow;
-    for (final row in table.rows) {
-      if (row.matchesRoll(total)) {
-        matchingRow = row;
-        break;
-      }
-    }
-    
-    if (matchingRow == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('No result found for roll: $total'),
-        ),
-      );
-      return;
-    }
-    
-    // Create an OracleRoll object
-    final oracleRoll = OracleRoll(
-      oracleName: table.name,
-      oracleTable: table.id,
-      dice: dice,
-      result: matchingRow.result,
-    );
-    
-    // Process nested oracle references
-    final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
-    
-    // Check if the result contains oracle references
-    if (DataswornLinkParser.containsLinks(matchingRow.result)) {
-      // Process the references
-      final processResult = await OracleReferenceProcessor.processOracleReferences(
-        matchingRow.result,
-        dataswornProvider,
-      );
-      
-      final processedText = processResult['processedText'] as String;
-      final nestedRolls = processResult['rolls'] as List<OracleRoll>;
-      
-      // Update the oracle roll with the processed text and nested rolls
-      oracleRoll.result = processedText;
-      oracleRoll.nestedRolls.addAll(nestedRolls);
-    }
-    
-    // Show the result
-    showDialog(
-      context: context,
-      builder: (context) {
-        // Log the result for debugging
-        final loggingService = LoggingService();
-        loggingService.debug(
-          'Oracle result: ${oracleRoll.result}',
-          tag: 'JournalEntryScreen',
-        );
-        
-        return AlertDialog(
-          title: Text('${table.name} Result'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Roll: $total'),
-              const SizedBox(height: 16),
-              // Use OracleResultText widget to display the result with clickable links and processed references
-              OracleResultText(
-                text: oracleRoll.result,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-                processReferences: true,
-              ),
-              
-              // Show nested oracle rolls if any
-              if (oracleRoll.nestedRolls.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                const Divider(),
-                const Text(
-                  'Nested Oracle Rolls:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                
-                // List all nested rolls
-                ...oracleRoll.nestedRolls.map((nestedRoll) => 
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${nestedRoll.oracleName} (Roll: ${nestedRoll.dice.join(', ')})',
-                          style: const TextStyle(fontStyle: FontStyle.italic),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          nestedRoll.result,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Close'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _rollOnOracleTable(context, table);
-              },
-              child: const Text('Roll Again'),
-            ),
-            TextButton(
-              onPressed: () {
-                // Add the oracle roll to the journal entry
-                setState(() {
-                  _oracleRolls.add(oracleRoll);
-                });
-                
-                // Insert the oracle roll text at the cursor position
-                if (_isEditing) {
-                  final formattedText = oracleRoll.getFormattedText();
-                  RichTextEditor.insertTextAtCursor(_editorController, formattedText);
-                  
-                  // Update the content
-                  setState(() {
-                    _content = _editorController.text;
-                  });
-                  
-                  // Start auto-save timer
-                  _startAutoSaveTimer();
-                }
-                
-                Navigator.pop(context);
-                
-                // Show confirmation
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Oracle roll added to journal entry'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              },
-              child: const Text('Add to Journal'),
-            ),
-          ],
-        );
+    // Use the OracleDialog class to show the dialog
+    OracleDialog.show(
+      context,
+      onOracleRollAdded: (oracleRoll) {
+        setState(() {
+          _oracleRolls.add(oracleRoll);
+        });
       },
+      onInsertText: (text) {
+        RichTextEditor.insertTextAtCursor(_editorController, text);
+        
+        // Update the content
+        setState(() {
+          _content = _editorController.text;
+        });
+        
+        // Start auto-save timer
+        _startAutoSaveTimer();
+      },
+      isEditing: true, // Always true since we check above
     );
   }
   

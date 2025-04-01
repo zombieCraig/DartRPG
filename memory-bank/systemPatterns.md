@@ -319,6 +319,34 @@ The Move system follows a modular architecture that separates concerns and impro
 
 This architecture serves as a model for other complex features in the application, demonstrating how to break down functionality into manageable, specialized components.
 
+## Component Extraction Pattern
+
+The project follows a component extraction pattern for complex features to improve maintainability and reduce the risk of data loss or regression:
+
+1. **Identify Complex Features**: Look for features with multiple responsibilities, complex UI, or embedded in large classes
+2. **Extract Utility Classes**: Create utility classes for dialog management (e.g., MoveDialog, OracleDialog)
+3. **Create Specialized Components**: Break down complex UI into specialized components with clear responsibilities
+4. **Move Business Logic to Services**: Extract business logic into dedicated service classes
+5. **Use Callback-Based Communication**: Components communicate through callbacks rather than direct dependencies
+6. **Add Comprehensive Tests**: Create tests for each component in isolation
+
+This pattern has been applied to:
+- **Move System**: MoveDialog, MoveList, MoveDetails, ActionRollPanel, ProgressRollPanel, NoRollPanel, RollResultView, RollService
+- **Planned for Oracle System**: OracleDialog, OracleCategoryList, OracleTableList, OracleRollPanel, OracleResultView, OracleService
+
+Future candidates for this pattern:
+- Journal Entry Editor System
+- Quest Management System
+- Location Graph System
+- Character Management System
+
+Benefits of this pattern:
+- **Improved Maintainability**: Each component has a clear, focused responsibility
+- **Better Testability**: Components can be tested in isolation
+- **Reduced Risk of Data Loss**: Changes to one component are less likely to affect others
+- **Enhanced User Experience**: More consistent UI and behavior
+- **Easier Future Enhancements**: New features can be added to specific components
+
 ## Future Architectural Considerations
 
 ### Potential Refactorings
@@ -326,6 +354,7 @@ This architecture serves as a model for other complex features in the applicatio
 - Extract repository logic from providers into dedicated repository classes
 - Implement a more robust offline-first data synchronization strategy
 - Enhance the Quest model with support for dependencies and prerequisites
+- Apply the component extraction pattern to more complex features
 
 ### Scalability Improvements
 - Database solution (SQLite) for larger datasets

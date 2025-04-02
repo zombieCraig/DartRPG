@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
+import '../../providers/datasworn_provider.dart';
 import '../../services/autosave_service.dart';
+import '../../models/journal_entry.dart';
 import 'editor_toolbar.dart';
 import 'autocomplete_system.dart';
 import 'linked_items_manager.dart';
+import 'location_oracle_shortcuts.dart';
 
 /// A widget for editing journal entries with rich text formatting and autocompletion.
 class JournalEntryEditor extends StatefulWidget {
@@ -460,6 +463,28 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
             onMovePressed: widget.onMoveRequested,
             onOraclePressed: widget.onOracleRequested,
             onQuestPressed: widget.onQuestRequested,
+          ),
+        
+        // Location Oracle Shortcuts
+        if (!widget.readOnly && _linkedItemsManager.linkedLocationIds.isNotEmpty)
+          Consumer<DataswornProvider>(
+            builder: (context, dataswornProvider, _) {
+              return LocationOracleShortcuts(
+                linkedLocationIds: _linkedItemsManager.linkedLocationIds,
+                onOracleRollAdded: (oracleRoll) {
+                  _linkedItemsManager.addOracleRoll(oracleRoll);
+                  // Notify parent about the change
+                  widget.onChanged(_controller.text, _controller.text);
+                },
+                onInsertText: (text) {
+                  JournalEntryEditor.insertTextAtCursor(_controller, text);
+                  // Notify parent about the change
+                  widget.onChanged(_controller.text, _controller.text);
+                  // Start autosave timer
+                  _startAutoSaveTimer();
+                },
+              );
+            },
           ),
           
         // Editor

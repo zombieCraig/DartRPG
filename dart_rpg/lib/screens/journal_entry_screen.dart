@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../providers/game_provider.dart';
+import '../providers/datasworn_provider.dart';
 import '../models/journal_entry.dart';
 import '../models/character.dart';
 import '../models/location.dart';
@@ -13,6 +14,7 @@ import '../widgets/journal/journal_entry_editor.dart';
 import '../widgets/journal/linked_items_summary.dart';
 import '../widgets/journal/journal_entry_viewer.dart';
 import '../widgets/journal/move_dialog.dart';
+import '../widgets/journal/linked_items_manager.dart';
 import '../widgets/oracles/oracle_dialog.dart';
 import 'game_screen.dart';
 
@@ -48,10 +50,22 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   // Controller for the RichTextEditor
   final TextEditingController _editorController = TextEditingController();
   
+  // Linked items manager
+  late LinkedItemsManager _linkedItemsManager;
+  
   @override
   void initState() {
     super.initState();
     _isEditing = widget.entryId == null;
+    
+    // Initialize the linked items manager
+    _linkedItemsManager = LinkedItemsManager(
+      linkedCharacterIds: _linkedCharacterIds,
+      linkedLocationIds: _linkedLocationIds,
+      moveRolls: _moveRolls,
+      oracleRolls: _oracleRolls,
+      embeddedImages: _embeddedImages,
+    );
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadEntry();
@@ -231,6 +245,15 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
             _moveRolls = List.from(entry.moveRolls);
             _oracleRolls = List.from(entry.oracleRolls);
             _embeddedImages = List.from(entry.embeddedImages);
+            
+            // Update the linked items manager
+            _linkedItemsManager = LinkedItemsManager(
+              linkedCharacterIds: _linkedCharacterIds,
+              linkedLocationIds: _linkedLocationIds,
+              moveRolls: _moveRolls,
+              oracleRolls: _oracleRolls,
+              embeddedImages: _embeddedImages,
+            );
             
             // Update the editor controller with the loaded content
             _editorController.text = entry.content;
@@ -897,6 +920,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                       initialRichText: _richContent,
                       readOnly: false,
                       controller: _editorController,
+                      linkedItemsManager: _linkedItemsManager,
                       onChanged: (plainText, richText) {
                         setState(() {
                           _content = plainText;

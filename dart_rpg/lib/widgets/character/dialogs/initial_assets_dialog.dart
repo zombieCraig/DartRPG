@@ -132,22 +132,78 @@ class _InitialAssetsDialogState extends State<InitialAssetsDialog> with SingleTi
                                 separatorBuilder: (context, index) => const SizedBox(width: 8),
                                 itemBuilder: (context, index) {
                                   final asset = _selectedAssets[index];
-                                  return Chip(
-                                    label: Text(asset.name),
-                                    backgroundColor: getAssetCategoryColor(
-                                      asset.category,
-                                      isDarkMode: Theme.of(context).brightness == Brightness.dark,
-                                    ).withOpacity(0.2),
-                                    deleteIcon: asset.name == 'Base Rig'
-                                        ? null // Don't allow removing Base Rig
-                                        : const Icon(Icons.close, size: 16),
-                                    onDeleted: asset.name == 'Base Rig'
-                                        ? null
-                                        : () {
-                                            setState(() {
-                                              _selectedAssets.removeAt(index);
-                                            });
-                                          },
+                                  return Tooltip(
+                                    richMessage: WidgetSpan(
+                                      child: Container(
+                                        constraints: const BoxConstraints(maxWidth: 300),
+                                        padding: const EdgeInsets.all(8),
+                                        child: asset.description != null
+                                          ? MarkdownBody(
+                                              data: asset.description!,
+                                              styleSheet: MarkdownStyleSheet(
+                                                p: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Theme.of(context).colorScheme.onSurface,
+                                                ),
+                                                h1: TextStyle(
+                                                  fontSize: 14, 
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Theme.of(context).colorScheme.onSurface,
+                                                ),
+                                                h2: TextStyle(
+                                                  fontSize: 13, 
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Theme.of(context).colorScheme.onSurface,
+                                                ),
+                                                h3: TextStyle(
+                                                  fontSize: 12, 
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Theme.of(context).colorScheme.onSurface,
+                                                ),
+                                                code: TextStyle(
+                                                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                                  fontSize: 12,
+                                                  color: Theme.of(context).colorScheme.onSurface,
+                                                ),
+                                              ),
+                                              shrinkWrap: true,
+                                              softLineBreak: true,
+                                            )
+                                          : Text(
+                                              'No description available',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontStyle: FontStyle.italic,
+                                                color: Theme.of(context).colorScheme.onSurface,
+                                              ),
+                                            ),
+                                      ),
+                                    ),
+                                    // Increase the wait duration for better user experience
+                                    waitDuration: const Duration(milliseconds: 500),
+                                    // Style the tooltip to match the app's theme
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    // Use the Chip as the child of the Tooltip
+                                    child: Chip(
+                                      label: Text(asset.name),
+                                      backgroundColor: getAssetCategoryColor(
+                                        asset.category,
+                                        isDarkMode: Theme.of(context).brightness == Brightness.dark,
+                                      ).withOpacity(0.2),
+                                      deleteIcon: asset.name == 'Base Rig'
+                                          ? null // Don't allow removing Base Rig
+                                          : const Icon(Icons.close, size: 16),
+                                      onDeleted: asset.name == 'Base Rig'
+                                          ? null
+                                          : () {
+                                              setState(() {
+                                                _selectedAssets.removeAt(index);
+                                              });
+                                            },
+                                    ),
                                   );
                                 },
                               ),

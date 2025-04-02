@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../providers/game_provider.dart';
 import '../models/move.dart';
-import '../models/character.dart';
 import '../models/journal_entry.dart';
 import '../services/roll_service.dart';
 import '../widgets/moves/move_list.dart';

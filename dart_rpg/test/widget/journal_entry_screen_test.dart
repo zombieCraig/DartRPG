@@ -11,7 +11,6 @@ import 'package:dart_rpg/models/move.dart';
 import 'package:dart_rpg/models/oracle.dart';
 import 'package:dart_rpg/models/character.dart';
 import 'package:dart_rpg/widgets/journal/journal_entry_editor.dart';
-import 'package:dart_rpg/widgets/journal/move_dialog.dart';
 import 'package:dart_rpg/widgets/journal/journal_entry_viewer.dart';
 
 // Mock GameProvider for testing

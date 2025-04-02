@@ -5,10 +5,8 @@ import '../../models/journal_entry.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../services/oracle_service.dart';
 import '../../utils/logging_service.dart';
-import '../oracle_result_text.dart';
 import 'oracle_category_list.dart';
 import 'oracle_table_list.dart';
-import 'oracle_roll_panel.dart';
 import 'oracle_result_view.dart';
 
 /// A dialog for selecting and rolling on oracle tables.

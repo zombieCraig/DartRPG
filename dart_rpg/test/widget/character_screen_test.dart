@@ -5,9 +5,6 @@ import 'package:dart_rpg/models/character.dart';
 import 'package:dart_rpg/models/game.dart';
 import 'package:dart_rpg/providers/game_provider.dart';
 import 'package:dart_rpg/screens/character_screen.dart';
-import 'package:dart_rpg/widgets/character/character_list_view.dart';
-import 'package:dart_rpg/widgets/character/character_dialog.dart';
-import 'package:dart_rpg/widgets/character/character_card.dart';
 
 // Mock GameProvider for testing
 class MockGameProvider extends GameProvider {

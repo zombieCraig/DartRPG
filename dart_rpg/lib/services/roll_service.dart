@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/move.dart';
-import '../models/character.dart';
 import '../models/journal_entry.dart';
 import '../utils/dice_roller.dart';
 

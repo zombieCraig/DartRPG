@@ -86,7 +86,7 @@ class MoveDialog {
                 
                 return AlertDialog(
                   title: const Text('Moves'),
-                  content: Container(
+                  content: SizedBox(
                     width: double.maxFinite,
                     height: 500,
                     child: Column(

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
-import '../providers/datasworn_provider.dart';
-import 'game_screen.dart';
+import 'loading_screen.dart';
 import 'new_game_screen.dart';
 import 'settings_screen.dart';
 
@@ -93,9 +92,10 @@ class GameSelectionScreen extends StatelessWidget {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => GameScreen(
+                            builder: (context) => LoadingScreen(
                               gameId: game.id,
-                              initialTabIndex: initialTabIndex,
+                              dataswornSource: game.dataswornSource,
+                              hasMainCharacter: hasMainCharacter,
                             ),
                           ),
                         );
@@ -197,11 +197,7 @@ class GameSelectionScreen extends StatelessWidget {
                               onPressed: () async {
                                 await gameProvider.switchGame(game.id);
                                 
-                                // Load datasworn source if available
-                                if (game.dataswornSource != null && context.mounted) {
-                                  final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
-                                  await dataswornProvider.loadDatasworn(game.dataswornSource!);
-                                }
+                                // We'll load datasworn in the LoadingScreen
                                 
                                 if (context.mounted) {
                                   // Check if there's a main character
@@ -214,9 +210,10 @@ class GameSelectionScreen extends StatelessWidget {
                                   Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => GameScreen(
+                                      builder: (context) => LoadingScreen(
                                         gameId: game.id,
-                                        initialTabIndex: initialTabIndex,
+                                        dataswornSource: game.dataswornSource,
+                                        hasMainCharacter: hasMainCharacter,
                                       ),
                                     ),
                                   );
@@ -228,11 +225,7 @@ class GameSelectionScreen extends StatelessWidget {
                         onTap: () async {
                           await gameProvider.switchGame(game.id);
                           
-                          // Load datasworn source if available
-                          if (game.dataswornSource != null && context.mounted) {
-                            final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
-                            await dataswornProvider.loadDatasworn(game.dataswornSource!);
-                          }
+                          // We'll load datasworn in the LoadingScreen
                           
                           if (context.mounted) {
                             // Check if there's a main character
@@ -245,9 +238,10 @@ class GameSelectionScreen extends StatelessWidget {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => GameScreen(
+                                builder: (context) => LoadingScreen(
                                   gameId: game.id,
-                                  initialTabIndex: initialTabIndex,
+                                  dataswornSource: game.dataswornSource,
+                                  hasMainCharacter: hasMainCharacter,
                                 ),
                               ),
                             );

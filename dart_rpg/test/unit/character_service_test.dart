@@ -6,7 +6,7 @@ import 'package:dart_rpg/widgets/character/character_service.dart';
 
 // Mock GameProvider for testing
 class MockGameProvider extends GameProvider {
-  Game? _mockGame;
+  final Game? _mockGame;
   
   MockGameProvider(this._mockGame);
   

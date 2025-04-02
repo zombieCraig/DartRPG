@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/character.dart';
 import '../../models/quest.dart';
-import '../../providers/game_provider.dart';
 import 'quest_card.dart';
 import 'quest_dialog.dart';
 import 'quest_service.dart';

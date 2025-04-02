@@ -46,7 +46,7 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   }
   
   @override
-  Future<Game> createGame(String name, {String? dataswornSource}) async {
+  Future<Game> createGame(String name, {String? dataswornSource, bool tutorialsEnabled = true}) async {
     throw UnimplementedError();
   }
   

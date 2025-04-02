@@ -5,6 +5,7 @@ import '../models/journal_entry.dart';
 import '../models/session.dart';
 import '../models/character.dart';
 import '../models/location.dart';
+import '../services/tutorial_service.dart';
 import 'journal_entry_screen.dart';
 
 class JournalScreen extends StatefulWidget {
@@ -24,6 +25,45 @@ class _JournalScreenState extends State<JournalScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_scrollListener);
+    
+    // Schedule tutorial check after build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkTutorials();
+    });
+  }
+  
+  void _checkTutorials() async {
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final currentGame = gameProvider.currentGame;
+    final currentSession = gameProvider.currentSession;
+    
+    if (currentGame == null) return;
+    
+    // Tutorial for creating a session
+    if (currentGame.sessions.isEmpty) {
+      await TutorialService.showTutorialIfNeeded(
+        context: context,
+        tutorialId: 'journal_create_session',
+        title: 'Create Your First Session',
+        message: 'You should create an initial session to start journaling. '
+            'Click the + button next to the session dropdown to get started.',
+        condition: true,
+      );
+    }
+    
+    // Tutorial for understanding sessions after creating first one
+    if (currentGame.sessions.length == 1 && currentSession != null && 
+        currentSession.entries.isEmpty) {
+      await TutorialService.showTutorialIfNeeded(
+        context: context,
+        tutorialId: 'journal_session_explanation',
+        title: 'About Sessions',
+        message: 'Each Session is a collection of journal entries. '
+            'Group them how you like but often it is best to keep each entry short, '
+            'perhaps a paragraph or two.',
+        condition: true,
+      );
+    }
   }
 
   @override
@@ -350,6 +390,19 @@ class _JournalScreenState extends State<JournalScreen> {
                   await gameProvider.createSession(textController.text);
                   if (context.mounted) {
                     Navigator.pop(context);
+                    
+                    // Show tutorial about sessions after creating the first one
+                    if (gameProvider.currentGame?.sessions.length == 1) {
+                      await TutorialService.showTutorialIfNeeded(
+                        context: context,
+                        tutorialId: 'journal_session_explanation',
+                        title: 'About Sessions',
+                        message: 'Each Session is a collection of journal entries. '
+                            'Group them how you like but often it is best to keep each entry short, '
+                            'perhaps a paragraph or two.',
+                        condition: true,
+                      );
+                    }
                   }
                 }
               },

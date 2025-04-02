@@ -17,6 +17,7 @@ class Game {
   Character? mainCharacter;
   String? dataswornSource;
   Location? rigLocation;
+  bool tutorialsEnabled;
 
   Game({
     String? id,
@@ -30,6 +31,7 @@ class Game {
     this.mainCharacter,
     this.dataswornSource,
     this.rigLocation,
+    this.tutorialsEnabled = true,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now(),
         lastPlayedAt = lastPlayedAt ?? DateTime.now(),
@@ -66,6 +68,7 @@ class Game {
       'dataswornSource': dataswornSource,
       'rigLocationId': rigLocation?.id,
       'quests': quests.map((q) => q.toJson()).toList(),
+      'tutorialsEnabled': tutorialsEnabled,
     };
   }
 
@@ -117,6 +120,7 @@ class Game {
       mainCharacter: mainChar,
       dataswornSource: json['dataswornSource'],
       rigLocation: rigLoc,
+      tutorialsEnabled: json['tutorialsEnabled'] ?? true,
     );
   }
 

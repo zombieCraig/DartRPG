@@ -696,6 +696,113 @@ The node types are structured in the Datasworn JSON as follows:
 - **Alphabetical Sorting**: Provides a consistent ordering of node types in the dropdown
 - **Random Selection**: Supports both segment-specific and general random node type selection
 
+## Tutorial System Architecture
+
+The application implements a tutorial system to help guide new players through the application. This system follows a modular architecture that separates concerns and improves maintainability:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   SettingsProvider                      │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              enableTutorials                     │   │
+│  └───────────────────────┬─────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                       Game Model                        │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              tutorialsEnabled                    │   │
+│  └───────────────────────┬─────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                   TutorialService                       │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │         showTutorialIfNeeded()                  │   │
+│  │         hasShownTutorial()                      │   │
+│  │         markTutorialAsShown()                   │   │
+│  │         resetAllTutorials()                     │   │
+│  └───────────────────────┬─────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                   TutorialPopup                         │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              title                               │   │
+│  │              message                             │   │
+│  │              onClose                             │   │
+│  │              showDisableOption                   │   │
+│  └─────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Component Responsibilities
+
+1. **SettingsProvider**:
+   - Manages the global setting for enabling/disabling tutorials
+   - Persists the setting using SharedPreferences
+   - Provides the setting to other components through the Provider pattern
+
+2. **Game Model**:
+   - Contains a per-game setting for enabling/disabling tutorials
+   - Allows different games to have different tutorial settings
+   - Persists the setting as part of the game data
+
+3. **TutorialService**:
+   - Provides static methods for managing tutorial state
+   - Checks if a tutorial should be shown based on multiple conditions
+   - Tracks which tutorials have been shown using SharedPreferences
+   - Provides methods to reset tutorial state for testing
+
+4. **TutorialPopup**:
+   - Displays tutorial content in a modal dialog
+   - Provides a consistent UI for all tutorials
+   - Includes an option to disable all tutorials
+   - Handles user interaction and dismissal
+
+### Process Flow
+
+1. When a screen is loaded that might need to show a tutorial:
+   - The screen calls `TutorialService.showTutorialIfNeeded()`
+   - The service checks if tutorials are enabled globally in SettingsProvider
+   - The service checks if tutorials are enabled for the current game
+   - The service checks if this specific tutorial has already been shown
+   - The service checks if the condition for showing the tutorial is met
+   - If all conditions are met, the TutorialPopup is displayed
+
+2. When the user interacts with a TutorialPopup:
+   - They can dismiss the popup by clicking "Got it"
+   - They can disable all tutorials by checking the "Disable all tutorials" checkbox
+   - When dismissed, the tutorial is marked as shown so it won't appear again
+
+3. Tutorial state persistence:
+   - The global enableTutorials setting is stored in SharedPreferences
+   - The per-game tutorialsEnabled setting is stored as part of the Game object
+   - The shown state of each tutorial is stored in SharedPreferences with a prefix
+
+### Benefits
+
+- **Contextual Help**: Provides help exactly when and where it's needed
+- **Non-intrusive**: Can be disabled globally or per-game
+- **Persistent**: Remembers which tutorials have been shown
+- **Flexible**: Can be easily added to any screen or feature
+- **Consistent**: Provides a uniform experience across the application
+
+### Implementation Examples
+
+The tutorial system has been integrated with the Journal Screen to provide guidance on:
+- Creating a session when none exists
+- Understanding what sessions are after creating the first one
+
+This pattern can be extended to other screens and features as needed, providing a comprehensive onboarding experience for new users.
+
 ## Loading Screen Architecture
 
 The application implements a specialized loading screen pattern for handling resource-intensive operations that may take significant time to complete. This pattern provides a visually engaging experience while background processes run.

@@ -19,6 +19,18 @@ This work enhances the overall architecture of the application, making it more m
 
 ## Recent Changes
 
+### Tutorial System Implementation (April 2025)
+- Implemented a tutorial system to help guide new players through the application
+- Created a TutorialService to manage tutorial state and display logic
+- Developed a reusable TutorialPopup widget for displaying contextual help
+- Added a global setting to enable/disable tutorials in the SettingsProvider
+- Added a per-game setting to enable/disable tutorials during game creation
+- Integrated tutorials with the Journal Screen to guide users in creating sessions
+- Added tutorial popups that explain what sessions are and how to use them
+- Implemented persistence of tutorial state using SharedPreferences
+- Added ability to disable all tutorials directly from any tutorial popup
+- Designed the system to be easily extensible for adding more tutorials in the future
+
 ### Character Short Name Enhancements (April 2025)
 - Enhanced the character short name (handle) functionality with automatic generation and customization options
 - Added auto-generation of short name when the field gets focus and is empty but the name field is filled

@@ -169,10 +169,11 @@ class GameProvider extends ChangeNotifier {
   }
   
   // Create a new game
-  Future<Game> createGame(String name, {String? dataswornSource}) async {
+  Future<Game> createGame(String name, {String? dataswornSource, bool tutorialsEnabled = true}) async {
     final game = Game(
       name: name,
       dataswornSource: dataswornSource,
+      tutorialsEnabled: tutorialsEnabled,
     );
     
     _games.add(game);

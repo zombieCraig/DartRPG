@@ -40,6 +40,12 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Comprehensive logging system and log viewer
 
 ### Recently Completed
+- ✅ Implemented tutorial system with contextual help popups for new players
+- ✅ Created TutorialService to manage tutorial state and display logic
+- ✅ Developed a reusable TutorialPopup widget for displaying contextual help
+- ✅ Added global and per-game settings to enable/disable tutorials
+- ✅ Integrated tutorials with the Journal Screen to guide users in creating sessions
+- ✅ Implemented persistence of tutorial state using SharedPreferences
 - ✅ Enhanced character short name functionality with auto-generation and customization options
 - ✅ Added "Random Handle" and "Make l33t" buttons to the character form
 - ✅ Created LeetSpeakConverter utility for converting text to leet speak
@@ -156,7 +162,7 @@ The DartRPG application is in active development with core functionality impleme
 - ⬜ Quest dependencies and prerequisites
 
 ### Low Priority
-- ⬜ In-app help and tutorials
+- ✅ In-app help and tutorials
 - ⬜ Customizable themes beyond light/dark mode
 - ⬜ Data backup and cloud sync options
 - ⬜ Advanced multimedia support in journal entries (audio, video)
@@ -204,6 +210,18 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Journal Navigation**: Added "Jump to last entry" button on journal screen when entries are scrollable
 
 ## Recent Milestones
+
+### Milestone: Tutorial System Implementation (April 2025)
+- ✅ Implemented a tutorial system to help guide new players through the application
+- ✅ Created a TutorialService to manage tutorial state and display logic
+- ✅ Developed a reusable TutorialPopup widget for displaying contextual help
+- ✅ Added a global setting to enable/disable tutorials in the SettingsProvider
+- ✅ Added a per-game setting to enable/disable tutorials during game creation
+- ✅ Integrated tutorials with the Journal Screen to guide users in creating sessions
+- ✅ Added tutorial popups that explain what sessions are and how to use them
+- ✅ Implemented persistence of tutorial state using SharedPreferences
+- ✅ Added ability to disable all tutorials directly from any tutorial popup
+- ✅ Designed the system to be easily extensible for adding more tutorials in the future
 
 ### Milestone: Character Short Name Enhancements (April 2025)
 - ✅ Enhanced character short name (handle) functionality with automatic generation and customization
@@ -317,7 +335,7 @@ The DartRPG application is in active development with core functionality impleme
 - ⬜ UI refinements and visual polish
 - ⬜ Improved accessibility
 - ⬜ Additional customization options
-- ⬜ In-app help and tutorials
+- ✅ In-app help and tutorials
 
 ### Milestone: Advanced Features (June 2025)
 - ⬜ Multimedia support

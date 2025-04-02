@@ -14,6 +14,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   bool _isCreating = false;
+  bool _enableTutorials = true;
 
   @override
   void dispose() {
@@ -57,7 +58,18 @@ class _NewGameScreenState extends State<NewGameScreen> {
                 'This game will use the Fe-Runners datasworn source.',
                 style: TextStyle(fontSize: 16),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
+              CheckboxListTile(
+                title: const Text('Enable Tutorials'),
+                subtitle: const Text('Show helpful tips for new players'),
+                value: _enableTutorials,
+                onChanged: (value) {
+                  setState(() {
+                    _enableTutorials = value ?? true;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
               if (_isCreating)
                 const Center(child: CircularProgressIndicator())
               else
@@ -88,6 +100,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
         await gameProvider.createGame(
           _nameController.text,
           dataswornSource: 'assets/data/fe_runners.json',
+          tutorialsEnabled: _enableTutorials,
         );
         
         // Explicitly save the game

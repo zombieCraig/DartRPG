@@ -7,11 +7,13 @@ class SettingsProvider extends ChangeNotifier {
   double _fontSize = 16.0;
   String _fontFamily = 'Roboto';
   int _logLevel = 1; // Default to INFO level
+  bool _enableTutorials = true; // Default to enabled
   
   bool get isDarkMode => _isDarkMode;
   double get fontSize => _fontSize;
   String get fontFamily => _fontFamily;
   int get logLevel => _logLevel;
+  bool get enableTutorials => _enableTutorials;
   
   ThemeMode get themeMode => _isDarkMode ? ThemeMode.dark : ThemeMode.light;
   
@@ -25,6 +27,7 @@ class SettingsProvider extends ChangeNotifier {
     _fontSize = prefs.getDouble('fontSize') ?? 16.0;
     _fontFamily = prefs.getString('fontFamily') ?? 'Roboto';
     _logLevel = prefs.getInt('logLevel') ?? 0; // Default to DEBUG level for troubleshooting
+    _enableTutorials = prefs.getBool('enableTutorials') ?? true;
     
     // Apply log level to the logging service
     LoggingService().setLogLevel(_logLevel);
@@ -69,6 +72,15 @@ class SettingsProvider extends ChangeNotifier {
     // Apply the new log level to the logging service
     LoggingService().setLogLevel(value);
     
+    notifyListeners();
+  }
+  
+  Future<void> setEnableTutorials(bool value) async {
+    if (_enableTutorials == value) return;
+    
+    _enableTutorials = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('enableTutorials', value);
     notifyListeners();
   }
   

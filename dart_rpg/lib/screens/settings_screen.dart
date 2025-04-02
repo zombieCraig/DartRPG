@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
 import '../utils/logging_service.dart';
+import '../services/tutorial_service.dart';
 import 'log_viewer_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -32,6 +33,16 @@ class SettingsScreen extends StatelessWidget {
                   settings.setDarkMode(value);
                 },
               ),
+              SwitchListTile(
+                title: const Text('Enable Tutorials'),
+                subtitle: const Text('Show helpful tips for new players'),
+                value: settings.enableTutorials,
+                onChanged: (value) {
+                  settings.setEnableTutorials(value);
+                },
+              ),
+              if (settings.enableTutorials)
+                TutorialService.buildResetTutorialsButton(context),
               const Divider(),
               
               // Font size settings

@@ -113,6 +113,14 @@ class Character {
   
   // Additional notes separate from bio
   String? gameNotes;
+  
+  // Character details for NPCs
+  String? firstLook;
+  String? disposition;
+  String? trademarkAvatar;
+  String? role;
+  String? details;
+  String? goals;
 
   Character({
     String? id,
@@ -146,6 +154,12 @@ class Character {
     this.legacyBondsTicks = 0,
     this.legacyDiscoveriesTicks = 0,
     this.gameNotes,
+    this.firstLook,
+    this.disposition,
+    this.trademarkAvatar,
+    this.role,
+    this.details,
+    this.goals,
   })  : id = id ?? const Uuid().v4(),
         stats = stats ?? [],
         assets = assets ?? [],
@@ -282,6 +296,12 @@ class Character {
       'legacyBondsTicks': legacyBondsTicks,
       'legacyDiscoveriesTicks': legacyDiscoveriesTicks,
       'gameNotes': gameNotes,
+      'firstLook': firstLook,
+      'disposition': disposition,
+      'trademarkAvatar': trademarkAvatar,
+      'role': role,
+      'details': details,
+      'goals': goals,
     };
   }
 
@@ -322,6 +342,12 @@ class Character {
       legacyBondsTicks: json['legacyBondsTicks'] ?? 0,
       legacyDiscoveriesTicks: json['legacyDiscoveriesTicks'] ?? 0,
       gameNotes: json['gameNotes'],
+      firstLook: json['firstLook'],
+      disposition: json['disposition'],
+      trademarkAvatar: json['trademarkAvatar'],
+      role: json['role'],
+      details: json['details'],
+      goals: json['goals'],
     );
   }
 

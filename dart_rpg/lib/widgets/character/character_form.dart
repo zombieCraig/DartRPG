@@ -15,6 +15,14 @@ class CharacterForm extends StatefulWidget {
   final bool isPlayerCharacterSwitchVisible;
   final bool isPlayerCharacter;
   final Function(bool)? onPlayerCharacterChanged;
+  
+  // Controllers for NPC character details
+  final TextEditingController? firstLookController;
+  final TextEditingController? dispositionController;
+  final TextEditingController? trademarkAvatarController;
+  final TextEditingController? roleController;
+  final TextEditingController? detailsController;
+  final TextEditingController? goalsController;
 
   const CharacterForm({
     super.key,
@@ -25,6 +33,12 @@ class CharacterForm extends StatefulWidget {
     required this.isPlayerCharacterSwitchVisible,
     required this.isPlayerCharacter,
     this.onPlayerCharacterChanged,
+    this.firstLookController,
+    this.dispositionController,
+    this.trademarkAvatarController,
+    this.roleController,
+    this.detailsController,
+    this.goalsController,
   });
 
   @override
@@ -136,6 +150,60 @@ class _CharacterFormState extends State<CharacterForm> {
       tag: 'CharacterForm',
     );
   }
+  
+  /// Generates random content for a field using the specified oracle table.
+  void _generateRandomField(String oracleKey, TextEditingController? controller) {
+    if (controller == null) return;
+    
+    final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+    
+    // Try to find the oracle table using the key
+    final oracleTable = OracleService.findOracleTableByKeyAnywhere(oracleKey, dataswornProvider);
+    
+    if (oracleTable == null) {
+      _loggingService.warning(
+        'Could not find $oracleKey oracle table',
+        tag: 'CharacterForm',
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not find $oracleKey oracle table'),
+        ),
+      );
+      return;
+    }
+    
+    // Roll on the oracle table
+    final rollResult = OracleService.rollOnOracleTable(oracleTable);
+    
+    if (rollResult['success'] == true) {
+      final oracleRoll = rollResult['oracleRoll'];
+      final result = oracleRoll.result;
+      
+      // Append the result to the current text
+      final currentText = controller.text;
+      if (currentText.isNotEmpty) {
+        controller.text = '$currentText\n$result';
+      } else {
+        controller.text = result;
+      }
+      
+      _loggingService.debug(
+        'Generated random content for $oracleKey: $result',
+        tag: 'CharacterForm',
+      );
+    } else {
+      _loggingService.warning(
+        'Failed to roll on $oracleKey oracle table: ${rollResult['error']}',
+        tag: 'CharacterForm',
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to generate random content: ${rollResult['error']}'),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -200,6 +268,150 @@ class _CharacterFormState extends State<CharacterForm> {
             subtitle: const Text('Has stats and can use assets'),
             value: widget.isPlayerCharacter,
             onChanged: widget.onPlayerCharacterChanged,
+          ),
+        ],
+        
+        // NPC character details section - only show for non-player characters
+        if (!widget.isPlayerCharacter && 
+            widget.firstLookController != null &&
+            widget.dispositionController != null &&
+            widget.trademarkAvatarController != null &&
+            widget.roleController != null &&
+            widget.detailsController != null &&
+            widget.goalsController != null) ...[
+          const SizedBox(height: 24),
+          const Text('Character Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 16),
+          
+          // First Look field with random button
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: widget.firstLookController,
+                  decoration: const InputDecoration(
+                    labelText: 'First Look',
+                    hintText: 'What is the first thing someone notices about this character?',
+                  ),
+                  maxLines: 2,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.casino),
+                tooltip: 'Random First Look',
+                onPressed: () => _generateRandomField('character_first_look', widget.firstLookController),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          
+          // Disposition field with random button
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: widget.dispositionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Disposition',
+                    hintText: 'How does this character typically behave?',
+                  ),
+                  maxLines: 2,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.casino),
+                tooltip: 'Random Disposition',
+                onPressed: () => _generateRandomField('character_disposition', widget.dispositionController),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          
+          // Trademark Avatar field with random button
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: widget.trademarkAvatarController,
+                  decoration: const InputDecoration(
+                    labelText: 'Trademark Avatar Characteristic',
+                    hintText: 'What distinctive feature defines their digital avatar?',
+                  ),
+                  maxLines: 2,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.casino),
+                tooltip: 'Random Trademark Avatar',
+                onPressed: () => _generateRandomField('trademark_avatar', widget.trademarkAvatarController),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          
+          // Role field with random button
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: widget.roleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Role',
+                    hintText: 'What is this character\'s function or occupation?',
+                  ),
+                  maxLines: 2,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.casino),
+                tooltip: 'Random Role',
+                onPressed: () => _generateRandomField('character_role', widget.roleController),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          
+          // Details field with random button
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: widget.detailsController,
+                  decoration: const InputDecoration(
+                    labelText: 'Details',
+                    hintText: 'Additional details about this character',
+                  ),
+                  maxLines: 3,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.casino),
+                tooltip: 'Random Details',
+                onPressed: () => _generateRandomField('character_details', widget.detailsController),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          
+          // Goals field with random button
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: widget.goalsController,
+                  decoration: const InputDecoration(
+                    labelText: 'Goals',
+                    hintText: 'What does this character want to achieve?',
+                  ),
+                  maxLines: 3,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.casino),
+                tooltip: 'Random Goals',
+                onPressed: () => _generateRandomField('character_goals', widget.goalsController),
+              ),
+            ],
           ),
         ],
       ],

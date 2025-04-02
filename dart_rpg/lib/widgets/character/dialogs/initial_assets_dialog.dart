@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../models/character.dart';
@@ -299,20 +300,42 @@ class _InitialAssetsDialogState extends State<InitialAssetsDialog> with SingleTi
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context, false);
-                        },
-                        child: const Text('Skip for Now'),
+                      // New buttons on the left
+                      Row(
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: _addRandomPathAsset,
+                            icon: const Icon(Icons.shuffle),
+                            label: const Text('Add Random Path'),
+                          ),
+                          const SizedBox(width: 8),
+                          OutlinedButton.icon(
+                            onPressed: _addRandomAsset,
+                            icon: const Icon(Icons.casino),
+                            label: const Text('Add Random Asset'),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          _confirmSelection();
-                        },
-                        child: const Text('Confirm Selection'),
+                      
+                      // Existing buttons on the right
+                      Row(
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context, false);
+                            },
+                            child: const Text('Skip for Now'),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () {
+                              _confirmSelection();
+                            },
+                            child: const Text('Confirm Selection'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -363,5 +386,67 @@ class _InitialAssetsDialogState extends State<InitialAssetsDialog> with SingleTi
     
     // Close the dialog
     Navigator.pop(context, true);
+  }
+  
+  /// Adds a random path asset that hasn't been added to the character yet.
+  void _addRandomPathAsset() {
+    final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+    final assetsByCategory = dataswornProvider.getAssetsByCategory();
+    
+    // Get all path assets
+    final pathAssets = assetsByCategory.entries
+        .where((entry) => entry.key.toLowerCase().contains('path'))
+        .expand((entry) => entry.value)
+        .toList();
+    
+    // Filter out assets that are already selected
+    final availablePathAssets = pathAssets
+        .where((asset) => !_selectedAssets.any((a) => a.id == asset.id))
+        .toList();
+    
+    if (availablePathAssets.isEmpty) {
+      // Show a snackbar if no available path assets
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No more path assets available to add')),
+      );
+      return;
+    }
+    
+    // Select a random path asset
+    final random = Random();
+    final randomAsset = availablePathAssets[random.nextInt(availablePathAssets.length)];
+    
+    // Add the asset to selected assets
+    setState(() {
+      _selectedAssets.add(randomAsset);
+    });
+  }
+
+  /// Adds a random asset of any type that hasn't been added to the character yet.
+  void _addRandomAsset() {
+    final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+    final allAssets = dataswornProvider.assets;
+    
+    // Filter out assets that are already selected
+    final availableAssets = allAssets
+        .where((asset) => !_selectedAssets.any((a) => a.id == asset.id))
+        .toList();
+    
+    if (availableAssets.isEmpty) {
+      // Show a snackbar if no available assets
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No more assets available to add')),
+      );
+      return;
+    }
+    
+    // Select a random asset
+    final random = Random();
+    final randomAsset = availableAssets[random.nextInt(availableAssets.length)];
+    
+    // Add the asset to selected assets
+    setState(() {
+      _selectedAssets.add(randomAsset);
+    });
   }
 }

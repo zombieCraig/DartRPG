@@ -44,6 +44,9 @@ class _LoadingScreenState extends State<LoadingScreen> {
   // Whether to show the "System ready." message
   bool _showSystemReady = false;
   
+  // Whether "System ready." has been displayed
+  bool _systemReadyDisplayed = false;
+  
   // Whether all messages have been displayed
   bool _allMessagesDisplayed = false;
   
@@ -123,19 +126,32 @@ class _LoadingScreenState extends State<LoadingScreen> {
   
   /// Get the next message to display in the console animation
   String? _getNextMessage() {
+    // If "System ready." has already been displayed, don't show any more messages
+    if (_systemReadyDisplayed) {
+      return null;
+    }
+    
     // If there are fixed messages left, return the next one
     if (_fixedMessageIndex < _fixedMessages.length) {
       return _fixedMessages[_fixedMessageIndex++];
     }
     
-    // If we should show the "System ready." message, return it
-    if (_showSystemReady) {
+    // Ensure at least 1 random boot message is displayed
+    if (_bootMessagesDisplayed < 1) {
+      _bootMessagesDisplayed++;
+      return _bootMessages[(_bootMessagesDisplayed - 1) % _bootMessages.length];
+    }
+    
+    // If we should show the "System ready." message and we've displayed at least one boot message
+    if (_showSystemReady && _bootMessagesDisplayed >= 1) {
       // Mark that all messages have been displayed
       _allMessagesDisplayed = true;
+      _systemReadyDisplayed = true;
+      _loggingService.debug('Displaying System ready message', tag: 'LoadingScreen');
       return "System ready.";
     }
     
-    // If we've displayed the maximum number of boot messages, return null
+    // If we've displayed the maximum number of boot messages, check if Datasworn is loaded
     if (_bootMessagesDisplayed >= _maxBootMessages) {
       // If Datasworn is loaded, show the "System ready." message next
       if (_isDataswornLoaded) {
@@ -143,8 +159,9 @@ class _LoadingScreenState extends State<LoadingScreen> {
         return _getNextMessage();
       }
       
-      // Otherwise, return null to pause the animation until Datasworn is loaded
-      return null;
+      // Otherwise, continue showing random boot messages by cycling through them
+      _bootMessagesDisplayed++;
+      return _bootMessages[(_bootMessagesDisplayed - 1) % _bootMessages.length];
     }
     
     // Return the next boot message

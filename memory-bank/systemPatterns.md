@@ -584,3 +584,80 @@ This architecture ensures a clean separation of concerns while providing a seaml
 - Enhance error handling with more specific error types
 - Refine the logging system with more structured log entries
 - Optimize quest data persistence for better performance
+
+## Loading Screen Architecture
+
+The application implements a specialized loading screen pattern for handling resource-intensive operations that may take significant time to complete. This pattern provides a visually engaging experience while background processes run.
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   LoadingScreen                         │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              Background Loading                  │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ DataswornLoading│  │ Minimum Time Enforcer│  │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  └──────────────────────────────────────────────────┘   │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              ConsoleTextAnimation               │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ Message Provider│  │ Typing Animation    │   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ Fixed Messages  │  │ Random Boot Messages│   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  └──────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Key Components
+
+1. **LoadingScreen**: Coordinates the loading process and animation
+   - Manages the state of resource loading (e.g., Datasworn data)
+   - Enforces minimum loading time for better user experience
+   - Provides message sequences to the animation component
+   - Handles navigation after loading completes
+
+2. **ConsoleTextAnimation**: Displays animated console-style text
+   - Uses a message provider callback to get messages dynamically
+   - Implements typing animation with character-by-character display
+   - Shows fixed messages with guaranteed minimum display times
+   - Displays random messages during background loading
+   - Shows "System ready." only when loading is complete
+
+### Process Flow
+
+1. When a resource-intensive operation is needed (e.g., loading Datasworn data):
+   - The LoadingScreen is shown with a console-style animation
+   - Fixed initial messages are displayed with minimum display times
+   - Background loading of resources begins simultaneously
+   - Random "boot" messages are shown while loading continues
+   - When loading completes, "System ready." is displayed
+   - After a short delay, navigation to the target screen occurs
+
+2. The implementation ensures:
+   - A minimum loading time (e.g., 3 seconds) even if loading completes quickly
+   - Proper coordination between animation and background loading
+   - Graceful handling of loading errors
+   - Smooth transition to the target screen
+
+### Benefits
+
+- **Improved User Experience**: Provides visual feedback during long-running operations
+- **Reduced Perceived Wait Time**: Engaging animation makes waiting feel shorter
+- **Flexible Message System**: Can be customized for different loading contexts
+- **Proper Resource Loading**: Ensures resources are fully loaded before proceeding
+- **Error Resilience**: Handles loading failures gracefully
+
+### Reusability
+
+This pattern can be applied to other resource-intensive operations in the application:
+- Initial data loading
+- Large asset downloads
+- Complex data processing
+- Image loading and caching
+- Any operation that might take more than a second to complete
+
+The message provider pattern allows for easy customization of the loading messages for different contexts, making this a highly reusable component.

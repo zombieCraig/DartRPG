@@ -4,6 +4,7 @@ import '../../../providers/game_provider.dart';
 import '../character_form.dart';
 import '../services/character_dialog_service.dart';
 import '../stat_panel.dart';
+import 'initial_assets_dialog.dart';
 
 /// A dialog for creating a new character.
 class CharacterCreateDialog extends StatefulWidget {
@@ -139,7 +140,7 @@ class _CharacterCreateDialogState extends State<CharacterCreateDialog> {
             }
             
             // Create character using the service
-            await CharacterDialogService.createCharacter(
+            final character = await CharacterDialogService.createCharacter(
               gameProvider: widget.gameProvider,
               name: nameController.text,
               isPlayerCharacter: isPlayerCharacter,
@@ -157,7 +158,13 @@ class _CharacterCreateDialogState extends State<CharacterCreateDialog> {
             );
             
             if (mounted) {
+              // Close the character creation dialog
               Navigator.pop(context);
+              
+              // Show the initial assets dialog for player characters
+              if (isPlayerCharacter && character != null) {
+                await InitialAssetsDialog.show(context, character, widget.gameProvider);
+              }
             }
           },
           child: const Text('Create'),

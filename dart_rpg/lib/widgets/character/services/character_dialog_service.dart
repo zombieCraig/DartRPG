@@ -5,7 +5,8 @@ import '../../../providers/game_provider.dart';
 /// A service class that handles the business logic for character dialogs.
 class CharacterDialogService {
   /// Creates a new character and adds it to the game.
-  static Future<void> createCharacter({
+  /// Returns the created character, or null if creation failed.
+  static Future<Character?> createCharacter({
     required GameProvider gameProvider,
     required String name,
     required bool isPlayerCharacter,
@@ -99,7 +100,13 @@ class CharacterDialogService {
       
       // Save the game
       gameProvider.saveGame();
+      
+      // Return the created character
+      return createdCharacter;
     }
+    
+    // Return null if no game is available
+    return null;
   }
   
   /// Updates an existing character.

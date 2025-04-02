@@ -8,6 +8,39 @@ import 'settings_screen.dart';
 class GameSelectionScreen extends StatelessWidget {
   const GameSelectionScreen({super.key});
 
+  Widget _buildHeader(BuildContext context) {
+    return Column(
+      children: [
+        const SizedBox(height: 24),
+        const Text(
+          'Fe-Runners',
+          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'A solo RPG hacking game based on Ironsworn',
+          style: TextStyle(fontSize: 16),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: Text(
+            'Note: No data is stored on the server. All game data is stored locally on your computer.',
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        const SizedBox(height: 24),
+        const Divider(),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,67 +81,71 @@ class GameSelectionScreen extends StatelessWidget {
 
           if (gameProvider.games.isEmpty) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'No Games Found',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Create a new game to get started.',
-                    style: TextStyle(fontSize: 16),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.add),
-                    label: const Text('Create New Game'),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const NewGameScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.upload_file),
-                    label: const Text('Import Game'),
-                    onPressed: () async {
-                      final game = await gameProvider.importGame();
-                      if (game != null && context.mounted) {
-                        // Check if there's a main character
-                        final hasMainCharacter = gameProvider.currentGame?.mainCharacter != null;
-                        
-                        // If there's a main character, start with Journal tab (0)
-                        // Otherwise, start with Characters tab (1)
-                        final initialTabIndex = hasMainCharacter ? 0 : 1;
-                        
-                        Navigator.pushReplacement(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildHeader(context),
+                    const Text(
+                      'No Games Found',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Create a new game to get started.',
+                      style: TextStyle(fontSize: 16),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.add),
+                      label: const Text('Create New Game'),
+                      onPressed: () {
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => LoadingScreen(
-                              gameId: game.id,
-                              dataswornSource: game.dataswornSource,
-                              hasMainCharacter: hasMainCharacter,
-                            ),
+                            builder: (context) => const NewGameScreen(),
                           ),
                         );
-                      }
-                    },
-                  ),
-                ],
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.upload_file),
+                      label: const Text('Import Game'),
+                      onPressed: () async {
+                        final game = await gameProvider.importGame();
+                        if (game != null && context.mounted) {
+                          // Check if there's a main character
+                          final hasMainCharacter = gameProvider.currentGame?.mainCharacter != null;
+                          
+                          // If there's a main character, start with Journal tab (0)
+                          // Otherwise, start with Characters tab (1)
+                          final initialTabIndex = hasMainCharacter ? 0 : 1;
+                          
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => LoadingScreen(
+                                gameId: game.id,
+                                dataswornSource: game.dataswornSource,
+                                hasMainCharacter: hasMainCharacter,
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                ),
               ),
             );
           }
 
           return Column(
             children: [
+              _buildHeader(context),
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(

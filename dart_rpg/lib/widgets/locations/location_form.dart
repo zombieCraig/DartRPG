@@ -290,9 +290,9 @@ class _LocationFormState extends State<LocationForm> {
           _nodeTypes.isEmpty
               ? TextFormField(
                   enabled: false,
+                  initialValue: 'No node types available',
                   decoration: const InputDecoration(
                     labelText: 'Node Type (optional)',
-                    hintText: 'No node types available',
                     border: OutlineInputBorder(),
                   ),
                 )

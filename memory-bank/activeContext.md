@@ -19,6 +19,16 @@ This work enhances the overall architecture of the application, making it more m
 
 ## Recent Changes
 
+### Character Short Name Enhancements (April 2025)
+- Enhanced the character short name (handle) functionality with automatic generation and customization options
+- Added auto-generation of short name when the field gets focus and is empty but the name field is filled
+- Implemented "Random Handle" button that rolls on the fe_runner_handles oracle and appends the result
+- Added "Make l33t" button with a terminal icon to convert the short name to leet speak
+- Created LeetSpeakConverter utility for converting text to leet speak with appropriate character substitutions
+- Enhanced OracleService with a recursive search method to find oracle tables by key anywhere in the hierarchy
+- Improved oracle table lookup to work with nested tables like "social/fe_runner_handles"
+- Made the character creation process more thematically consistent with the cyberpunk/hacking theme
+
 ### Loading Screen Implementation (April 2025)
 - Implemented a specialized loading screen for handling resource-intensive operations
 - Created a console-style text animation with typing effect for visual engagement

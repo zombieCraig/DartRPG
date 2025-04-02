@@ -146,6 +146,67 @@ class DataswornProvider extends ChangeNotifier {
     loggingService.debug('Oracle table not found with ID: $id', tag: 'DataswornProvider');
     return null;
   }
+  
+  // Find an oracle table by name
+  OracleTable? findOracleTableByName(String name) {
+    final loggingService = LoggingService();
+    loggingService.debug('Finding oracle table by name: $name', tag: 'DataswornProvider');
+    
+    // First, search in top-level categories
+    for (final category in _oracles) {
+      try {
+        final table = category.tables.firstWhere(
+          (table) => table.name.toLowerCase() == name.toLowerCase()
+        );
+        loggingService.debug('Found table in category ${category.name}', tag: 'DataswornProvider');
+        return table;
+      } catch (e) {
+        // Continue to next category
+      }
+      
+      // Search in subcategories
+      for (final subcategory in category.subcategories) {
+        try {
+          final table = subcategory.tables.firstWhere(
+            (table) => table.name.toLowerCase() == name.toLowerCase()
+          );
+          loggingService.debug('Found table in subcategory ${subcategory.name}', tag: 'DataswornProvider');
+          return table;
+        } catch (e) {
+          // Continue to next subcategory
+        }
+      }
+    }
+    
+    // If exact match not found, try contains match
+    for (final category in _oracles) {
+      try {
+        final table = category.tables.firstWhere(
+          (table) => table.name.toLowerCase().contains(name.toLowerCase())
+        );
+        loggingService.debug('Found table with partial name match in category ${category.name}', tag: 'DataswornProvider');
+        return table;
+      } catch (e) {
+        // Continue to next category
+      }
+      
+      // Search in subcategories
+      for (final subcategory in category.subcategories) {
+        try {
+          final table = subcategory.tables.firstWhere(
+            (table) => table.name.toLowerCase().contains(name.toLowerCase())
+          );
+          loggingService.debug('Found table with partial name match in subcategory ${subcategory.name}', tag: 'DataswornProvider');
+          return table;
+        } catch (e) {
+          // Continue to next subcategory
+        }
+      }
+    }
+    
+    loggingService.debug('Oracle table not found with name: $name', tag: 'DataswornProvider');
+    return null;
+  }
 
   // Find an asset by ID
   Asset? findAssetById(String id) {

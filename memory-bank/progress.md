@@ -40,6 +40,11 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Comprehensive logging system and log viewer
 
 ### Recently Completed
+- ✅ Enhanced character short name functionality with auto-generation and customization options
+- ✅ Added "Random Handle" and "Make l33t" buttons to the character form
+- ✅ Created LeetSpeakConverter utility for converting text to leet speak
+- ✅ Enhanced OracleService with recursive search for oracle tables by key anywhere in hierarchy
+- ✅ Improved oracle table lookup to work with nested tables like "social/fe_runner_handles"
 - ✅ Implemented a loading screen for resource-intensive operations with console-style animation
 - ✅ Created a dynamic message provider system for flexible loading screen content
 - ✅ Added background loading of Datasworn data with proper coordination
@@ -181,6 +186,7 @@ The DartRPG application is in active development with core functionality impleme
 - **Tablet Support**: UI not fully optimized for tablet screens
 
 ### Recently Fixed Issues
+- ✅ **Oracle Table Lookup**: Enhanced oracle table lookup to find tables by key anywhere in the hierarchy
 - ✅ **Oracle Reference Processing**: Implemented automatic processing of nested oracle references in oracle results
 - ✅ **Oracle Result Display**: Enhanced oracle result display to show nested oracle rolls
 - ✅ **Oracle Collection Parsing**: Fixed issue with collections in JSON file not being properly parsed, enabling display of node types like "Science & Research"
@@ -198,6 +204,16 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Journal Navigation**: Added "Jump to last entry" button on journal screen when entries are scrollable
 
 ## Recent Milestones
+
+### Milestone: Character Short Name Enhancements (April 2025)
+- ✅ Enhanced character short name (handle) functionality with automatic generation and customization
+- ✅ Added auto-generation of short name when field gets focus and is empty but name field is filled
+- ✅ Implemented "Random Handle" button that rolls on the fe_runner_handles oracle
+- ✅ Added "Make l33t" button with terminal icon to convert short names to leet speak
+- ✅ Created LeetSpeakConverter utility for converting text to leet speak
+- ✅ Enhanced OracleService with recursive search for oracle tables by key anywhere in hierarchy
+- ✅ Improved oracle table lookup to work with nested tables like "social/fe_runner_handles"
+- ✅ Made the character creation process more thematically consistent with the cyberpunk theme
 
 ### Milestone: Loading Screen Implementation (April 2025)
 - ✅ Implemented a specialized loading screen for handling resource-intensive operations

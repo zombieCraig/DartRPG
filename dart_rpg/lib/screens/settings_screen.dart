@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/settings_provider.dart';
 import '../utils/logging_service.dart';
 import '../services/tutorial_service.dart';
@@ -162,21 +163,31 @@ class SettingsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const ListTile(
-                title: Text('IronSworn Journal'),
-                subtitle: Text('Version 1.0.0'),
+                title: Text('Fe-Runners Solo RPG'),
+                subtitle: Text('Version 0.0.1'),
               ),
               ListTile(
                 title: const Text('Source Code'),
                 subtitle: const Text('View on GitHub'),
-                onTap: () {
-                  // Open GitHub repository
+                onTap: () async {
+                  final Uri url = Uri.parse('https://github.com/zombieCraig/DartRPG');
+                  if (!await launchUrl(url)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Could not open URL')),
+                    );
+                  }
                 },
               ),
               ListTile(
-                title: const Text('IronSworn'),
-                subtitle: const Text('Learn more about the IronSworn RPG'),
-                onTap: () {
-                  // Open IronSworn website
+                title: const Text('Fe-Runners'),
+                subtitle: const Text('Learn more about the Fe-Runners RPG'),
+                onTap: () async {
+                  final Uri url = Uri.parse('https://zombiecraig.itch.io/fe-runners');
+                  if (!await launchUrl(url)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Could not open URL')),
+                    );
+                  }
                 },
               ),
             ],

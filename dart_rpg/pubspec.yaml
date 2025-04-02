@@ -50,6 +50,7 @@ dependencies:
   # UI components
   flutter_markdown: ^0.7.6+2
   flutter_quill: ^9.2.1
+  url_launcher: ^6.2.5
   
   # File handling
   file_picker: ^9.2.1

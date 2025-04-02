@@ -240,6 +240,7 @@ class GameProvider extends ChangeNotifier {
     String name, {
     String? description,
     LocationSegment segment = LocationSegment.core,
+    String? nodeType,
     String? connectToLocationId,
     double? x,
     double? y,
@@ -252,6 +253,7 @@ class GameProvider extends ChangeNotifier {
       name: name,
       description: description,
       segment: segment,
+      nodeType: nodeType,
       x: x,
       y: y,
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/move.dart';
 import '../models/oracle.dart';
 import '../models/character.dart';
+import '../models/node_type_info.dart';
 import '../utils/datasworn_parser.dart';
 import '../utils/logging_service.dart';
 
@@ -153,5 +154,90 @@ class DataswornProvider extends ChangeNotifier {
     } catch (e) {
       return null;
     }
+  }
+  
+  // Get all node types from oracle collections
+  List<NodeTypeInfo> getAllNodeTypes() {
+    final loggingService = LoggingService();
+    final List<NodeTypeInfo> nodeTypes = [];
+    
+    // Log all top-level categories to help with debugging
+    loggingService.debug(
+      'Oracle categories: ${_oracles.map((c) => "${c.id}: ${c.name} (${c.subcategories.length} subcategories)").join(", ")}',
+      tag: 'DataswornProvider',
+    );
+    
+    // Method 1: Find the node_type category by ID
+    try {
+      final nodeTypeCategory = _oracles.firstWhere(
+        (category) => category.id == 'node_type',
+      );
+      
+      loggingService.debug(
+        'Found node_type category by ID: ${nodeTypeCategory.name} with ${nodeTypeCategory.subcategories.length} subcategories',
+        tag: 'DataswornProvider',
+      );
+      
+      // Add all subcategories as node types
+      for (final subcategory in nodeTypeCategory.subcategories) {
+        // Extract the key from the subcategory ID
+        final key = subcategory.id;
+        
+        nodeTypes.add(NodeTypeInfo(
+          key: key,
+          displayName: subcategory.name,
+        ));
+        
+        loggingService.debug(
+          'Added node type: ${subcategory.name} (${subcategory.id})',
+          tag: 'DataswornProvider',
+        );
+      }
+    } catch (e) {
+      loggingService.warning(
+        'No node_type category found by ID: ${e.toString()}',
+        tag: 'DataswornProvider',
+      );
+      
+      // Method 2: Try to find by name if ID search failed
+      try {
+        final nodeTypeCategory = _oracles.firstWhere(
+          (category) => category.name.toLowerCase().contains('node type'),
+        );
+        
+        loggingService.debug(
+          'Found node_type category by name: ${nodeTypeCategory.name} with ${nodeTypeCategory.subcategories.length} subcategories',
+          tag: 'DataswornProvider',
+        );
+        
+        // Add all subcategories as node types
+        for (final subcategory in nodeTypeCategory.subcategories) {
+          nodeTypes.add(NodeTypeInfo(
+            key: subcategory.id,
+            displayName: subcategory.name,
+          ));
+          
+          loggingService.debug(
+            'Added node type: ${subcategory.name} (${subcategory.id})',
+            tag: 'DataswornProvider',
+          );
+        }
+      } catch (e2) {
+        loggingService.warning(
+          'No node_type category found by name: ${e2.toString()}',
+          tag: 'DataswornProvider',
+        );
+      }
+    }
+    
+    // Sort alphabetically by display name
+    nodeTypes.sort((a, b) => a.displayName.compareTo(b.displayName));
+    
+    loggingService.debug(
+      'Returning ${nodeTypes.length} node types',
+      tag: 'DataswornProvider',
+    );
+    
+    return nodeTypes;
   }
 }

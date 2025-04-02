@@ -17,6 +17,7 @@ class LocationService {
     required String name,
     String? description,
     LocationSegment segment = LocationSegment.core,
+    String? nodeType,
     String? connectToLocationId,
     double? x,
     double? y,
@@ -26,6 +27,7 @@ class LocationService {
         name,
         description: description,
         segment: segment,
+        nodeType: nodeType,
         connectToLocationId: connectToLocationId,
         x: x,
         y: y,
@@ -48,6 +50,7 @@ class LocationService {
     String? description,
     String? imageUrl,
     LocationSegment? segment,
+    String? nodeType,
   }) async {
     try {
       // Get the current location
@@ -64,6 +67,7 @@ class LocationService {
       location.name = name;
       location.description = description;
       location.imageUrl = imageUrl;
+      location.nodeType = nodeType;
       
       // Update segment if provided and different
       if (segment != null && segment != location.segment) {

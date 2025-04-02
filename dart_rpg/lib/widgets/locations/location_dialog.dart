@@ -44,12 +44,13 @@ class LocationDialog {
               children: [
                 LocationForm(
                   validSegments: validSegments,
-                  onSave: (name, description, segment, imageUrl) async {
+                  onSave: (name, description, segment, imageUrl, nodeType) async {
                     // Create the location
                     final location = await locationService.createLocation(
                       name: name,
                       description: description,
                       segment: segment,
+                      nodeType: nodeType,
                       connectToLocationId: connectToLocationId,
                     );
                     
@@ -60,6 +61,7 @@ class LocationDialog {
                         name: location.name,
                         description: location.description,
                         imageUrl: imageUrl,
+                        nodeType: location.nodeType,
                       );
                     }
                     
@@ -126,7 +128,7 @@ class LocationDialog {
                     LocationForm(
                       initialLocation: location,
                       validSegments: LocationSegment.values,
-                      onSave: (name, description, segment, imageUrl) async {
+                      onSave: (name, description, segment, imageUrl, nodeType) async {
                         // Update the location
                         final success = await locationService.updateLocation(
                           locationId: location.id,
@@ -134,6 +136,7 @@ class LocationDialog {
                           description: description,
                           imageUrl: imageUrl,
                           segment: segment,
+                          nodeType: nodeType,
                         );
                         
                         if (success) {

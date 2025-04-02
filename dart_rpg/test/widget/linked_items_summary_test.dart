@@ -56,7 +56,7 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   }
   
   @override
-  Future<Location> createLocation(String name, {String? description, LocationSegment segment = LocationSegment.core, String? connectToLocationId, double? x, double? y}) async {
+  Future<Location> createLocation(String name, {String? description, LocationSegment segment = LocationSegment.core, String? nodeType, String? connectToLocationId, double? x, double? y}) async {
     throw UnimplementedError();
   }
   

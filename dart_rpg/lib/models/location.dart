@@ -60,6 +60,7 @@ class Location {
   List<String> notes;
   List<String> connectedLocationIds;
   LocationSegment segment;
+  String? nodeType; // Added nodeType property
   double? x;
   double? y;
   double? scale;
@@ -72,6 +73,7 @@ class Location {
     List<String>? notes,
     List<String>? connectedLocationIds,
     this.segment = LocationSegment.core,
+    this.nodeType, // Added nodeType parameter
     this.x,
     this.y,
     this.scale,
@@ -88,6 +90,7 @@ class Location {
       'notes': notes,
       'connectedLocationIds': connectedLocationIds,
       'segment': segment.toString().split('.').last,
+      'nodeType': nodeType,
       'x': x,
       'y': y,
       'scale': scale,
@@ -105,6 +108,7 @@ class Location {
       segment: json['segment'] != null 
           ? LocationSegmentExtension.fromString(json['segment'])
           : LocationSegment.core,
+      nodeType: json['nodeType'],
       x: json['x'] != null ? (json['x'] as num).toDouble() : null,
       y: json['y'] != null ? (json['y'] as num).toDouble() : null,
       scale: json['scale'] != null ? (json['scale'] as num).toDouble() : null,

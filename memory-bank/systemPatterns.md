@@ -585,6 +585,117 @@ This architecture ensures a clean separation of concerns while providing a seaml
 - Refine the logging system with more structured log entries
 - Optimize quest data persistence for better performance
 
+## Node Type System Architecture
+
+The Node Type system is designed to handle location node types from the Datasworn JSON structure. This system follows these key architectural patterns:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   Datasworn JSON                        │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              node_type (oracle_collection)       │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ collections     │  │ name: "Node Types"  │   │   │
+│  │  └───────┬─────────┘  └─────────────────────┘   │   │
+│  └──────────┬───────────────────────────────────────┘   │
+│             │                                           │
+│             ▼                                           │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              Node Type Collections              │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ social          │  │ commerce            │   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ gaming          │  │ entertainment       │   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  └─────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Datasworn JSON Structure
+
+The node types are structured in the Datasworn JSON as follows:
+
+```json
+"node_type": {
+    "name": "Node Types",
+    "oracle_type": "tables",
+    "type": "oracle_collection",
+    "collections": {
+        "social": {
+            "name": "Social / Communications",
+            "type": "oracle_collection",
+            "oracle_type": "tables",
+            ...
+        },
+        "commerce": {
+            "name": "Commerce",
+            "type": "oracle_collection",
+            "oracle_type": "tables",
+            ...
+        },
+        ...
+    }
+}
+```
+
+### Component Responsibilities
+
+1. **DataswornParser**:
+   - Parses the Datasworn JSON structure
+   - Creates OracleCategory objects for node_type and its subcategories
+   - Sets the `isNodeType` flag on the node_type category
+
+2. **DataswornProvider**:
+   - Provides access to the parsed oracle categories
+   - Implements `getAllNodeTypes()` to extract node types from the node_type category
+   - Finds the node_type category by ID or name
+   - Extracts node type information from subcategories
+   - Sorts node types alphabetically by display name
+
+3. **NodeTypeInfo**:
+   - A model class that represents a node type with key and display name
+   - Used in the LocationForm for the node type dropdown
+
+4. **NodeTypeUtils**:
+   - Provides utility methods for working with node types
+   - Maps segment types to oracle table IDs for segment-specific node type rolls
+   - Implements methods to find node types by key and get random node types
+
+5. **LocationForm**:
+   - Displays a dropdown of available node types
+   - Handles selection of node types
+   - Provides buttons for random node type selection
+   - Gracefully handles cases where no node types are available
+
+### Process Flow
+
+1. When the application loads:
+   - DataswornParser parses the Datasworn JSON
+   - It creates an OracleCategory for the node_type collection with isNodeType=true
+   - It creates subcategories for each node type collection (social, commerce, etc.)
+
+2. When the LocationForm is displayed:
+   - It calls DataswornProvider.getAllNodeTypes()
+   - DataswornProvider finds the node_type category by ID or name
+   - It extracts node type information from the subcategories
+   - It returns a sorted list of NodeTypeInfo objects
+
+3. When a random node type is requested:
+   - For segment-specific rolls, it uses the segment to determine the oracle table ID
+   - It rolls on the appropriate oracle table
+   - It matches the result to a node type
+   - For any node type, it randomly selects from the available node types
+
+### Benefits
+
+- **Flexible Structure**: The system can handle different node type structures in the Datasworn JSON
+- **Robust Lookup**: Multiple methods for finding the node_type category (by ID or name)
+- **Graceful Degradation**: Handles cases where node types are not available
+- **Alphabetical Sorting**: Provides a consistent ordering of node types in the dropdown
+- **Random Selection**: Supports both segment-specific and general random node type selection
+
 ## Loading Screen Architecture
 
 The application implements a specialized loading screen pattern for handling resource-intensive operations that may take significant time to complete. This pattern provides a visually engaging experience while background processes run.

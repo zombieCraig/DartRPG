@@ -92,10 +92,10 @@ class CharacterCard extends StatelessWidget {
                       // Key stats for main characters
                       if (character.isMainCharacter && isMainCharacter) ...[
                         const SizedBox(height: 4),
-                        // Use the CharacterKeyStatsPanel with compact mode and editable=true
+                        // Use the CharacterKeyStatsPanel with compact mode and always editable
                         CharacterKeyStatsPanel(
                           character: character,
-                          isEditable: true, // Enable the + and - buttons
+                          isEditable: true, // Always enable the + and - buttons
                           useCompactMode: true, // Use the compact layout
                           initiallyExpanded: true, // Show without needing to expand
                           onStatsChanged: (momentum, health, spirit, supply) {

@@ -18,6 +18,7 @@ import '../widgets/journal/autocomplete_system.dart';
 import '../widgets/oracles/oracle_dialog.dart';
 import '../widgets/locations/location_service.dart';
 import '../widgets/locations/location_dialog.dart';
+import '../widgets/character/dialogs/character_edit_dialog.dart';
 import 'game_screen.dart';
 
 // Custom intents for keyboard shortcuts
@@ -850,6 +851,29 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     );
   }
   
+  // Show the character edit dialog for the main character
+  void _showCharacterEditDialog(BuildContext context) {
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final currentGame = gameProvider.currentGame;
+    
+    if (currentGame == null || currentGame.mainCharacter == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No main character found'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    // Show the character edit dialog for the main character
+    CharacterEditDialog.show(
+      context,
+      gameProvider,
+      currentGame.mainCharacter!,
+    );
+  }
+  
   @override
   Widget build(BuildContext context) {
     final gameProvider = Provider.of<GameProvider>(context);
@@ -890,6 +914,13 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         appBar: AppBar(
           title: Text(widget.entryId == null ? 'New Journal Entry' : 'Edit Journal Entry'),
           actions: [
+            // Character edit icon - only show if there's a main character
+            if (currentGame.mainCharacter != null)
+              IconButton(
+                icon: const Icon(Icons.assignment_ind),
+                tooltip: 'Edit Character',
+                onPressed: () => _showCharacterEditDialog(context),
+              ),
             if (_isEditing)
               IconButton(
                 icon: const Icon(Icons.save),

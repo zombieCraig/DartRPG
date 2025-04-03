@@ -5,7 +5,6 @@ import '../../models/journal_entry.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../services/roll_service.dart';
-import '../../screens/journal_entry_screen.dart';
 import '../moves/move_list.dart';
 import '../moves/move_details.dart';
 import '../moves/roll_result_view.dart';

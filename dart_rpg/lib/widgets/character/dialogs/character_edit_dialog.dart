@@ -17,20 +17,23 @@ import 'character_delete_confirmation.dart';
 class CharacterEditDialog extends StatefulWidget {
   final GameProvider gameProvider;
   final Character character;
+  final VoidCallback? onCharacterDeleted;
   
   const CharacterEditDialog({
     super.key,
     required this.gameProvider,
     required this.character,
+    this.onCharacterDeleted,
   });
   
   /// Shows a dialog for editing an existing character.
-  static Future<void> show(BuildContext context, GameProvider gameProvider, Character character) async {
+  static Future<void> show(BuildContext context, GameProvider gameProvider, Character character, {VoidCallback? onCharacterDeleted}) async {
     await showDialog(
       context: context,
       builder: (context) => CharacterEditDialog(
         gameProvider: gameProvider,
         character: character,
+        onCharacterDeleted: onCharacterDeleted,
       ),
     );
   }
@@ -168,7 +171,12 @@ class _CharacterEditDialogState extends State<CharacterEditDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(isEditing ? 'Edit Character' : "${widget.character.name} aka ${widget.character.getHandle()}"),
+      title: Text(isEditing 
+        ? 'Edit Character' 
+        : widget.character.name == widget.character.getHandle() 
+          ? widget.character.name 
+          : "${widget.character.name} aka ${widget.character.getHandle()}"
+      ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -414,6 +422,12 @@ class _CharacterEditDialogState extends State<CharacterEditDialog> {
                   gameProvider: widget.gameProvider,
                   character: widget.character,
                 );
+                
+                // Call the onCharacterDeleted callback if provided
+                if (widget.onCharacterDeleted != null) {
+                  widget.onCharacterDeleted!();
+                }
+                
                 Navigator.pop(context); // Close character details dialog
               }
             },

@@ -118,7 +118,7 @@ class _AssetDetailDialogState extends State<AssetDetailDialog> {
                     },
                   ),
                 );
-              }).toList(),
+              }),
               const SizedBox(height: 8),
               const Divider(height: 1),
             ],

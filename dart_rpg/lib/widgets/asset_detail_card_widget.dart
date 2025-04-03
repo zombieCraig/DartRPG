@@ -206,7 +206,7 @@ class AssetDetailCardWidget extends StatelessWidget {
                       );
                     },
                   );
-                }).toList(),
+                }),
               ],
             ],
           ),

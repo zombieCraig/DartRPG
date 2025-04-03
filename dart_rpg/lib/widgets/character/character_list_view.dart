@@ -64,7 +64,12 @@ class CharacterListView extends StatelessWidget {
           character: character,
           isMainCharacter: isMainCharacter,
           onTap: () {
-            CharacterDialog.showEditDialog(context, gameProvider, character);
+            CharacterDialog.showEditDialog(
+              context, 
+              gameProvider, 
+              character,
+              onCharacterDeleted: onCharacterAdded, // Use the same callback as for adding
+            );
           },
         );
       },

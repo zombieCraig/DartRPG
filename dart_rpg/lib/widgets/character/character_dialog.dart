@@ -13,8 +13,8 @@ class CharacterDialog {
   }
 
   /// Shows a dialog for editing an existing character.
-  static Future<void> showEditDialog(BuildContext context, GameProvider gameProvider, Character character) async {
-    await CharacterEditDialog.show(context, gameProvider, character);
+  static Future<void> showEditDialog(BuildContext context, GameProvider gameProvider, Character character, {VoidCallback? onCharacterDeleted}) async {
+    await CharacterEditDialog.show(context, gameProvider, character, onCharacterDeleted: onCharacterDeleted);
   }
 
   /// Shows a dialog for confirming character deletion.

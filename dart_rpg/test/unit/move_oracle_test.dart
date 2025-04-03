@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dart_rpg/models/move.dart';
 import 'package:dart_rpg/models/move_oracle.dart';
-import 'package:dart_rpg/models/oracle.dart';
 
 void main() {
   group('MoveOracle', () {

@@ -395,65 +395,63 @@ class DataswornParser {
     final loggingService = LoggingService();
     Map<String, AssetControl> controls = {};
     
-    if (controlsJson != null) {
-      controlsJson.forEach((key, value) {
-        if (value is Map) {
-          try {
-            final fieldType = value['field_type']?.toString() ?? 'condition_meter';
-            
-            // Warn if field_type is not condition_meter
-            if (fieldType != 'condition_meter') {
-              loggingService.warning(
-                'Unsupported control field type "$fieldType" for control "$key"',
-                tag: 'DataswornParser',
-              );
-            }
-            
-            // Parse nested controls if they exist
-            Map<String, AssetControl> nestedControls = {};
-            if (value['controls'] != null && value['controls'] is Map) {
-              value['controls'].forEach((nestedKey, nestedValue) {
-                if (nestedValue is Map) {
-                  try {
-                    nestedControls[nestedKey.toString()] = AssetControl.fromJson(
-                      Map<String, dynamic>.from(nestedValue)
-                    );
-                  } catch (e) {
-                    loggingService.error(
-                      'Failed to parse nested control "$nestedKey": ${e.toString()}',
-                      tag: 'DataswornParser',
-                    );
-                  }
-                }
-              });
-            }
-            
-            // Create the control
-            controls[key.toString()] = AssetControl(
-              label: value['label']?.toString() ?? key.toString(),
-              max: value['max'] is num ? (value['max'] as num).toInt() : 5,
-              value: value['value'] is num ? (value['value'] as num).toInt() : 0,
-              fieldType: fieldType,
-              min: value['min'] is num ? (value['min'] as num).toInt() : 0,
-              rollable: value['rollable'] == true,
-              moves: value['moves'] != null ? Map<String, dynamic>.from(value['moves']) : {},
-              controls: nestedControls,
-            );
-            
-            loggingService.debug(
-              'Parsed control: ${controls[key.toString()]?.label ?? key} with ${nestedControls.length} nested controls',
-              tag: 'DataswornParser',
-            );
-          } catch (e) {
-            loggingService.error(
-              'Failed to parse control "$key": ${e.toString()}',
+    controlsJson.forEach((key, value) {
+      if (value is Map) {
+        try {
+          final fieldType = value['field_type']?.toString() ?? 'condition_meter';
+          
+          // Warn if field_type is not condition_meter
+          if (fieldType != 'condition_meter') {
+            loggingService.warning(
+              'Unsupported control field type "$fieldType" for control "$key"',
               tag: 'DataswornParser',
             );
           }
+          
+          // Parse nested controls if they exist
+          Map<String, AssetControl> nestedControls = {};
+          if (value['controls'] != null && value['controls'] is Map) {
+            value['controls'].forEach((nestedKey, nestedValue) {
+              if (nestedValue is Map) {
+                try {
+                  nestedControls[nestedKey.toString()] = AssetControl.fromJson(
+                    Map<String, dynamic>.from(nestedValue)
+                  );
+                } catch (e) {
+                  loggingService.error(
+                    'Failed to parse nested control "$nestedKey": ${e.toString()}',
+                    tag: 'DataswornParser',
+                  );
+                }
+              }
+            });
+          }
+          
+          // Create the control
+          controls[key.toString()] = AssetControl(
+            label: value['label']?.toString() ?? key.toString(),
+            max: value['max'] is num ? (value['max'] as num).toInt() : 5,
+            value: value['value'] is num ? (value['value'] as num).toInt() : 0,
+            fieldType: fieldType,
+            min: value['min'] is num ? (value['min'] as num).toInt() : 0,
+            rollable: value['rollable'] == true,
+            moves: value['moves'] != null ? Map<String, dynamic>.from(value['moves']) : {},
+            controls: nestedControls,
+          );
+          
+          loggingService.debug(
+            'Parsed control: ${controls[key.toString()]?.label ?? key} with ${nestedControls.length} nested controls',
+            tag: 'DataswornParser',
+          );
+        } catch (e) {
+          loggingService.error(
+            'Failed to parse control "$key": ${e.toString()}',
+            tag: 'DataswornParser',
+          );
         }
-      });
-    }
-    
+      }
+    });
+      
     return controls;
   }
 

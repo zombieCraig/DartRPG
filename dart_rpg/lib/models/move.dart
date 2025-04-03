@@ -218,7 +218,7 @@ class Move {
     
     _oracles = {};
     if (_oraclesData != null) {
-      _oraclesData!.forEach((key, value) {
+      _oraclesData.forEach((key, value) {
         _oracles![key] = MoveOracle.fromJson(key, value);
       });
     }

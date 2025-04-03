@@ -14,12 +14,12 @@ class ConditionMeterWidget extends StatelessWidget {
   final bool isEditable;
 
   const ConditionMeterWidget({
-    Key? key,
+    super.key,
     required this.control,
     this.onValueChanged,
     this.onRoll,
     this.isEditable = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +91,7 @@ class ConditionMeterWidget extends StatelessWidget {
               );
             }
             return const SizedBox.shrink();
-          }).toList(),
+          }),
         ],
       ],
     );

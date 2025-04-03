@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/character.dart';
 import '../utils/asset_utils.dart';
 import '../providers/game_provider.dart';
+import 'condition_meter_widget.dart';
 
 /// A widget that displays only the content of an asset (description and abilities)
 /// without the name and category header, to avoid duplication in cards that already
@@ -132,9 +133,69 @@ class AssetContentWidget extends StatelessWidget {
         );
       }
       
+      // Add controls if they exist
+      if (asset.controls.isNotEmpty) {
+        // Add a divider before controls
+        contentWidgets.add(const Divider(height: 16));
+        
+        // Add controls header
+        contentWidgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4.0),
+            child: Text(
+              'Controls',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ),
+        );
+        
+        // Add each control
+        for (final entry in asset.controls.entries) {
+          final control = entry.value;
+          
+          // Check if the control is a condition meter
+          if (control.fieldType == 'condition_meter') {
+            contentWidgets.add(
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0, left: 8.0),
+                child: ConditionMeterWidget(
+                  control: control,
+                  isEditable: enableToggle,
+                  onValueChanged: enableToggle ? (newValue) {
+                    // Update control value
+                    control.setValue(newValue);
+                    // Save game
+                    gameProvider.saveGame();
+                  } : null,
+                ),
+              ),
+            );
+          } else {
+            // Show warning for unsupported field types
+            contentWidgets.add(
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  'Warning: Unsupported control field type "${control.fieldType}" for ${control.label}',
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontStyle: FontStyle.italic,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            );
+          }
+        }
+      }
+      
       // Return a ListView with all content widgets
       return SizedBox(
-        height: 150, // Fixed height for the content
+        height: 200, // Increased height to accommodate controls
         child: ListView(
           shrinkWrap: true,
           children: contentWidgets,
@@ -197,6 +258,67 @@ class AssetContentWidget extends StatelessWidget {
             },
           ),
         );
+      }
+      
+      // Add first control if any (in summary view, just show the first one with compact display)
+      if (asset.controls.isNotEmpty) {
+        final firstControlEntry = asset.controls.entries.first;
+        final control = firstControlEntry.value;
+        
+        if (control.fieldType == 'condition_meter') {
+          // Build a list of active conditions
+          final List<String> activeConditions = [];
+          control.controls.forEach((key, nestedControl) {
+            if (nestedControl.fieldType == 'checkbox' && 
+                nestedControl.valueAsBool) {
+              activeConditions.add(nestedControl.label);
+            }
+          });
+          
+          contentWidgets.add(
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4.0),
+              child: RichText(
+                text: TextSpan(
+                  style: DefaultTextStyle.of(context).style.copyWith(fontSize: 12),
+                  children: [
+                    TextSpan(
+                      text: '${control.label}: ',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    TextSpan(text: '${control.valueAsInt}/${control.max}'),
+                    // Only show active conditions
+                    if (activeConditions.isNotEmpty)
+                      TextSpan(
+                        text: ' [${activeConditions.join(", ")}]',
+                        style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          color: Colors.red[700],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+        
+        // Show indicator for additional controls
+        if (asset.controls.length > 1) {
+          contentWidgets.add(
+            Padding(
+              padding: const EdgeInsets.only(top: 4.0, left: 8.0),
+              child: Text(
+                '+ ${asset.controls.length - 1} more controls',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.primary,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          );
+        }
       }
       
       // Show indicator for additional abilities

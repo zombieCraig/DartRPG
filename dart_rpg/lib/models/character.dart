@@ -53,6 +53,93 @@ class AssetOption {
   }
 }
 
+class AssetControl {
+  String label;
+  int max;
+  dynamic value; // Can be int or bool depending on fieldType
+  String fieldType;
+  int min;
+  bool rollable;
+  Map<String, dynamic> moves;
+  Map<String, AssetControl> controls; // For nested controls like overheated/infected
+
+  AssetControl({
+    required this.label,
+    required this.max,
+    required this.value,
+    required this.fieldType,
+    this.min = 0,
+    this.rollable = false,
+    Map<String, dynamic>? moves,
+    Map<String, AssetControl>? controls,
+  }) : 
+    moves = moves ?? {},
+    controls = controls ?? {};
+
+  // Get the value as an integer (for condition_meter)
+  int get valueAsInt => value is bool ? (value ? 1 : 0) : (value ?? 0);
+  
+  // Get the value as a boolean (for checkbox)
+  bool get valueAsBool => value is bool ? value : (value > 0);
+  
+  // Set the value based on the field type
+  void setValue(dynamic newValue) {
+    if (fieldType == 'checkbox') {
+      value = newValue is bool ? newValue : (newValue > 0);
+    } else {
+      value = newValue is int ? newValue : (newValue is bool ? (newValue ? 1 : 0) : 0);
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'label': label,
+      'max': max,
+      'value': value,
+      'field_type': fieldType,
+      'min': min,
+      'rollable': rollable,
+      'moves': moves,
+      'controls': controls.map((key, control) => MapEntry(key, control.toJson())),
+    };
+  }
+  
+  factory AssetControl.fromJson(Map<String, dynamic> json) {
+    // Parse nested controls if they exist
+    Map<String, AssetControl> nestedControls = {};
+    if (json['controls'] != null && json['controls'] is Map) {
+      (json['controls'] as Map).forEach((key, value) {
+        if (value is Map) {
+          nestedControls[key.toString()] = AssetControl.fromJson(Map<String, dynamic>.from(value));
+        }
+      });
+    }
+    
+    // Handle value based on field type
+    final fieldType = json['field_type']?.toString() ?? 'condition_meter';
+    dynamic value;
+    
+    if (fieldType == 'checkbox') {
+      // For checkbox, value should be a boolean
+      value = json['value'] is bool ? json['value'] : (json['value'] == true || json['value'] == 1);
+    } else {
+      // For condition_meter and others, value should be an integer
+      value = json['value'] is num ? (json['value'] as num).toInt() : 0;
+    }
+    
+    return AssetControl(
+      label: json['label'] ?? '',
+      max: json['max'] ?? 5,
+      value: value,
+      fieldType: fieldType,
+      min: json['min'] ?? 0,
+      rollable: json['rollable'] ?? false,
+      moves: json['moves'] != null ? Map<String, dynamic>.from(json['moves']) : {},
+      controls: nestedControls,
+    );
+  }
+}
+
 class AssetAbility {
   String text;
   bool enabled;
@@ -85,6 +172,7 @@ class Asset {
   bool enabled;
   List<AssetAbility> abilities;
   Map<String, AssetOption> options;
+  Map<String, AssetControl> controls;
 
   Asset({
     String? id,
@@ -94,10 +182,12 @@ class Asset {
     this.enabled = false,
     List<AssetAbility>? abilities,
     Map<String, AssetOption>? options,
+    Map<String, AssetControl>? controls,
   }) : 
     id = id ?? const Uuid().v4(),
     abilities = abilities ?? [],
-    options = options ?? {};
+    options = options ?? {},
+    controls = controls ?? {};
 
   Map<String, dynamic> toJson() {
     return {
@@ -108,6 +198,7 @@ class Asset {
       'enabled': enabled,
       'abilities': abilities.map((ability) => ability.toJson()).toList(),
       'options': options.map((key, option) => MapEntry(key, option.toJson())),
+      'controls': controls.map((key, control) => MapEntry(key, control.toJson())),
     };
   }
 
@@ -117,6 +208,15 @@ class Asset {
       (json['options'] as Map).forEach((key, value) {
         if (value is Map) {
           options[key.toString()] = AssetOption.fromJson(Map<String, dynamic>.from(value));
+        }
+      });
+    }
+    
+    Map<String, AssetControl> controls = {};
+    if (json['controls'] != null && json['controls'] is Map) {
+      (json['controls'] as Map).forEach((key, value) {
+        if (value is Map) {
+          controls[key.toString()] = AssetControl.fromJson(Map<String, dynamic>.from(value));
         }
       });
     }
@@ -131,6 +231,7 @@ class Asset {
           ? (json['abilities'] as List).map((a) => AssetAbility.fromJson(a)).toList()
           : [],
       options: options,
+      controls: controls,
     );
   }
   
@@ -148,11 +249,46 @@ class Asset {
   
   // Factory method for creating a Base Rig asset
   factory Asset.baseRig() {
+    // Create the integrity control
+    final integrityControl = AssetControl(
+      label: 'Integrity',
+      max: 5,
+      value: 5,
+      fieldType: 'condition_meter',
+      min: 0,
+      rollable: true,
+      moves: {
+        'suffer': ['move:fe_runners/suffer/withstand_damage'],
+        'recover': ['move:fe_runners/recover/repair'],
+      },
+      controls: {
+        'overheated': AssetControl(
+          label: 'Overheated',
+          max: 1,
+          value: 0,
+          fieldType: 'checkbox',
+          min: 0,
+          rollable: false,
+        ),
+        'infected': AssetControl(
+          label: 'Infected',
+          max: 1,
+          value: 0,
+          fieldType: 'checkbox',
+          min: 0,
+          rollable: false,
+        ),
+      },
+    );
+    
     return Asset(
       name: 'Base Rig',
       category: 'Base Rig',
       description: 'Your personal computer system and starting point in the network.',
       enabled: true,
+      controls: {
+        'integrity': integrityControl,
+      },
     );
   }
 }

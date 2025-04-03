@@ -163,6 +163,82 @@ class AssetCardWidget extends StatelessWidget {
                                 ),
                               ),
                           ],
+                          
+                          // Display controls if they exist
+                          if (asset.controls.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            const Divider(height: 1),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Controls',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: color,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            
+                            // Display first control (ultra compact view)
+                            if (asset.controls.isNotEmpty)
+                              Builder(
+                                builder: (context) {
+                                  final firstControlEntry = asset.controls.entries.first;
+                                  final control = firstControlEntry.value;
+                                  
+                                  if (control.fieldType == 'condition_meter') {
+                                    // Build a list of active conditions
+                                    final List<String> activeConditions = [];
+                                    control.controls.forEach((key, nestedControl) {
+                                      if (nestedControl.fieldType == 'checkbox' && 
+                                          nestedControl.valueAsBool) {
+                                        activeConditions.add(nestedControl.label);
+                                      }
+                                    });
+                                    
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 4.0),
+                                      child: RichText(
+                                        text: TextSpan(
+                                          style: DefaultTextStyle.of(context).style.copyWith(fontSize: 12),
+                                          children: [
+                                            TextSpan(
+                                              text: '${control.label}: ',
+                                              style: const TextStyle(fontWeight: FontWeight.bold),
+                                            ),
+                                            TextSpan(text: '${control.valueAsInt}/${control.max}'),
+                                            // Only show active conditions
+                                            if (activeConditions.isNotEmpty)
+                                              TextSpan(
+                                                text: ' [${activeConditions.join(", ")}]',
+                                                style: TextStyle(
+                                                  fontStyle: FontStyle.italic,
+                                                  color: Colors.red[700],
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                },
+                              ),
+                            
+                            // Show indicator for additional controls
+                            if (asset.controls.length > 1)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Text(
+                                  '+ ${asset.controls.length - 1} more controls',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Theme.of(context).colorScheme.primary,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ],
                       ),
                     ),

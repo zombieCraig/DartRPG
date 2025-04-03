@@ -5,6 +5,7 @@ import '../models/character.dart';
 import '../utils/asset_utils.dart';
 import '../providers/game_provider.dart';
 import '../utils/logging_service.dart';
+import 'condition_meter_widget.dart';
 
 /// A specialized version of the asset card widget for use in detail dialogs
 /// that avoids using Expanded to prevent layout issues
@@ -12,12 +13,14 @@ class AssetDetailCardWidget extends StatelessWidget {
   final Asset asset;
   final bool showAbilities;
   final Function(AssetAbility, bool)? onAbilityToggle;
+  final bool enableControls;
 
   const AssetDetailCardWidget({
     super.key,
     required this.asset,
     this.showAbilities = true,
     this.onAbilityToggle,
+    this.enableControls = true,
   });
 
   Color _getAssetColor(BuildContext context) {
@@ -144,6 +147,66 @@ class AssetDetailCardWidget extends StatelessWidget {
                       );
                     },
                   ),
+              ],
+              
+              // Display controls if they exist
+              if (asset.controls.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Divider(height: 1),
+                const SizedBox(height: 8),
+                Text(
+                  'Controls',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Use ConditionMeterWidget for controls
+                ...asset.controls.entries.map((entry) {
+                  final control = entry.value;
+                  
+                  // Only support condition_meter for now
+                  if (control.fieldType != 'condition_meter') {
+                    // Log warning for unsupported field types
+                    LoggingService().warning(
+                      'Unsupported control field type "${control.fieldType}" for control "${entry.key}" in asset "${asset.name}"',
+                      tag: 'AssetDetailCardWidget',
+                    );
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: Text(
+                        'Warning: Unsupported control field type "${control.fieldType}" for ${control.label}',
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontStyle: FontStyle.italic,
+                          fontSize: 12,
+                        ),
+                      ),
+                    );
+                  }
+                  
+                  // Use ConditionMeterWidget for editable controls
+                  return StatefulBuilder(
+                    builder: (context, setState) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12.0),
+                        child: ConditionMeterWidget(
+                          control: control,
+                          isEditable: enableControls,
+                          onValueChanged: enableControls ? (newValue) {
+                            // Update control value and rebuild
+                            control.setValue(newValue);
+                            setState(() {}); // Rebuild this widget
+                            // Save game
+                            Provider.of<GameProvider>(context, listen: false).saveGame();
+                          } : null,
+                        ),
+                      );
+                    },
+                  );
+                }).toList(),
               ],
             ],
           ),

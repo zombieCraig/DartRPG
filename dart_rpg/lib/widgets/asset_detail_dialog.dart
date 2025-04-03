@@ -131,6 +131,7 @@ class _AssetDetailDialogState extends State<AssetDetailDialog> {
                 child: AssetDetailCardWidget(
                   asset: widget.asset,
                   showAbilities: true,
+                  enableControls: widget.isCharacterAsset,
                   onAbilityToggle: widget.isCharacterAsset ? (ability, newValue) {
                     setState(() {
                       ability.enabled = newValue;

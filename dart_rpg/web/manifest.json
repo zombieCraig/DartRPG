@@ -1,11 +1,11 @@
 {
-    "name": "dart_rpg",
-    "short_name": "dart_rpg",
+    "name": "Fe-Runners RPG",
+    "short_name": "Fe-Runners",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#121212",
+    "theme_color": "#00FFFF",
+    "description": "A digital companion for the Fe-Runners hacking-themed RPG.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

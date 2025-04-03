@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../services/autosave_service.dart';
-import '../../models/journal_entry.dart';
 import 'editor_toolbar.dart';
 import 'autocomplete_system.dart';
 import 'linked_items_manager.dart';

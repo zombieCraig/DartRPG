@@ -8,6 +8,7 @@ import 'package:dart_rpg/models/session.dart';
 import 'package:dart_rpg/models/journal_entry.dart';
 import 'package:dart_rpg/models/quest.dart';
 import 'package:dart_rpg/providers/game_provider.dart';
+import 'package:dart_rpg/providers/datasworn_provider.dart';
 import 'package:dart_rpg/widgets/location_graph_widget.dart';
 
 // Mock GameProvider for testing
@@ -148,6 +149,9 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   
   @override
   Future<void> removeQuestTicksForRank(String questId) async {}
+  
+  @override
+  Future<void> updateBaseRigAssets(DataswornProvider dataswornProvider) async {}
 }
 
 void main() {

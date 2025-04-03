@@ -25,10 +25,10 @@ class MockGameProvider extends GameProvider {
       isMainCharacter: isMainCharacter,
     );
     
-    _mockGame!.characters.add(character);
+    _mockGame.characters.add(character);
     
     if (isMainCharacter) {
-      _mockGame!.mainCharacter = character;
+      _mockGame.mainCharacter = character;
     }
     
     return character;

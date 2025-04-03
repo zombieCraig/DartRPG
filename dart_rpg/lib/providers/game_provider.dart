@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import 'dart:math' as math;
 
 import '../models/game.dart';
 import '../models/character.dart';
@@ -11,6 +12,7 @@ import '../models/journal_entry.dart';
 import '../models/quest.dart';
 import '../utils/logging_service.dart';
 import '../utils/dice_roller.dart';
+import 'datasworn_provider.dart';
 
 class GameProvider extends ChangeNotifier {
   
@@ -216,6 +218,88 @@ class GameProvider extends ChangeNotifier {
     
     await _saveGames();
     notifyListeners();
+  }
+  
+  // Update Base Rig assets for existing characters
+  Future<void> updateBaseRigAssets(DataswornProvider dataswornProvider) async {
+    final loggingService = LoggingService();
+    
+    // Skip if no game is loaded
+    if (_currentGame == null) return;
+    
+    bool assetsUpdated = false;
+    
+    // Process all characters
+    for (final character in _currentGame!.characters) {
+      // Find any Base Rig assets
+      for (int i = 0; i < character.assets.length; i++) {
+        final asset = character.assets[i];
+        
+        // Check if this is a Base Rig asset without options (factory-created)
+        if (asset.category == 'Base Rig' && asset.options.isEmpty) {
+          loggingService.debug(
+            'Found factory-created Base Rig asset for character: ${character.name}',
+            tag: 'GameProvider',
+          );
+          
+          // Try to find the Base Rig asset in the DataswornProvider by ID
+          Asset? baseRig = dataswornProvider.findAssetById("base_rig");
+          
+          // If not found by ID, try to find it in the rig asset collection
+          if (baseRig == null) {
+            final assetsByCategory = dataswornProvider.getAssetsByCategory();
+            if (assetsByCategory.containsKey('rig')) {
+              final rigAssets = assetsByCategory['rig'];
+              if (rigAssets != null && rigAssets.isNotEmpty) {
+                try {
+                  baseRig = rigAssets.firstWhere(
+                    (a) => a.id == "base_rig"
+                  );
+                  loggingService.debug(
+                    'Found Base Rig asset in rig category: ${baseRig.name} (ID: ${baseRig.id})',
+                    tag: 'GameProvider',
+                  );
+                } catch (e) {
+                  loggingService.warning(
+                    'Base Rig asset not found in rig category: ${e.toString()}',
+                    tag: 'GameProvider',
+                  );
+                }
+              }
+            }
+          } else {
+            loggingService.debug(
+              'Found Base Rig asset by ID: ${baseRig.name} (ID: ${baseRig.id})',
+              tag: 'GameProvider',
+            );
+          }
+          
+          // If we found a proper Base Rig asset, replace the factory-created one
+          if (baseRig != null) {
+            loggingService.debug(
+              'Replacing factory-created Base Rig with Datasworn version for character: ${character.name}',
+              tag: 'GameProvider',
+            );
+            
+            // Preserve enabled state of abilities if any
+            if (asset.abilities.isNotEmpty && baseRig.abilities.isNotEmpty) {
+              for (int j = 0; j < math.min(asset.abilities.length, baseRig.abilities.length); j++) {
+                baseRig.abilities[j].enabled = asset.abilities[j].enabled;
+              }
+            }
+            
+            // Replace the asset
+            character.assets[i] = baseRig;
+            assetsUpdated = true;
+          }
+        }
+      }
+    }
+    
+    // Save changes if any assets were updated
+    if (assetsUpdated) {
+      await saveGame();
+    }
   }
 
   // Create a new character

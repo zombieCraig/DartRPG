@@ -428,8 +428,37 @@ class DataswornParser {
                 }
               }
               
+              // Parse options if they exist
+              Map<String, AssetOption> options = {};
+              if (assetJson['options'] != null && assetJson['options'] is Map) {
+                final optionsJson = assetJson['options'] as Map;
+                
+                optionsJson.forEach((key, value) {
+                  if (value is Map) {
+                    final fieldType = value['field_type']?.toString() ?? 'text';
+                    final label = value['label']?.toString() ?? key.toString();
+                    final optionValue = value['value'];
+                    
+                    // Add the option
+                    options[key.toString()] = AssetOption(
+                      fieldType: fieldType,
+                      label: label,
+                      value: optionValue?.toString(),
+                    );
+                    
+                    // Log warning for unsupported field types
+                    if (fieldType != 'text') {
+                      loggingService.warning(
+                        'Unsupported field type "$fieldType" for option "$key" in asset "$name"',
+                        tag: 'DataswornParser',
+                      );
+                    }
+                  }
+                });
+              }
+              
               loggingService.debug(
-                'Parsed asset: $name with ${abilities.length} abilities',
+                'Parsed asset: $name with ${abilities.length} abilities and ${options.length} options',
                 tag: 'DataswornParser',
               );
               
@@ -439,6 +468,7 @@ class DataswornParser {
                 category: category,
                 description: description,
                 abilities: abilities,
+                options: options,
               ));
             }
           });

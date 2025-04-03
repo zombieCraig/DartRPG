@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../providers/game_provider.dart';
-import '../providers/datasworn_provider.dart';
 import '../models/journal_entry.dart';
 import '../models/character.dart';
 import '../models/location.dart';

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'location.dart';
 
 /// A class to represent node type information with key and display name

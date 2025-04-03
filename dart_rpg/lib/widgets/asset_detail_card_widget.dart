@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/character.dart';
 import '../utils/asset_utils.dart';
 import '../providers/game_provider.dart';
+import '../utils/logging_service.dart';
 
 /// A specialized version of the asset card widget for use in detail dialogs
 /// that avoids using Expanded to prevent layout issues
@@ -43,22 +44,84 @@ class AssetDetailCardWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Remove asset description as it's not a field in the JSON
-              
-                // Display abilities if they exist and showAbilities is true
-                if (showAbilities && asset.abilities.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  const Divider(height: 1),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Abilities',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                    ),
+              // Display options if they exist
+              if (asset.options.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Divider(height: 1),
+                const SizedBox(height: 8),
+                Text(
+                  'Options',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: color,
                   ),
-                  const SizedBox(height: 8),
+                ),
+                const SizedBox(height: 8),
+                // Display options directly in a column
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: asset.options.length,
+                  itemBuilder: (context, index) {
+                    final entry = asset.options.entries.elementAt(index);
+                    final option = entry.value;
+                    
+                    // Only support text fields for now
+                    if (option.fieldType != 'text') {
+                      // Log warning for unsupported field types
+                      LoggingService().warning(
+                        'Unsupported field type "${option.fieldType}" for option "${entry.key}" in asset "${asset.name}"',
+                        tag: 'AssetDetailCardWidget',
+                      );
+                      return const SizedBox.shrink();
+                    }
+                    
+                    if (option.value == null || option.value!.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${option.label}: ',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              option.value!,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                const Divider(height: 1),
+              ],
+              
+              // Display abilities if they exist and showAbilities is true
+              if (showAbilities && asset.abilities.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                const Divider(height: 1),
+                const SizedBox(height: 8),
+                Text(
+                  'Abilities',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 8),
                   // Display abilities directly in a column
                   ListView.builder(
                     shrinkWrap: true,

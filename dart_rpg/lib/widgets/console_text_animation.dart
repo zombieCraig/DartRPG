@@ -52,7 +52,7 @@ class ConsoleTextAnimation extends StatefulWidget {
 
 class _ConsoleTextAnimationState extends State<ConsoleTextAnimation> {
   /// List of messages that have been displayed
-  List<String> _displayedMessages = [];
+  final List<String> _displayedMessages = [];
   
   /// Current message being displayed
   String? _currentMessage;

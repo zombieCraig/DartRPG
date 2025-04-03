@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/character.dart';
 import '../../providers/datasworn_provider.dart';
-import '../../widgets/asset_card_widget.dart';
 import '../../widgets/asset_content_widget.dart';
 import '../../widgets/asset_detail_dialog.dart';
 import '../../utils/asset_utils.dart';

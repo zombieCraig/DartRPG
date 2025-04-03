@@ -66,6 +66,21 @@ class AssetCardWidget extends StatelessWidget {
                       ),
                   ],
                 ),
+                
+                // Display custom name if available
+                if (asset.options.containsKey('name') && 
+                    asset.options['name']!.value != null && 
+                    asset.options['name']!.value!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2.0),
+                    child: Text(
+                      asset.options['name']!.value!,
+                      style: const TextStyle(
+                        fontStyle: FontStyle.italic,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 4),
                 Text(
                   asset.category,

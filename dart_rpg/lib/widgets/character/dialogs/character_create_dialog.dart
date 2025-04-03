@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../models/character.dart';
 import '../../../providers/game_provider.dart';
+import '../../../providers/datasworn_provider.dart';
 import '../character_form.dart';
 import '../services/character_dialog_service.dart';
 import '../stat_panel.dart';
@@ -142,6 +144,7 @@ class _CharacterCreateDialogState extends State<CharacterCreateDialog> {
             // Create character using the service
             final character = await CharacterDialogService.createCharacter(
               gameProvider: widget.gameProvider,
+              dataswornProvider: Provider.of<DataswornProvider>(context, listen: false),
               name: nameController.text,
               isPlayerCharacter: isPlayerCharacter,
               handle: handleController.text.isEmpty ? null : handleController.text,

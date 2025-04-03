@@ -25,6 +25,34 @@ class CharacterStat {
   }
 }
 
+class AssetOption {
+  String fieldType;
+  String label;
+  String? value;
+  
+  AssetOption({
+    required this.fieldType,
+    required this.label,
+    this.value,
+  });
+  
+  Map<String, dynamic> toJson() {
+    return {
+      'field_type': fieldType,
+      'label': label,
+      'value': value,
+    };
+  }
+  
+  factory AssetOption.fromJson(Map<String, dynamic> json) {
+    return AssetOption(
+      fieldType: json['field_type'] ?? 'text',
+      label: json['label'] ?? '',
+      value: json['value'],
+    );
+  }
+}
+
 class AssetAbility {
   String text;
   bool enabled;
@@ -56,6 +84,7 @@ class Asset {
   String? description;
   bool enabled;
   List<AssetAbility> abilities;
+  Map<String, AssetOption> options;
 
   Asset({
     String? id,
@@ -64,9 +93,11 @@ class Asset {
     required this.description,
     this.enabled = false,
     List<AssetAbility>? abilities,
+    Map<String, AssetOption>? options,
   }) : 
     id = id ?? const Uuid().v4(),
-    abilities = abilities ?? [];
+    abilities = abilities ?? [],
+    options = options ?? {};
 
   Map<String, dynamic> toJson() {
     return {
@@ -76,10 +107,20 @@ class Asset {
       'description': description,
       'enabled': enabled,
       'abilities': abilities.map((ability) => ability.toJson()).toList(),
+      'options': options.map((key, option) => MapEntry(key, option.toJson())),
     };
   }
 
   factory Asset.fromJson(Map<String, dynamic> json) {
+    Map<String, AssetOption> options = {};
+    if (json['options'] != null && json['options'] is Map) {
+      (json['options'] as Map).forEach((key, value) {
+        if (value is Map) {
+          options[key.toString()] = AssetOption.fromJson(Map<String, dynamic>.from(value));
+        }
+      });
+    }
+    
     return Asset(
       id: json['id'],
       name: json['name'],
@@ -89,7 +130,20 @@ class Asset {
       abilities: json['abilities'] != null
           ? (json['abilities'] as List).map((a) => AssetAbility.fromJson(a)).toList()
           : [],
+      options: options,
     );
+  }
+  
+  // Helper method to get an option value
+  String? getOptionValue(String key) {
+    return options[key]?.value;
+  }
+  
+  // Helper method to set an option value
+  void setOptionValue(String key, String? value) {
+    if (options.containsKey(key)) {
+      options[key]!.value = value;
+    }
   }
   
   // Factory method for creating a Base Rig asset

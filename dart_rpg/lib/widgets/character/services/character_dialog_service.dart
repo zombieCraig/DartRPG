@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
 import '../../../models/character.dart';
 import '../../../providers/game_provider.dart';
+import '../../../providers/datasworn_provider.dart';
+import '../../../utils/logging_service.dart';
 
 /// A service class that handles the business logic for character dialogs.
 class CharacterDialogService {
@@ -8,6 +9,7 @@ class CharacterDialogService {
   /// Returns the created character, or null if creation failed.
   static Future<Character?> createCharacter({
     required GameProvider gameProvider,
+    required DataswornProvider dataswornProvider,
     required String name,
     required bool isPlayerCharacter,
     String? handle,
@@ -92,9 +94,52 @@ class CharacterDialogService {
         createdCharacter.spirit = 5;
         createdCharacter.supply = 5;
         
-        // Ensure Base Rig asset is added
+        // Ensure Base Rig asset is added - use DataswornProvider if possible
         if (createdCharacter.assets.isEmpty) {
-          createdCharacter.assets.add(Asset.baseRig());
+          // Try to find the Base Rig asset in the DataswornProvider by ID
+          Asset? baseRig = dataswornProvider.findAssetById("base_rig");
+          
+          // If not found by ID, try to find it in the rig asset collection
+          if (baseRig == null) {
+            final assetsByCategory = dataswornProvider.getAssetsByCategory();
+            if (assetsByCategory.containsKey('rig')) {
+              final rigAssets = assetsByCategory['rig'];
+              if (rigAssets != null && rigAssets.isNotEmpty) {
+                // Look for an asset with ID "base_rig" in the rig category
+                try {
+                  baseRig = rigAssets.firstWhere(
+                    (asset) => asset.id == "base_rig"
+                  );
+                  LoggingService().debug(
+                    'Found Base Rig asset in rig category: ${baseRig.name} (ID: ${baseRig.id})',
+                    tag: 'CharacterDialogService',
+                  );
+                } catch (e) {
+                  LoggingService().warning(
+                    'Base Rig asset not found in rig category: ${e.toString()}',
+                    tag: 'CharacterDialogService',
+                  );
+                }
+              }
+            }
+          } else {
+            LoggingService().debug(
+              'Found Base Rig asset by ID: ${baseRig.name} (ID: ${baseRig.id})',
+              tag: 'CharacterDialogService',
+            );
+          }
+          
+          // If still not found, use the factory method and log a warning
+          if (baseRig == null) {
+            LoggingService().warning(
+              'Base Rig asset not found in Datasworn data. Using factory fallback.',
+              tag: 'CharacterDialogService',
+            );
+            baseRig = Asset.baseRig();
+          }
+          
+          // Add the Base Rig asset to the character
+          createdCharacter.assets.add(baseRig);
         }
       }
       

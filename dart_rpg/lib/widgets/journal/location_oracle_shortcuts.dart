@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../models/location.dart';
-import '../../models/oracle.dart';
 import '../../models/journal_entry.dart'; // Import for OracleRoll
 import 'node_type_oracle_dialog.dart';
 

@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:dart_rpg/models/location.dart';
 import 'package:dart_rpg/models/node_type_info.dart';
-import 'package:dart_rpg/models/oracle.dart';
 import 'package:dart_rpg/providers/datasworn_provider.dart';
 import 'package:dart_rpg/widgets/locations/location_form.dart';
 

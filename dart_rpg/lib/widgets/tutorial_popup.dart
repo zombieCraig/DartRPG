@@ -15,12 +15,12 @@ class TutorialPopup extends StatelessWidget {
   /// The [onClose] callback is called when the user dismisses the popup.
   /// If [showDisableOption] is true, a checkbox to disable all tutorials is shown.
   const TutorialPopup({
-    Key? key,
+    super.key,
     required this.title,
     required this.message,
     required this.onClose,
     this.showDisableOption = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

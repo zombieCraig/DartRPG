@@ -6,6 +6,7 @@ import '../../../providers/datasworn_provider.dart';
 import '../../../providers/game_provider.dart';
 import '../../../utils/asset_utils.dart';
 import '../../../widgets/asset_detail_dialog.dart';
+import '../../../widgets/asset_content_widget.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
 /// A dialog for selecting initial assets for a new character.
@@ -281,28 +282,13 @@ class _InitialAssetsDialogState extends State<InitialAssetsDialog> with SingleTi
                                             child: Column(
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
-                                                SizedBox(
-                                                  height: 80, // Fixed height for consistent card sizing
-                                                  child: asset.description != null
-                                                      ? MarkdownBody(
-                                                          data: asset.description!,
-                                                          styleSheet: MarkdownStyleSheet(
-                                                            p: const TextStyle(fontSize: 12),
-                                                            h1: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                                                            h2: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                                                            h3: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                                                            code: TextStyle(
-                                                              backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                                              fontSize: 12,
-                                                            ),
-                                                          ),
-                                                          shrinkWrap: true,
-                                                          softLineBreak: true,
-                                                        )
-                                                      : const Text(
-                                                          'No description available',
-                                                          style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
-                                                        ),
+                                                // Use Flexible instead of SizedBox with fixed height
+                                                Flexible(
+                                                  child: AssetContentWidget(
+                                                    asset: asset,
+                                                    showAbilities: true, // Show abilities in the grid view
+                                                    isDetailView: true, // Use detail view to show all abilities
+                                                  ),
                                                 ),
                                                 const Spacer(),
                                                 // View details button

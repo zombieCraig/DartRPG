@@ -392,6 +392,7 @@ class DataswornParser {
 
   // Parse assets from the Datasworn JSON
   static List<Asset> parseAssets(Map<String, dynamic> datasworn) {
+    final loggingService = LoggingService();
     final List<Asset> assets = [];
     
     if (datasworn['assets'] != null) {
@@ -402,21 +403,42 @@ class DataswornParser {
           categoryJson['contents'].forEach((assetId, assetJson) {
             if (assetJson['type'] == 'asset') {
               final name = assetJson['name'] ?? 'Unknown Asset';
-              String description = '';
+              String? description = assetJson['description'];
+              String? color = assetJson['color'];
               
-              // Try to extract description from abilities
+              // Create list of abilities
+              List<AssetAbility> abilities = [];
+              
+              // Parse abilities if they exist
               if (assetJson['abilities'] != null && assetJson['abilities'] is List) {
-                final abilities = assetJson['abilities'] as List;
-                if (abilities.isNotEmpty && abilities[0]['text'] != null) {
-                  description = abilities[0]['text'];
+                final abilitiesJson = assetJson['abilities'] as List;
+                
+                for (var abilityJson in abilitiesJson) {
+                  if (abilityJson is Map && abilityJson['text'] != null) {
+                    abilities.add(AssetAbility(
+                      text: abilityJson['text'],
+                      enabled: abilityJson['enabled'] ?? false,
+                    ));
+                  }
+                }
+                
+                // If no description was provided, use the first ability text as description
+                if ((description == null || description.isEmpty) && abilities.isNotEmpty) {
+                  description = abilities[0].text;
                 }
               }
+              
+              loggingService.debug(
+                'Parsed asset: $name with ${abilities.length} abilities',
+                tag: 'DataswornParser',
+              );
               
               assets.add(Asset(
                 id: assetId,
                 name: name,
                 category: category,
                 description: description,
+                abilities: abilities,
               ));
             }
           });

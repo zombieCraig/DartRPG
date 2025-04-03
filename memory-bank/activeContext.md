@@ -19,6 +19,16 @@ This work enhances the overall architecture of the application, making it more m
 
 ## Recent Changes
 
+### Asset Card System Improvements (April 2025)
+- Redesigned the asset card system to properly display abilities with toggle circles
+- Created a flexible AssetContentWidget that handles both summary and detail views
+- Fixed layout issues that were causing overflow errors in asset cards
+- Improved the display of asset abilities with toggle circles (empty when disabled, filled when enabled)
+- Updated all asset display locations to use the new components consistently
+- Removed the asset description section as it's not a field in the JSON
+- Modified the AssetPanel to use the AssetDetailDialog for consistent display
+- Enhanced the user experience when viewing and managing character assets
+
 ### Tutorial System Implementation (April 2025)
 - Implemented a tutorial system to help guide new players through the application
 - Created a TutorialService to manage tutorial state and display logic

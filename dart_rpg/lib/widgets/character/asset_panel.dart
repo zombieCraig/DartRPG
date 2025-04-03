@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../models/character.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../widgets/asset_card_widget.dart';
+import '../../widgets/asset_content_widget.dart';
+import '../../widgets/asset_detail_dialog.dart';
 import '../../utils/asset_utils.dart';
 
 /// A component for managing character assets.
@@ -26,19 +28,74 @@ class AssetPanel extends StatelessWidget {
         if (character.assets.isEmpty)
           const Text('No assets attached'),
         ...character.assets.map((asset) {
-          return AssetCardWidget(
-            asset: asset,
-            onTap: () {
-              _showAssetDetailsDialog(context, asset);
-            },
-            onRemove: isEditable && asset.category.toLowerCase() != 'base rig'
-                ? () {
-                    character.assets.remove(asset);
-                    if (onAssetsChanged != null) {
-                      onAssetsChanged!();
-                    }
-                  }
-                : null,
+          return Card(
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () {
+                _showAssetDetailsDialog(context, asset);
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: getAssetCategoryColor(asset.category),
+                      width: 4,
+                    ),
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Asset header
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              asset.name,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (isEditable && asset.category.toLowerCase() != 'base rig')
+                            IconButton(
+                              icon: const Icon(Icons.close, size: 16),
+                              onPressed: () {
+                                character.assets.remove(asset);
+                                if (onAssetsChanged != null) {
+                                  onAssetsChanged!();
+                                }
+                              },
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        asset.category,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: getAssetCategoryColor(asset.category),
+                        ),
+                      ),
+                      
+                      // Asset content
+                      Flexible(
+                        child: AssetContentWidget(
+                          asset: asset,
+                          showAbilities: true,
+                          isDetailView: false, // Use summary view in the panel
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           );
         }),
         
@@ -187,85 +244,10 @@ class AssetPanel extends StatelessWidget {
   void _showAssetDetailsDialog(BuildContext context, Asset asset) {
     showDialog(
       context: context,
-      builder: (context) {
-        final color = getAssetCategoryColor(asset.category);
-        
-        return AlertDialog(
-          title: Row(
-            children: [
-              Container(
-                width: 12,
-                height: 24,
-                color: color,
-                margin: const EdgeInsets.only(right: 8),
-              ),
-              Expanded(child: Text(asset.name)),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Asset category
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    border: Border.all(color: color),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    asset.category,
-                    style: TextStyle(
-                      color: color,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                // Asset description
-                if (asset.description != null) ...[
-                  const Text(
-                    'Description:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(asset.description!),
-                  const SizedBox(height: 16),
-                ],
-                
-                // Asset status
-                Row(
-                  children: [
-                    const Text(
-                      'Status: ',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      asset.enabled ? 'Enabled' : 'Disabled',
-                      style: TextStyle(
-                        color: asset.enabled ? Colors.green : Colors.grey,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
+      builder: (context) => AssetDetailDialog(
+        asset: asset,
+        isCharacterAsset: true, // This is a character asset, so enable ability toggling
+      ),
     );
   }
 }

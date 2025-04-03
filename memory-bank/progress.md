@@ -40,6 +40,11 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Comprehensive logging system and log viewer
 
 ### Recently Completed
+- ✅ Improved asset card system to properly display abilities with toggle circles
+- ✅ Created a flexible AssetContentWidget that handles both summary and detail views
+- ✅ Fixed layout issues that were causing overflow errors in asset cards
+- ✅ Updated all asset display locations to use the new components consistently
+- ✅ Modified the AssetPanel to use the AssetDetailDialog for consistent display
 - ✅ Implemented tutorial system with contextual help popups for new players
 - ✅ Created TutorialService to manage tutorial state and display logic
 - ✅ Developed a reusable TutorialPopup widget for displaying contextual help
@@ -192,6 +197,8 @@ The DartRPG application is in active development with core functionality impleme
 - **Tablet Support**: UI not fully optimized for tablet screens
 
 ### Recently Fixed Issues
+- ✅ **Asset Card Display**: Fixed layout issues in asset cards and improved ability display with toggle circles
+- ✅ **Asset Detail Dialog**: Updated character asset detail dialog to use the improved AssetDetailDialog
 - ✅ **Oracle Table Lookup**: Enhanced oracle table lookup to find tables by key anywhere in the hierarchy
 - ✅ **Oracle Reference Processing**: Implemented automatic processing of nested oracle references in oracle results
 - ✅ **Oracle Result Display**: Enhanced oracle result display to show nested oracle rolls
@@ -210,6 +217,16 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Journal Navigation**: Added "Jump to last entry" button on journal screen when entries are scrollable
 
 ## Recent Milestones
+
+### Milestone: Asset Card System Improvements (April 2025)
+- ✅ Redesigned the asset card system to properly display abilities with toggle circles
+- ✅ Created a flexible AssetContentWidget that handles both summary and detail views
+- ✅ Fixed layout issues that were causing overflow errors in asset cards
+- ✅ Improved the display of asset abilities with toggle circles (empty when disabled, filled when enabled)
+- ✅ Updated all asset display locations to use the new components consistently
+- ✅ Removed the asset description section as it's not a field in the JSON
+- ✅ Modified the AssetPanel to use the AssetDetailDialog for consistent display
+- ✅ Enhanced the user experience when viewing and managing character assets
 
 ### Milestone: Tutorial System Implementation (April 2025)
 - ✅ Implemented a tutorial system to help guide new players through the application

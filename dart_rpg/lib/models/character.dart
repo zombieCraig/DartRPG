@@ -25,12 +25,37 @@ class CharacterStat {
   }
 }
 
+class AssetAbility {
+  String text;
+  bool enabled;
+  
+  AssetAbility({
+    required this.text,
+    this.enabled = false,
+  });
+  
+  Map<String, dynamic> toJson() {
+    return {
+      'text': text,
+      'enabled': enabled,
+    };
+  }
+  
+  factory AssetAbility.fromJson(Map<String, dynamic> json) {
+    return AssetAbility(
+      text: json['text'] ?? '',
+      enabled: json['enabled'] ?? false,
+    );
+  }
+}
+
 class Asset {
   final String id;
   String name;
   String category;
   String? description;
   bool enabled;
+  List<AssetAbility> abilities;
 
   Asset({
     String? id,
@@ -38,7 +63,10 @@ class Asset {
     required this.category,
     required this.description,
     this.enabled = false,
-  }) : id = id ?? const Uuid().v4();
+    List<AssetAbility>? abilities,
+  }) : 
+    id = id ?? const Uuid().v4(),
+    abilities = abilities ?? [];
 
   Map<String, dynamic> toJson() {
     return {
@@ -47,6 +75,7 @@ class Asset {
       'category': category,
       'description': description,
       'enabled': enabled,
+      'abilities': abilities.map((ability) => ability.toJson()).toList(),
     };
   }
 
@@ -57,6 +86,9 @@ class Asset {
       category: json['category'],
       description: json['description'],
       enabled: json['enabled'] ?? false,
+      abilities: json['abilities'] != null
+          ? (json['abilities'] as List).map((a) => AssetAbility.fromJson(a)).toList()
+          : [],
     );
   }
   

@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../providers/datasworn_provider.dart';
 import '../providers/game_provider.dart';
-import '../models/character.dart' show Asset;
+import '../models/character.dart' show Asset, AssetAbility;
 import '../utils/asset_utils.dart';
+import '../widgets/asset_card_widget.dart';
+import '../widgets/asset_content_widget.dart';
 
 class AssetsScreen extends StatefulWidget {
   const AssetsScreen({super.key});
@@ -50,21 +52,18 @@ class _AssetsScreenState extends State<AssetsScreen> {
                 onChanged: (value) {
                   setState(() {
                     _selectedCategory = value;
-                    _selectedAsset = null;
                   });
                 },
               ),
             ),
             
-            // Asset list or details
+            // Asset list
             Expanded(
-              child: _selectedAsset != null
-                  ? _buildAssetDetails(_selectedAsset!, gameProvider)
-                  : _selectedCategory != null && assetsByCategory.containsKey(_selectedCategory)
-                      ? _buildAssetList(assetsByCategory[_selectedCategory]!, gameProvider)
-                      : const Center(
-                          child: Text('Select an asset category to begin'),
-                        ),
+              child: _selectedCategory != null && assetsByCategory.containsKey(_selectedCategory)
+                  ? _buildAssetGrid(assetsByCategory[_selectedCategory]!, gameProvider)
+                  : const Center(
+                      child: Text('Select an asset category to begin'),
+                    ),
             ),
           ],
         );
@@ -72,7 +71,7 @@ class _AssetsScreenState extends State<AssetsScreen> {
     );
   }
   
-  Widget _buildAssetList(List<Asset> assets, GameProvider gameProvider) {
+  Widget _buildAssetGrid(List<Asset> assets, GameProvider gameProvider) {
     final sortedAssets = List<Asset>.from(assets)..sort((a, b) => a.name.compareTo(b.name));
     
     return GridView.builder(
@@ -89,205 +88,52 @@ class _AssetsScreenState extends State<AssetsScreen> {
         
         return Card(
           clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () {
-              setState(() {
-                _selectedAsset = asset;
-              });
-            },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Asset header
-                Container(
-                  color: getAssetCategoryColor(asset.category),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Asset header
+              Container(
+                color: getAssetCategoryColor(asset.category),
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  asset.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              
+              // Asset content using AssetContentWidget
+              Expanded(
+                child: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    asset.name,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    textAlign: TextAlign.center,
+                  child: AssetContentWidget(
+                    asset: asset,
+                    showAbilities: true, // Show abilities in the list view
+                    isDetailView: true, // Always use detail view to show all abilities
+                    enableToggle: false, // Disable ability toggling in the asset screen
                   ),
                 ),
-                
-                // Asset content
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(
-                          height: 80, // Fixed height for consistent card sizing
-                          child: asset.description != null
-                              ? MarkdownBody(
-                                  data: asset.description!,
-                                  styleSheet: MarkdownStyleSheet(
-                                    p: const TextStyle(fontSize: 12),
-                                    h1: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                                    h2: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                                    h3: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                                    code: TextStyle(
-                                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  shrinkWrap: true,
-                                  softLineBreak: true,
-                                )
-                              : const Text(
-                                  'No description available',
-                                  style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
-                                ),
-                        ),
-                        const Spacer(),
-                        // Asset enabled status
-                        if (asset.enabled) ...[
-                          const Text(
-                            'Enabled',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ] else ...[
-                          const Text(
-                            'Disabled',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
+              ),
+              
+              // Add to character button
+              if (gameProvider.currentGame?.mainCharacter != null)
+                TextButton.icon(
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text('Add to Character'),
+                  onPressed: () {
+                    _addAssetToCharacter(context, asset, gameProvider);
+                  },
                 ),
-                
-                // Add to character button
-                if (gameProvider.currentGame?.mainCharacter != null)
-                  TextButton.icon(
-                    icon: const Icon(Icons.add, size: 16),
-                    label: const Text('Add to Character'),
-                    onPressed: () {
-                      _addAssetToCharacter(context, asset, gameProvider);
-                    },
-                  ),
-              ],
-            ),
+            ],
           ),
         );
       },
     );
   }
   
-  Widget _buildAssetDetails(Asset asset, GameProvider gameProvider) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Back button
-          TextButton.icon(
-            icon: const Icon(Icons.arrow_back),
-            label: const Text('Back to Assets'),
-            onPressed: () {
-              setState(() {
-                _selectedAsset = null;
-              });
-            },
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Asset card
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Asset name
-                  Text(
-                    asset.name,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  
-                  const SizedBox(height: 8),
-                  
-                  // Asset category
-                  Text(
-                    asset.category,
-                    style: TextStyle(
-                      color: getAssetCategoryColor(asset.category),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  // Asset description
-                  if (asset.description != null) ...[
-                    MarkdownBody(
-                      data: asset.description!,
-                      styleSheet: MarkdownStyleSheet(
-                        p: Theme.of(context).textTheme.bodyMedium,
-                        h1: Theme.of(context).textTheme.titleLarge,
-                        h2: Theme.of(context).textTheme.titleMedium,
-                        h3: Theme.of(context).textTheme.titleSmall,
-                        code: TextStyle(
-                          backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  
-                  // Asset enabled status
-                  Row(
-                    children: [
-                      const Text(
-                        'Status: ',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        asset.enabled ? 'Enabled' : 'Disabled',
-                        style: TextStyle(
-                          color: asset.enabled ? Colors.green : Colors.grey,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  // Add to character button
-                  if (gameProvider.currentGame?.mainCharacter != null) ...[
-                    const SizedBox(height: 16),
-                    Center(
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.add),
-                        label: const Text('Add to Character'),
-                        onPressed: () {
-                          _addAssetToCharacter(context, asset, gameProvider);
-                        },
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
   
   void _addAssetToCharacter(BuildContext context, Asset asset, GameProvider gameProvider) {
     final character = gameProvider.currentGame?.mainCharacter;

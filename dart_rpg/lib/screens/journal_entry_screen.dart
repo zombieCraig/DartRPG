@@ -14,7 +14,10 @@ import '../widgets/journal/linked_items_summary.dart';
 import '../widgets/journal/journal_entry_viewer.dart';
 import '../widgets/journal/move_dialog.dart';
 import '../widgets/journal/linked_items_manager.dart';
+import '../widgets/journal/autocomplete_system.dart';
 import '../widgets/oracles/oracle_dialog.dart';
+import '../widgets/locations/location_service.dart';
+import '../widgets/locations/location_dialog.dart';
 import 'game_screen.dart';
 
 // Custom intents for keyboard shortcuts
@@ -59,6 +62,9 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   // Linked items manager
   late LinkedItemsManager _linkedItemsManager;
   
+  // Autocomplete system
+  late AutocompleteSystem _autocompleteSystem;
+  
   @override
   void initState() {
     super.initState();
@@ -72,6 +78,9 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
       oracleRolls: _oracleRolls,
       embeddedImages: _embeddedImages,
     );
+    
+    // Initialize the autocomplete system
+    _autocompleteSystem = AutocompleteSystem();
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadEntry();
@@ -719,71 +728,45 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   }
   
   void _showQuickAddLocationDialog(BuildContext context) {
-    final TextEditingController nameController = TextEditingController();
-    final TextEditingController descriptionController = TextEditingController();
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
     
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Add Location'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Location Name',
-                    border: OutlineInputBorder(),
-                  ),
-                  autofocus: true,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (Optional)',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 3,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                if (nameController.text.isNotEmpty) {
-                  final gameProvider = Provider.of<GameProvider>(context, listen: false);
-                  final location = await gameProvider.createLocation(
-                    nameController.text,
-                    description: descriptionController.text.isNotEmpty
-                        ? descriptionController.text
-                        : null,
-                  );
-                  
-                  setState(() {
-                    _linkedLocationIds.add(location.id);
-                  });
-                  
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                  }
-                }
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        );
-      },
-    );
+    // Create a LocationService instance
+    final locationService = LocationService(gameProvider: gameProvider);
+    
+    // Show the comprehensive location creation dialog
+    LocationDialog.showCreateDialog(
+      context,
+      locationService,
+    ).then((location) {
+      if (location != null) {
+        setState(() {
+          _linkedLocationIds.add(location.id);
+        });
+        
+        // Insert a mention of the location in the editor if we're in editing mode
+        if (_isEditing && _editorController.text.isNotEmpty) {
+          final result = _autocompleteSystem.insertMention(
+            location,
+            _editorController.text,
+            _editorController.selection.baseOffset,
+          );
+          
+          // Update the text
+          _editorController.value = TextEditingValue(
+            text: result['text'],
+            selection: TextSelection.collapsed(offset: result['cursorPosition']),
+          );
+          
+          // Notify parent about the change
+          setState(() {
+            _content = _editorController.text;
+          });
+          
+          // Start auto-save timer
+          _startAutoSaveTimer();
+        }
+      }
+    });
   }
   
   // Move-related methods have been moved to the MoveDialog class
@@ -1051,7 +1034,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                     ),
                     ElevatedButton.icon(
                       icon: const Icon(Icons.add_location),
-                      label: const Text('Add Location'),
+                      label: const Text('Create Location'),
                       onPressed: () => _showQuickAddLocationDialog(context),
                     ),
                   ],

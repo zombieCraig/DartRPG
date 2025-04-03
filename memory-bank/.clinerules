@@ -83,6 +83,19 @@
 - Comprehensive error handling
 - Performance optimization for mobile devices
 
+## Move Oracle System
+
+### Move Oracle Integration Pattern
+- Moves can have embedded oracles that are displayed as a dropdown with a dice button
+- The MoveOracle model represents embedded oracles in moves
+- The Move model has been enhanced to handle embedded oracles
+- The MoveOraclePanel widget displays the dropdown and dice button
+- The MoveDetails widget includes the MoveOraclePanel when a move has embedded oracles
+- The MoveDialog class handles oracle rolls from moves
+- Oracle results are stored in the MoveRoll's moveData property
+- Journal entry display has been enhanced to show oracle results
+- The LinkedItemsSummary widget displays oracle results in the journal entry summary
+
 ## Journal Entry System
 
 ### Journal Entry Editor Architecture

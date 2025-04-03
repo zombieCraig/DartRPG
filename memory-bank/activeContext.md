@@ -19,6 +19,19 @@ This work enhances the overall architecture of the application, making it more m
 
 ## Recent Changes
 
+### Move Oracle Integration (April 2025)
+- Implemented dropdown and dice button for moves with embedded oracles
+- Created MoveOracle model to represent embedded oracles in moves
+- Enhanced the Move model to handle embedded oracles
+- Created MoveOraclePanel widget to display the dropdown and dice button
+- Updated MoveDetails widget to include the MoveOraclePanel when a move has embedded oracles
+- Updated MoveDialog class to handle oracle rolls from moves
+- Fixed issue with oracle results not showing in the journal
+- Stored oracle results in the MoveRoll's moveData property
+- Enhanced journal entry display to show oracle results
+- Added tests to verify the implementation
+- Improved the user experience for moves with embedded oracles
+
 ### Asset Card System Improvements (April 2025)
 - Redesigned the asset card system to properly display abilities with toggle circles
 - Created a flexible AssetContentWidget that handles both summary and detail views

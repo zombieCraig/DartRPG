@@ -40,6 +40,17 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Comprehensive logging system and log viewer
 
 ### Recently Completed
+- ✅ Implemented dropdown and dice button for moves with embedded oracles
+- ✅ Created MoveOracle model to represent embedded oracles in moves
+- ✅ Enhanced the Move model to handle embedded oracles
+- ✅ Created MoveOraclePanel widget to display the dropdown and dice button
+- ✅ Updated MoveDetails widget to include the MoveOraclePanel when a move has embedded oracles
+- ✅ Updated MoveDialog class to handle oracle rolls from moves
+- ✅ Fixed issue with oracle results not showing in the journal
+- ✅ Stored oracle results in the MoveRoll's moveData property
+- ✅ Enhanced journal entry display to show oracle results
+- ✅ Added tests to verify the implementation
+- ✅ Improved the user experience for moves with embedded oracles
 - ✅ Improved asset card system to properly display abilities with toggle circles
 - ✅ Created a flexible AssetContentWidget that handles both summary and detail views
 - ✅ Fixed layout issues that were causing overflow errors in asset cards
@@ -197,6 +208,7 @@ The DartRPG application is in active development with core functionality impleme
 - **Tablet Support**: UI not fully optimized for tablet screens
 
 ### Recently Fixed Issues
+- ✅ **Move Oracle Results**: Fixed issue with oracle results from moves not showing in the journal
 - ✅ **Asset Card Display**: Fixed layout issues in asset cards and improved ability display with toggle circles
 - ✅ **Asset Detail Dialog**: Updated character asset detail dialog to use the improved AssetDetailDialog
 - ✅ **Oracle Table Lookup**: Enhanced oracle table lookup to find tables by key anywhere in the hierarchy
@@ -217,6 +229,19 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Journal Navigation**: Added "Jump to last entry" button on journal screen when entries are scrollable
 
 ## Recent Milestones
+
+### Milestone: Move Oracle Integration (April 2025)
+- ✅ Implemented dropdown and dice button for moves with embedded oracles
+- ✅ Created MoveOracle model to represent embedded oracles in moves
+- ✅ Enhanced the Move model to handle embedded oracles
+- ✅ Created MoveOraclePanel widget to display the dropdown and dice button
+- ✅ Updated MoveDetails widget to include the MoveOraclePanel when a move has embedded oracles
+- ✅ Updated MoveDialog class to handle oracle rolls from moves
+- ✅ Fixed issue with oracle results not showing in the journal
+- ✅ Stored oracle results in the MoveRoll's moveData property
+- ✅ Enhanced journal entry display to show oracle results
+- ✅ Added tests to verify the implementation
+- ✅ Improved the user experience for moves with embedded oracles
 
 ### Milestone: Asset Card System Improvements (April 2025)
 - ✅ Redesigned the asset card system to properly display abilities with toggle circles

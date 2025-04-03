@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/character.dart';
 import '../../utils/asset_utils.dart';
+import 'panels/character_key_stats_panel.dart';
 
 /// A component for displaying a character card.
 class CharacterCard extends StatelessWidget {
@@ -87,6 +88,22 @@ class CharacterCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 4),
+                      
+                      // Key stats for main characters
+                      if (character.isMainCharacter && isMainCharacter) ...[
+                        const SizedBox(height: 4),
+                        // Use the CharacterKeyStatsPanel with compact mode and editable=true
+                        CharacterKeyStatsPanel(
+                          character: character,
+                          isEditable: true, // Enable the + and - buttons
+                          useCompactMode: true, // Use the compact layout
+                          initiallyExpanded: true, // Show without needing to expand
+                          onStatsChanged: (momentum, health, spirit, supply) {
+                            // The panel already updates the character object
+                            // No need to do anything else here
+                          },
+                        ),
+                      ],
                       
                       // Compact stats display
                       if (character.stats.isNotEmpty)

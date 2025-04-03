@@ -217,6 +217,7 @@ class _CharacterEditDialogState extends State<CharacterEditDialog> {
                 supplyController: supplyController,
                 isEditable: isEditing,
                 initiallyExpanded: showKeyStats,
+                useCompactMode: !isEditing, // Use compact mode when viewing, text field mode when editing
                 onStatsChanged: (newMomentum, newHealth, newSpirit, newSupply) {
                   setState(() {
                     momentum = newMomentum;

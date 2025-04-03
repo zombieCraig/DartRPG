@@ -78,7 +78,7 @@ class _CharacterFormState extends State<CharacterForm> {
   }
   
   /// Generates a random handle from the fe_runner_handles oracle.
-  void _generateRandomHandle() {
+  Future<void> _generateRandomHandle() async {
     final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
     
     // Try to find the fe_runner_handles oracle table using the new method
@@ -102,14 +102,40 @@ class _CharacterFormState extends State<CharacterForm> {
     
     if (rollResult['success'] == true) {
       final oracleRoll = rollResult['oracleRoll'];
-      final result = oracleRoll.result;
+      final initialResult = oracleRoll.result;
+      
+      // Process any oracle references in the result
+      _loggingService.debug(
+        'Processing oracle references in handle result: $initialResult',
+        tag: 'CharacterForm',
+      );
+      
+      
+      // Process the references
+      final processResult = await OracleService.processOracleReferences(initialResult, dataswornProvider);
+      
+      String finalResult;
+      if (processResult['success'] == true) {
+        finalResult = processResult['processedText'] as String;
+        _loggingService.debug(
+          'Processed result: $finalResult',
+          tag: 'CharacterForm',
+        );
+      } else {
+        // If processing fails, use the initial result
+        finalResult = initialResult;
+        _loggingService.warning(
+          'Failed to process oracle references: ${processResult['error']}',
+          tag: 'CharacterForm',
+        );
+      }
       
       // Append the result to the current handle
       final currentHandle = widget.handleController.text;
       if (currentHandle.isNotEmpty) {
-        widget.handleController.text = '$currentHandle$result';
+        widget.handleController.text = '$currentHandle$finalResult';
       } else {
-        widget.handleController.text = result;
+        widget.handleController.text = finalResult;
       }
       
       _loggingService.debug(
@@ -152,7 +178,7 @@ class _CharacterFormState extends State<CharacterForm> {
   }
   
   /// Generates random content for a field using the specified oracle table.
-  void _generateRandomField(String oracleKey, TextEditingController? controller) {
+  Future<void> _generateRandomField(String oracleKey, TextEditingController? controller) async {
     if (controller == null) return;
     
     final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
@@ -178,18 +204,51 @@ class _CharacterFormState extends State<CharacterForm> {
     
     if (rollResult['success'] == true) {
       final oracleRoll = rollResult['oracleRoll'];
-      final result = oracleRoll.result;
+      final initialResult = oracleRoll.result;
+      
+      // Process any oracle references in the result
+      _loggingService.debug(
+        'Processing oracle references in $oracleKey result: $initialResult',
+        tag: 'CharacterForm',
+      );
+      
+      // Show a loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Processing oracle references...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+      
+      // Process the references
+      final processResult = await OracleService.processOracleReferences(initialResult, dataswornProvider);
+      
+      String finalResult;
+      if (processResult['success'] == true) {
+        finalResult = processResult['processedText'] as String;
+        _loggingService.debug(
+          'Processed result: $finalResult',
+          tag: 'CharacterForm',
+        );
+      } else {
+        // If processing fails, use the initial result
+        finalResult = initialResult;
+        _loggingService.warning(
+          'Failed to process oracle references: ${processResult['error']}',
+          tag: 'CharacterForm',
+        );
+      }
       
       // Append the result to the current text
       final currentText = controller.text;
       if (currentText.isNotEmpty) {
-        controller.text = '$currentText\n$result';
+        controller.text = '$currentText\n$finalResult';
       } else {
-        controller.text = result;
+        controller.text = finalResult;
       }
       
       _loggingService.debug(
-        'Generated random content for $oracleKey: $result',
+        'Generated random content for $oracleKey: $finalResult',
         tag: 'CharacterForm',
       );
     } else {
@@ -235,7 +294,7 @@ class _CharacterFormState extends State<CharacterForm> {
             IconButton(
               icon: const Icon(Icons.casino),
               tooltip: 'Random Handle',
-              onPressed: _generateRandomHandle,
+              onPressed: () async => await _generateRandomHandle(),
             ),
             IconButton(
               icon: const Icon(Icons.terminal),
@@ -299,7 +358,7 @@ class _CharacterFormState extends State<CharacterForm> {
               IconButton(
                 icon: const Icon(Icons.casino),
                 tooltip: 'Random First Look',
-                onPressed: () => _generateRandomField('character_first_look', widget.firstLookController),
+                onPressed: () async => await _generateRandomField('character_first_look', widget.firstLookController),
               ),
             ],
           ),
@@ -321,7 +380,7 @@ class _CharacterFormState extends State<CharacterForm> {
               IconButton(
                 icon: const Icon(Icons.casino),
                 tooltip: 'Random Disposition',
-                onPressed: () => _generateRandomField('character_disposition', widget.dispositionController),
+                onPressed: () async => await _generateRandomField('character_disposition', widget.dispositionController),
               ),
             ],
           ),
@@ -343,7 +402,7 @@ class _CharacterFormState extends State<CharacterForm> {
               IconButton(
                 icon: const Icon(Icons.casino),
                 tooltip: 'Random Trademark Avatar',
-                onPressed: () => _generateRandomField('trademark_avatar', widget.trademarkAvatarController),
+                onPressed: () async => await _generateRandomField('trademark_avatar', widget.trademarkAvatarController),
               ),
             ],
           ),
@@ -365,7 +424,7 @@ class _CharacterFormState extends State<CharacterForm> {
               IconButton(
                 icon: const Icon(Icons.casino),
                 tooltip: 'Random Role',
-                onPressed: () => _generateRandomField('character_role', widget.roleController),
+                onPressed: () async => await _generateRandomField('character_role', widget.roleController),
               ),
             ],
           ),
@@ -387,7 +446,7 @@ class _CharacterFormState extends State<CharacterForm> {
               IconButton(
                 icon: const Icon(Icons.casino),
                 tooltip: 'Random Details',
-                onPressed: () => _generateRandomField('character_details', widget.detailsController),
+                onPressed: () async => await _generateRandomField('character_details', widget.detailsController),
               ),
             ],
           ),
@@ -409,7 +468,7 @@ class _CharacterFormState extends State<CharacterForm> {
               IconButton(
                 icon: const Icon(Icons.casino),
                 tooltip: 'Random Goals',
-                onPressed: () => _generateRandomField('character_goals', widget.goalsController),
+                onPressed: () async => await _generateRandomField('character_goals', widget.goalsController),
               ),
             ],
           ),

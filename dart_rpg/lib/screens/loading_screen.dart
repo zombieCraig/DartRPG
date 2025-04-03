@@ -315,11 +315,19 @@ class _LoadingScreenState extends State<LoadingScreen> {
   
   @override
   Widget build(BuildContext context) {
-    // Get the main character name if available
+    // Get the main character name and handle if available
     String? mainCharacterName;
+    String? mainCharacterHandle;
     if (widget.hasMainCharacter) {
       final gameProvider = Provider.of<GameProvider>(context, listen: false);
-      mainCharacterName = gameProvider.currentGame?.mainCharacter?.name;
+      final mainCharacter = gameProvider.currentGame?.mainCharacter;
+      mainCharacterName = mainCharacter?.name;
+      mainCharacterHandle = mainCharacter?.handle;
+      
+      // If handle is not set, use the getHandle method to get or generate one
+      if (mainCharacterHandle == null || mainCharacterHandle.isEmpty) {
+        mainCharacterHandle = mainCharacter?.getHandle();
+      }
     }
     
     return Scaffold(
@@ -335,6 +343,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
           isLoadingComplete: _isDataswornLoaded,
           onComplete: _onAnimationComplete,
           mainCharacterName: mainCharacterName,
+          mainCharacterHandle: mainCharacterHandle,
         ),
       ),
     );

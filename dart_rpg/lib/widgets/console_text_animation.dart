@@ -32,6 +32,9 @@ class ConsoleTextAnimation extends StatefulWidget {
   
   /// Main character name to replace in messages
   final String? mainCharacterName;
+  
+  /// Main character handle (short name) to replace in messages
+  final String? mainCharacterHandle;
 
   const ConsoleTextAnimation({
     super.key,
@@ -44,6 +47,7 @@ class ConsoleTextAnimation extends StatefulWidget {
     required this.reducedPause,
     required this.isLoadingComplete,
     this.mainCharacterName,
+    this.mainCharacterHandle,
   });
 
   @override
@@ -123,8 +127,12 @@ class _ConsoleTextAnimationState extends State<ConsoleTextAnimation> {
   }
   
   String _processMessage(String message) {
-    // Replace placeholder with actual character name if available
-    if (widget.mainCharacterName != null && message.contains("<player's main character>")) {
+    // Replace placeholder with actual character handle (short name) if available
+    if (widget.mainCharacterHandle != null && message.contains("<player's main character>")) {
+      return message.replaceAll("<player's main character>", widget.mainCharacterHandle!);
+    }
+    // Fallback to full name if handle is not available
+    else if (widget.mainCharacterName != null && message.contains("<player's main character>")) {
       return message.replaceAll("<player's main character>", widget.mainCharacterName!);
     }
     return message;

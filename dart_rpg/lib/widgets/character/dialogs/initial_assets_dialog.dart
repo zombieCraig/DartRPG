@@ -341,11 +341,11 @@ class _InitialAssetsDialogState extends State<InitialAssetsDialog> with SingleTi
                 // Dialog actions
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // New buttons on the left
-                      Row(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Define the random buttons group
+                      final randomButtonsGroup = Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           OutlinedButton.icon(
                             onPressed: _addRandomPathAsset,
@@ -359,10 +359,11 @@ class _InitialAssetsDialogState extends State<InitialAssetsDialog> with SingleTi
                             label: const Text('Add Random Asset'),
                           ),
                         ],
-                      ),
+                      );
                       
-                      // Existing buttons on the right
-                      Row(
+                      // Define the navigation buttons group
+                      final navigationButtonsGroup = Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           TextButton(
                             onPressed: () {
@@ -378,8 +379,30 @@ class _InitialAssetsDialogState extends State<InitialAssetsDialog> with SingleTi
                             child: const Text('Confirm Selection'),
                           ),
                         ],
-                      ),
-                    ],
+                      );
+                      
+                      // Check if we have enough width for side-by-side layout
+                      if (constraints.maxWidth > 600) {
+                        // Wide layout: buttons side by side
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            randomButtonsGroup,
+                            navigationButtonsGroup,
+                          ],
+                        );
+                      } else {
+                        // Narrow layout: buttons stacked vertically
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            randomButtonsGroup,
+                            const SizedBox(height: 16), // Add spacing between rows
+                            navigationButtonsGroup,
+                          ],
+                        );
+                      }
+                    },
                   ),
                 ),
               ],

@@ -24,16 +24,22 @@ class CharacterDialogService {
     String? details,
     String? goals,
   }) async {
+    // If name is empty but handle is not, use handle as name
+    String characterName = name;
+    if (characterName.isEmpty && handle != null && handle.isNotEmpty) {
+      characterName = handle;
+    }
+    
     // Create character
     Character character;
     if (isPlayerCharacter) {
       character = Character.createMainCharacter(
-        name,
+        characterName,
         handle: handle,
       );
     } else {
       character = Character(
-        name: name,
+        name: characterName,
         handle: handle,
       );
     }
@@ -189,11 +195,17 @@ class CharacterDialogService {
     String? goals,
   }) {
     if (gameProvider.currentGame != null) {
+      // If name is empty but handle is not, use handle as name
+      String characterName = name;
+      if (characterName.isEmpty && handle != null && handle.isNotEmpty) {
+        characterName = handle;
+      }
+      
       // Find the character in the game
       final index = gameProvider.currentGame!.characters.indexWhere((c) => c.id == character.id);
       if (index != -1) {
         // Update the character properties
-        character.name = name;
+        character.name = characterName;
         if (handle != null) {
           character.setHandle(handle);
         }

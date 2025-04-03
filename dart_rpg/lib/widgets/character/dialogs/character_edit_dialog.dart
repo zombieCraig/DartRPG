@@ -422,10 +422,10 @@ class _CharacterEditDialogState extends State<CharacterEditDialog> {
           onPressed: () {
             if (isEditing) {
               // Save changes
-              if (nameController.text.isEmpty) {
+              if (nameController.text.isEmpty && handleController.text.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Please enter a name'),
+                    content: Text('Please enter a name or handle'),
                   ),
                 );
                 return;

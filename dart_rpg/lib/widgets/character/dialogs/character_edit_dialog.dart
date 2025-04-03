@@ -168,7 +168,7 @@ class _CharacterEditDialogState extends State<CharacterEditDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(isEditing ? 'Edit Character' : widget.character.name),
+      title: Text(isEditing ? 'Edit Character' : "${widget.character.name} aka ${widget.character.getHandle()}"),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,

@@ -304,13 +304,24 @@ class _CharacterFormState extends State<CharacterForm> {
           ],
         ),
         const SizedBox(height: 16),
-        TextField(
-          controller: widget.bioController,
-          decoration: const InputDecoration(
-            labelText: 'Bio',
-            hintText: 'Enter character bio',
-          ),
-          maxLines: 3,
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: widget.bioController,
+                decoration: const InputDecoration(
+                  labelText: 'Bio',
+                  hintText: 'Enter character bio',
+                ),
+                maxLines: 3,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.casino),
+              tooltip: 'Random Backstory',
+              onPressed: () async => await _generateRandomField('backstory_prompts', widget.bioController),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         TextField(

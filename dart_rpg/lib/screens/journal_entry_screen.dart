@@ -46,6 +46,13 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   List<String> _embeddedImages = [];
   Timer? _autoSaveTimer;
   
+  /// Adds an oracle roll to the journal entry.
+  void addOracleRoll(OracleRoll oracleRoll) {
+    setState(() {
+      _oracleRolls.add(oracleRoll);
+    });
+  }
+  
   // Controller for the RichTextEditor
   final TextEditingController _editorController = TextEditingController();
   
@@ -444,6 +451,17 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                     'Move performed successfully',
                     style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
                   ),
+                  
+                  // Show oracle result if this is an oracle roll
+                  if (moveRoll.rollType == 'oracle_roll' && 
+                      moveRoll.moveData != null && 
+                      moveRoll.moveData!.containsKey('oracleResult')) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Oracle Result: ${moveRoll.moveData!['oracleResult']}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
                 ],
               ],
             ),

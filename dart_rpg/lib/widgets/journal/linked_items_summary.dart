@@ -213,6 +213,11 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                         }
                         
                         subtitleText += ' - Progress: ${moveRoll.progressValue} vs ${moveRoll.challengeDice.join(', ')}';
+                      } else if (moveRoll.rollType == 'oracle_roll' && 
+                                moveRoll.moveData != null && 
+                                moveRoll.moveData!.containsKey('oracleResult')) {
+                        // Oracle roll subtitle
+                        subtitleText = 'Oracle Result: ${moveRoll.moveData!['oracleResult']}';
                       } else {
                         // No-roll move subtitle
                         subtitleText = 'Performed';
@@ -298,6 +303,10 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
       return Icons.trending_up;
     }
     
+    if (rollType == 'oracle_roll') {
+      return Icons.casino;
+    }
+    
     // For action rolls, use outcome-based icons
     if (outcome.toLowerCase().contains('strong hit with a match')) {
       return Icons.star; // Special icon for strong hit with match
@@ -376,6 +385,13 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                 ] else if (moveRoll.rollType == 'progress_roll') ...[
                   Text('Progress Value: ${moveRoll.progressValue}'),
                   Text('Challenge Dice: ${moveRoll.challengeDice.join(' and ')}'),
+                ] else if (moveRoll.rollType == 'oracle_roll' && 
+                           moveRoll.moveData != null && 
+                           moveRoll.moveData!.containsKey('oracleResult')) ...[
+                  Text(
+                    'Oracle Result: ${moveRoll.moveData!['oracleResult']}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ],
                 
                 const SizedBox(height: 16),

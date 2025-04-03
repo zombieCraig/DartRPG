@@ -5,6 +5,7 @@ import '../../models/journal_entry.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../services/roll_service.dart';
+import '../../screens/journal_entry_screen.dart';
 import '../moves/move_list.dart';
 import '../moves/move_details.dart';
 import '../moves/roll_result_view.dart';
@@ -188,6 +189,32 @@ class MoveDialog {
                                       onMoveRollAdded, 
                                       onInsertText, 
                                       isEditing,
+                                    );
+                                  },
+                                  onOracleRollAdded: (oracleRoll) {
+                                    // Add the oracle roll to the journal entry
+                                    onMoveRollAdded(MoveRoll(
+                                      moveName: selectedMove!.name,
+                                      moveDescription: selectedMove!.description,
+                                      rollType: 'oracle_roll',
+                                      outcome: 'performed',
+                                      actionDie: 0,
+                                      challengeDice: [],
+                                      moveData: {'moveId': selectedMove!.id, 'oracleResult': oracleRoll.result},
+                                    ));
+                                    
+                                    // Insert the oracle roll text at the cursor position
+                                    if (isEditing) {
+                                      final formattedText = oracleRoll.getFormattedText();
+                                      onInsertText(formattedText);
+                                    }
+                                    
+                                    // Show confirmation
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Oracle roll added to journal entry'),
+                                        duration: Duration(seconds: 2),
+                                      ),
                                     );
                                   },
                                 )

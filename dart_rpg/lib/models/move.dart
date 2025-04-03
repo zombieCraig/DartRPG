@@ -1,3 +1,5 @@
+import 'move_oracle.dart';
+
 class MoveOutcome {
   final String type; // "strong hit", "weak hit", or "miss"
   final String description;
@@ -37,6 +39,10 @@ class Move {
   final String rollType; // "action_roll", "progress_roll", or "no_roll"
   final List<Map<String, dynamic>> triggerConditions; // Conditions from the trigger
   final List<Map<String, dynamic>> rollOptions; // Options for rolling
+  
+  // Embedded oracles
+  Map<String, MoveOracle>? _oracles;
+  final Map<String, dynamic>? _oraclesData; // Raw oracles data from JSON
 
   Move({
     required this.id,
@@ -51,11 +57,13 @@ class Move {
     String? rollType,
     List<Map<String, dynamic>>? triggerConditions,
     List<Map<String, dynamic>>? rollOptions,
+    Map<String, dynamic>? oraclesData,
   }) : 
     outcomes = outcomes ?? [],
     rollType = rollType ?? (isProgressMove ? 'progress_roll' : (stat != null ? 'action_roll' : 'no_roll')),
     triggerConditions = triggerConditions ?? [],
-    rollOptions = rollOptions ?? [];
+    rollOptions = rollOptions ?? [],
+    _oraclesData = oraclesData;
 
   factory Move.fromJson(Map<String, dynamic> json) {
     List<MoveOutcome> outcomes = [];
@@ -83,6 +91,7 @@ class Move {
       rollOptions: json['rollOptions'] != null 
           ? List<Map<String, dynamic>>.from(json['rollOptions'])
           : null,
+      oraclesData: json['oracles'],
     );
   }
 
@@ -100,6 +109,7 @@ class Move {
       'rollType': rollType,
       'triggerConditions': triggerConditions,
       'rollOptions': rollOptions,
+      'oracles': _oraclesData,
     };
   }
 
@@ -196,8 +206,28 @@ class Move {
       rollType: rollType,
       triggerConditions: triggerConditions,
       rollOptions: rollOptions,
+      oraclesData: json['oracles'],
     );
   }
+  
+  /// Gets the embedded oracles for this move, if any.
+  Map<String, MoveOracle> get oracles {
+    if (_oracles != null) {
+      return _oracles!;
+    }
+    
+    _oracles = {};
+    if (_oraclesData != null) {
+      _oraclesData!.forEach((key, value) {
+        _oracles![key] = MoveOracle.fromJson(key, value);
+      });
+    }
+    
+    return _oracles!;
+  }
+  
+  /// Checks if this move has embedded oracles.
+  bool get hasEmbeddedOracles => oracles.isNotEmpty;
   
   // Enhanced method to get available stats and condition meters
   List<Map<String, dynamic>> getAvailableOptions() {

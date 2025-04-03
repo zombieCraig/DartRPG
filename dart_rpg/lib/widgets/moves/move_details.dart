@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../models/move.dart';
+import '../../models/journal_entry.dart';
 import '../../services/roll_service.dart';
 import 'action_roll_panel.dart';
 import 'progress_roll_panel.dart';
 import 'no_roll_panel.dart';
+import 'move_oracle_panel.dart';
 
 /// A widget for displaying the details of a move.
 class MoveDetails extends StatelessWidget {
@@ -13,6 +15,7 @@ class MoveDetails extends StatelessWidget {
   final Function(Move, String, int, int) onActionRoll;
   final Function(Move, int) onProgressRoll;
   final Function(Move) onNoRoll;
+  final Function(OracleRoll)? onOracleRollAdded;
   
   const MoveDetails({
     super.key,
@@ -21,6 +24,7 @@ class MoveDetails extends StatelessWidget {
     required this.onActionRoll,
     required this.onProgressRoll,
     required this.onNoRoll,
+    this.onOracleRollAdded,
   });
   
   @override
@@ -140,6 +144,14 @@ class MoveDetails extends StatelessWidget {
             NoRollPanel(
               move: move,
               onPerform: onNoRoll,
+            ),
+          ],
+          
+          // Oracle panel for moves with embedded oracles
+          if (move.hasEmbeddedOracles && onOracleRollAdded != null) ...[
+            MoveOraclePanel(
+              move: move,
+              onOracleRollAdded: onOracleRollAdded!,
             ),
           ],
         ],

@@ -17,6 +17,7 @@ class MoveRoll {
   int? modifier; // For action rolls with modifiers
   Map<String, dynamic>? moveData; // Store original move data for reference
   bool isMatch; // Whether the challenge dice match
+  bool momentumBurned; // Whether momentum was burned for this roll
 
   MoveRoll({
     String? id,
@@ -33,6 +34,7 @@ class MoveRoll {
     this.modifier,
     this.moveData,
     this.isMatch = false,
+    this.momentumBurned = false,
   })  : id = id ?? const Uuid().v4(),
         timestamp = timestamp ?? DateTime.now(),
         rollType = rollType ?? 'action_roll';
@@ -53,6 +55,7 @@ class MoveRoll {
       'modifier': modifier,
       'moveData': moveData,
       'isMatch': isMatch,
+      'momentumBurned': momentumBurned,
     };
   }
 
@@ -72,6 +75,7 @@ class MoveRoll {
       modifier: json['modifier'],
       moveData: json['moveData'],
       isMatch: json['isMatch'] ?? false,
+      momentumBurned: json['momentumBurned'] ?? false,
     );
   }
   
@@ -80,7 +84,12 @@ class MoveRoll {
     if (rollType == 'no_roll') {
       return '[$moveName]';
     } else {
-      return '[$moveName - ${outcome.split(' ').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ')}]';
+      String formattedOutcome = outcome.split(' ').map((word) => word[0].toUpperCase() + word.substring(1)).join(' ');
+      if (momentumBurned) {
+        return '[$moveName - $formattedOutcome (Momentum Burned)]';
+      } else {
+        return '[$moveName - $formattedOutcome]';
+      }
     }
   }
 }

@@ -195,6 +195,11 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                           subtitleText += ' - MATCH!';
                         }
                         
+                        // Add Momentum Burned indicator
+                        if (moveRoll.momentumBurned) {
+                          subtitleText += ' - MOMENTUM BURNED';
+                        }
+                        
                         subtitleText += ' - Action Die: ${moveRoll.actionDie}';
                         if (statInfo.isNotEmpty) {
                           subtitleText += ', $statInfo';
@@ -372,6 +377,18 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                     ],
                   ],
                 ),
+                
+                // Momentum Burned indicator
+                if (moveRoll.momentumBurned) ...[
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Momentum Burned',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.purple,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 
                 // Roll details

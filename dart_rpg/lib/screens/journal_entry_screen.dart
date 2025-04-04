@@ -455,6 +455,18 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                       color: _getOutcomeColor(moveRoll.outcome),
                     ),
                   ),
+                  
+                  // Add Momentum Burned indicator
+                  if (moveRoll.momentumBurned) ...[
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Momentum Burned',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.purple,
+                      ),
+                    ),
+                  ],
                 ] else ...[
                   const SizedBox(height: 16),
                   const Text(
@@ -1017,37 +1029,42 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                 _moveRolls.isNotEmpty || 
                 _oracleRolls.isNotEmpty
               ))
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: LinkedItemsSummary(
-                  journalEntry: JournalEntry(
-                    id: widget.entryId ?? _createdEntryId ?? '',
-                    content: _content,
-                    richContent: _richContent,
-                    linkedCharacterIds: _linkedCharacterIds,
-                    linkedLocationIds: _linkedLocationIds,
-                    moveRolls: _moveRolls,
-                    oracleRolls: _oracleRolls,
-                    embeddedImages: _embeddedImages,
+              Container(
+                constraints: const BoxConstraints(maxHeight: 300), // Limit height to prevent overflow
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: LinkedItemsSummary(
+                      journalEntry: JournalEntry(
+                        id: widget.entryId ?? _createdEntryId ?? '',
+                        content: _content,
+                        richContent: _richContent,
+                        linkedCharacterIds: _linkedCharacterIds,
+                        linkedLocationIds: _linkedLocationIds,
+                        moveRolls: _moveRolls,
+                        oracleRolls: _oracleRolls,
+                        embeddedImages: _embeddedImages,
+                      ),
+                      onCharacterTap: (characterId) {
+                        final gameProvider = Provider.of<GameProvider>(context, listen: false);
+                        final character = gameProvider.currentGame!.characters
+                            .firstWhere((c) => c.id == characterId);
+                        _showCharacterDetailsDialog(context, character);
+                      },
+                      onLocationTap: (locationId) {
+                        final gameProvider = Provider.of<GameProvider>(context, listen: false);
+                        final location = gameProvider.currentGame!.locations
+                            .firstWhere((l) => l.id == locationId);
+                        _showLocationDetailsDialog(context, location);
+                      },
+                      onMoveRollTap: (moveRoll) {
+                        _showMoveRollDetailsDialog(context, moveRoll);
+                      },
+                      onOracleRollTap: (oracleRoll) {
+                        _showOracleRollDetailsDialog(context, oracleRoll);
+                      },
+                    ),
                   ),
-                  onCharacterTap: (characterId) {
-                    final gameProvider = Provider.of<GameProvider>(context, listen: false);
-                    final character = gameProvider.currentGame!.characters
-                        .firstWhere((c) => c.id == characterId);
-                    _showCharacterDetailsDialog(context, character);
-                  },
-                  onLocationTap: (locationId) {
-                    final gameProvider = Provider.of<GameProvider>(context, listen: false);
-                    final location = gameProvider.currentGame!.locations
-                        .firstWhere((l) => l.id == locationId);
-                    _showLocationDetailsDialog(context, location);
-                  },
-                  onMoveRollTap: (moveRoll) {
-                    _showMoveRollDetailsDialog(context, moveRoll);
-                  },
-                  onOracleRollTap: (oracleRoll) {
-                    _showOracleRollDetailsDialog(context, oracleRoll);
-                  },
                 ),
               ),
             

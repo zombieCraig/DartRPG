@@ -367,6 +367,7 @@ class MoveDialog {
                 
                 // Update the moveRoll
                 moveRoll.outcome = newOutcome;
+                moveRoll.momentumBurned = true;
                 
                 // Update the UI
                 setState(() {
@@ -376,6 +377,17 @@ class MoveDialog {
                   rollResult['couldBurnMomentum'] = false;
                   rollResult['momentum'] = character.momentum;
                 });
+                
+                // We don't need to call onMoveRollAdded again since we're updating the existing moveRoll object
+                // that was already added to the journal entry. The object reference is maintained.
+                
+                // Show a notification about the updated outcome
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Momentum burned! New outcome: ${newOutcome.toUpperCase()}'),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
                 
                 // Save the game
                 gameProvider.saveGame();

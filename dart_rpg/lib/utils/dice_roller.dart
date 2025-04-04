@@ -60,6 +60,21 @@ class DiceRoller {
       outcome = isMatch ? 'miss with a match' : 'miss';
     }
     
+    // Check if burning momentum would change the outcome
+    bool wouldBurnMomentumChangeOutcome = false;
+    if (momentum > 0 && momentum > actionValue) {
+      // Calculate what the outcome would be if momentum was used as the action value
+      final momentumStrongHit = momentum > challengeDice[0] && momentum > challengeDice[1];
+      final momentumWeakHit = (momentum > challengeDice[0] && momentum <= challengeDice[1]) ||
+                              (momentum <= challengeDice[0] && momentum > challengeDice[1]);
+      
+      // Only allow burning momentum if it would improve the outcome
+      if ((outcome.contains('miss') && (momentumStrongHit || momentumWeakHit)) ||
+          (outcome == 'weak hit' && momentumStrongHit)) {
+        wouldBurnMomentumChangeOutcome = true;
+      }
+    }
+    
     return {
       'actionDie': actionDie,
       'actionDieCanceled': actionDieCanceled,
@@ -69,7 +84,7 @@ class DiceRoller {
       'challengeDice': challengeDice,
       'outcome': outcome,
       'momentum': momentum,
-      'couldBurnMomentum': momentum > 0 && momentum > actionValue,
+      'couldBurnMomentum': wouldBurnMomentumChangeOutcome,
       'isMatch': isMatch, // Add the match information
     };
   }

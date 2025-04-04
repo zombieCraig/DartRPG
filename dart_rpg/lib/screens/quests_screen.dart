@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/quest.dart';
 import '../models/character.dart';
+import '../models/clock.dart';
 import '../providers/game_provider.dart';
 import '../widgets/quests/quest_dialog.dart';
 import '../widgets/quests/quest_service.dart';
 import '../widgets/quests/quest_tab_list.dart';
+import '../widgets/clocks/clock_dialog.dart';
+import '../widgets/clocks/clock_service.dart';
+import '../widgets/clocks/clocks_tab_view.dart';
 
 /// A screen for managing quests
 class QuestsScreen extends StatefulWidget {
@@ -26,16 +30,26 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
   late TabController _tabController;
   String? _selectedCharacterId;
   late QuestService _questService;
+  late ClockService _clockService;
+  bool _showCharacterSelector = true;
   
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
+    
+    // Listen for tab changes to show/hide character selector
+    _tabController.addListener(() {
+      setState(() {
+        _showCharacterSelector = _tabController.index < 3;
+      });
+    });
     
     // Initialize with the main character if available
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final gameProvider = Provider.of<GameProvider>(context, listen: false);
       _questService = QuestService(gameProvider: gameProvider);
+      _clockService = ClockService(gameProvider: gameProvider);
       
       final game = gameProvider.games.firstWhere(
         (g) => g.id == widget.gameId,
@@ -92,8 +106,9 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
             .where((q) => q.status == QuestStatus.forsaken)
             .toList();
         
-        // Ensure the quest service is initialized
+        // Ensure the services are initialized
         _questService = QuestService(gameProvider: gameProvider);
+        _clockService = ClockService(gameProvider: gameProvider);
         
         return Scaffold(
           appBar: AppBar(
@@ -104,34 +119,36 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
                 Tab(text: 'Ongoing'),
                 Tab(text: 'Completed'),
                 Tab(text: 'Forsaken'),
+                Tab(text: 'Clocks'),
               ],
             ),
           ),
           body: Column(
             children: [
-              // Character selector
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(
-                    labelText: 'Character',
-                    border: OutlineInputBorder(),
-                    hintText: 'Select a character',
+              // Character selector (only for quest tabs)
+              if (_showCharacterSelector)
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      labelText: 'Character',
+                      border: OutlineInputBorder(),
+                      hintText: 'Select a character',
+                    ),
+                    value: _selectedCharacterId,
+                    items: charactersWithStats.map((character) {
+                      return DropdownMenuItem<String>(
+                        value: character.id,
+                        child: Text(character.name),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedCharacterId = value;
+                      });
+                    },
                   ),
-                  value: _selectedCharacterId,
-                  items: charactersWithStats.map((character) {
-                    return DropdownMenuItem<String>(
-                      value: character.id,
-                      child: Text(character.name),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedCharacterId = value;
-                    });
-                  },
                 ),
-              ),
               
               // Tab content
               Expanded(
@@ -161,14 +178,28 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
                       questService: _questService,
                       status: QuestStatus.forsaken,
                     ),
+                    
+                    // Clocks tab
+                    ClocksTabView(
+                      gameId: widget.gameId,
+                    ),
                   ],
                 ),
               ),
             ],
           ),
           floatingActionButton: FloatingActionButton(
-            onPressed: () => _showCreateQuestDialog(context, charactersWithStats),
-            tooltip: 'Create Quest',
+            onPressed: () {
+              // Show different dialogs based on the selected tab
+              if (_tabController.index == 3) {
+                // Clocks tab
+                _showCreateClockDialog(context);
+              } else {
+                // Quest tabs
+                _showCreateQuestDialog(context, charactersWithStats);
+              }
+            },
+            tooltip: _tabController.index == 3 ? 'Create Clock' : 'Create Quest',
             child: const Icon(Icons.add),
           ),
         );
@@ -201,6 +232,21 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
         characterId: result['characterId'],
         rank: result['rank'],
         notes: result['notes'],
+      );
+    }
+  }
+  
+  /// Show a dialog to create a new clock
+  void _showCreateClockDialog(BuildContext context) async {
+    final result = await ClockDialog.showCreateDialog(
+      context: context,
+    );
+    
+    if (result != null && context.mounted) {
+      await _clockService.createClock(
+        title: result['title'],
+        segments: result['segments'],
+        type: result['type'],
       );
     }
   }

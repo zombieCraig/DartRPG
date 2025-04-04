@@ -40,6 +40,16 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Comprehensive logging system and log viewer
 
 ### Recently Completed
+- ✅ Implemented a countdown clock system for tracking game events
+- ✅ Created Clock model with properties for title, segments, type, and progress
+- ✅ Developed a custom ClockSegmentPainter for drawing circular segmented clocks
+- ✅ Added clock-related methods to the Game model and GameProvider
+- ✅ Created specialized components for the clock system (ClockService, ClockForm, etc.)
+- ✅ Added a new "Clocks" tab to the Quests screen
+- ✅ Implemented "Advance all Campaign" and "Advance all Tension" buttons
+- ✅ Added journal entry creation when clocks are filled completely
+- ✅ Created unit tests for the Clock model and Game model's clock-related methods
+- ✅ Enhanced the UI with clear, high-contrast buttons for better readability
 - ✅ Implemented dropdown and dice button for moves with embedded oracles
 - ✅ Created MoveOracle model to represent embedded oracles in moves
 - ✅ Enhanced the Move model to handle embedded oracles
@@ -136,6 +146,15 @@ The DartRPG application is in active development with core functionality impleme
   - ✅ Moved oracle rolling logic to OracleService
   - ✅ Updated JournalEntryScreen to use the new components
   - ✅ Added tests for the new components
+- ✅ Countdown Clock Feature Implementation
+  - ✅ Created Clock model with properties for title, segments, type, and progress
+  - ✅ Developed a custom ClockSegmentPainter for drawing circular segmented clocks
+  - ✅ Added clock-related methods to the Game model and GameProvider
+  - ✅ Created specialized components for the clock system
+  - ✅ Added a new "Clocks" tab to the Quests screen
+  - ✅ Implemented "Advance all Campaign" and "Advance all Tension" buttons
+  - ✅ Added journal entry creation when clocks are filled completely
+  - ✅ Created unit tests for the Clock model and Game model's clock-related methods
 - ⬜ Testing for Quest system features
 - ⬜ Performance optimization for complex journal entries
 - ⬜ UI refinements for the rich text editor and quest cards
@@ -229,6 +248,24 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Journal Navigation**: Added "Jump to last entry" button on journal screen when entries are scrollable
 
 ## Recent Milestones
+
+### Milestone: Countdown Clock Feature Implementation (April 2025)
+- ✅ Implemented a countdown clock system for tracking game events
+- ✅ Created Clock model with properties for title, segments, type, and progress
+- ✅ Developed a custom ClockSegmentPainter for drawing circular segmented clocks
+- ✅ Added clock-related methods to the Game model and GameProvider
+- ✅ Created specialized components for the clock system:
+  - ✅ ClockService: Service for clock operations
+  - ✅ ClockForm: Component for clock data entry
+  - ✅ ClockDialog: Component for clock creation and editing
+  - ✅ ClockProgressPanel: Component for displaying and managing clock progress
+  - ✅ ClockCard: Component for displaying individual clocks
+  - ✅ ClocksTabView: Component for displaying the clocks tab
+- ✅ Added a new "Clocks" tab to the Quests screen
+- ✅ Implemented "Advance all Campaign" and "Advance all Tension" buttons for batch operations
+- ✅ Added journal entry creation when clocks are filled completely
+- ✅ Created unit tests for the Clock model and Game model's clock-related methods
+- ✅ Enhanced the UI with clear, high-contrast buttons for better readability
 
 ### Milestone: Move Oracle Integration (April 2025)
 - ✅ Implemented dropdown and dice button for moves with embedded oracles
@@ -354,6 +391,16 @@ The DartRPG application is in active development with core functionality impleme
 
 ## Upcoming Milestones
 
+### Milestone: Countdown Clock Enhancements (April 2025)
+- ⬜ Add widget tests for ClocksTabView and components
+- ⬜ Test clock advancement and reset functionality
+- ⬜ Verify integration with journal entry system
+- ⬜ Test batch operations for advancing clocks by type
+- ⬜ Improve the visual design of the clock visualization
+- ⬜ Add animations for clock advancement
+- ⬜ Optimize mobile experience for the clocks tab
+- ⬜ Enhance accessibility features for the clock components
+
 ### Milestone: Quest System Enhancements (April 2025)
 - ⬜ Add unit tests for Quest model methods
 - ⬜ Implement widget tests for QuestsScreen
@@ -416,9 +463,11 @@ The DartRPG application is in active development with core functionality impleme
 
 The immediate focus will be on:
 
-1. **Testing Quest System Features**: Ensuring quest creation, progress tracking, and status changes work correctly
-2. **Quest UI Refinements**: Improving the visual design and interaction of quest cards
-3. **Performance Optimization**: Addressing potential performance issues with large numbers of quests
-4. **Mobile Experience**: Enhancing the touch interaction for mobile devices
+1. **Testing Countdown Clock Features**: Ensuring clock creation, advancement, and completion work correctly
+2. **Countdown Clock UI Refinements**: Improving the visual design and interaction of clock visualization
+3. **Testing Quest System Features**: Ensuring quest creation, progress tracking, and status changes work correctly
+4. **Quest UI Refinements**: Improving the visual design and interaction of quest cards
+5. **Performance Optimization**: Addressing potential performance issues with large numbers of quests and clocks
+6. **Mobile Experience**: Enhancing the touch interaction for mobile devices
 
 Following this, the focus will shift to enhancing the user experience and adding more advanced features such as quest dependencies, full-text search across journal entries, and relationship mapping between characters, locations, and quests.

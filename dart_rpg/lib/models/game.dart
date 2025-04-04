@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:uuid/uuid.dart';
 import 'character.dart';
+import 'clock.dart';
 import 'location.dart';
 import 'session.dart';
 import 'quest.dart';
@@ -14,6 +15,7 @@ class Game {
   List<Location> locations;
   List<Session> sessions;
   List<Quest> quests;
+  List<Clock> clocks;
   Character? mainCharacter;
   String? dataswornSource;
   Location? rigLocation;
@@ -28,6 +30,7 @@ class Game {
     List<Location>? locations,
     List<Session>? sessions,
     List<Quest>? quests,
+    List<Clock>? clocks,
     this.mainCharacter,
     this.dataswornSource,
     this.rigLocation,
@@ -38,7 +41,8 @@ class Game {
         characters = characters ?? [],
         locations = locations ?? [],
         sessions = sessions ?? [],
-        quests = quests ?? [] {
+        quests = quests ?? [],
+        clocks = clocks ?? [] {
     // Create "Your Rig" location if it doesn't exist and no locations are provided
     if (locations == null || locations.isEmpty) {
       createRigLocation();
@@ -68,6 +72,7 @@ class Game {
       'dataswornSource': dataswornSource,
       'rigLocationId': rigLocation?.id,
       'quests': quests.map((q) => q.toJson()).toList(),
+      'clocks': clocks.map((c) => c.toJson()).toList(),
       'tutorialsEnabled': tutorialsEnabled,
     };
   }
@@ -116,6 +121,9 @@ class Game {
           .toList(),
       quests: (json['quests'] as List?)
           ?.map((q) => Quest.fromJson(q))
+          .toList() ?? [],
+      clocks: (json['clocks'] as List?)
+          ?.map((c) => Clock.fromJson(c))
           .toList() ?? [],
       mainCharacter: mainChar,
       dataswornSource: json['dataswornSource'],
@@ -225,6 +233,23 @@ class Game {
   // Add a quest
   void addQuest(Quest quest) {
     quests.add(quest);
+  }
+  
+  // Clock-related methods
+  
+  // Add a clock
+  void addClock(Clock clock) {
+    clocks.add(clock);
+  }
+  
+  // Get clocks by type
+  List<Clock> getClocksByType(ClockType type) {
+    return clocks.where((clock) => clock.type == type).toList();
+  }
+  
+  // Get all clocks
+  List<Clock> getAllClocks() {
+    return List.from(clocks);
   }
   
   // Get quests for a specific character

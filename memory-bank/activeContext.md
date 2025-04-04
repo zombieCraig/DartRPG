@@ -2,22 +2,41 @@
 
 ## Current Work Focus
 
-The current development focus is on restructuring the application's components to improve maintainability, testability, and reduce the risk of data loss. This includes:
+The current development focus is on restructuring the application's components to improve maintainability, testability, and reduce the risk of data loss, as well as adding new gameplay features. This includes:
 
 1. Restructuring the Oracle functionality into a more modular architecture (completed)
 2. Restructuring the Move functionality into a more modular architecture (completed)
 3. Restructuring the Journal Entry Editor System into specialized components (completed)
 4. Restructuring the Quest Management System into specialized components (completed)
 5. Restructuring the Location Graph System into specialized components (completed)
-6. Planning for future restructuring of the Character Management System
-7. Enhancing test coverage for restructured components
-8. Improving performance for complex journal entries and large datasets
-9. Refining UI for better user experience
-10. Documenting the restructured architecture
+6. Implementing the Countdown Clock feature for tracking game events (completed)
+7. Planning for future restructuring of the Character Management System
+8. Enhancing test coverage for restructured components
+9. Improving performance for complex journal entries and large datasets
+10. Refining UI for better user experience
+11. Documenting the restructured architecture
 
 This work enhances the overall architecture of the application, making it more maintainable and reducing the risk of data loss when making changes to complex features.
 
 ## Recent Changes
+
+### Countdown Clock Feature Implementation (April 2025)
+- Implemented a countdown clock system for tracking game events
+- Created Clock model with properties for title, segments (4, 6, 8, or 10), type (Campaign, Tension, or Trace), and progress
+- Developed a custom ClockSegmentPainter for drawing circular segmented clocks
+- Added clock-related methods to the Game model and GameProvider
+- Created specialized components for the clock system:
+  - ClockService: Service for clock operations
+  - ClockForm: Component for clock data entry
+  - ClockDialog: Component for clock creation and editing
+  - ClockProgressPanel: Component for displaying and managing clock progress
+  - ClockCard: Component for displaying individual clocks
+  - ClocksTabView: Component for displaying the clocks tab
+- Added a new "Clocks" tab to the Quests screen
+- Implemented "Advance all Campaign" and "Advance all Tension" buttons for batch operations
+- Added journal entry creation when clocks are filled completely
+- Created unit tests for the Clock model and Game model's clock-related methods
+- Enhanced the UI with clear, high-contrast buttons for better readability
 
 ### Move Oracle Integration (April 2025)
 - Implemented dropdown and dice button for moves with embedded oracles
@@ -246,11 +265,17 @@ This work enhances the overall architecture of the application, making it more m
 ## Next Steps
 
 ### Short-term Tasks
-1. **Testing Quest System Features**
-   - Add unit tests for Quest model methods
-   - Add widget tests for QuestsScreen and components
-   - Test quest progress rolls and status changes
+1. **Testing Countdown Clock Features**
+   - Add widget tests for ClocksTabView and components
+   - Test clock advancement and reset functionality
    - Verify integration with journal entry system
+   - Test batch operations for advancing clocks by type
+
+2. **Countdown Clock UI Refinements**
+   - Improve the visual design of the clock visualization
+   - Add animations for clock advancement
+   - Optimize mobile experience for the clocks tab
+   - Enhance accessibility features for the clock components
 
 3. **UI Refinements**
    - Improve the visual design of the quest cards
@@ -300,6 +325,32 @@ Following the successful pattern used in the Move dialog restructuring, Oracle d
    - Add printing support for physical copies
 
 ## Active Decisions and Considerations
+
+### Countdown Clock System Design
+- **Current Approach**: Tab-based integration with the Quest screen and circular visualization
+- **Considerations**:
+  - Circular visualization provides clear representation of clock segments
+  - Integration with Quest screen keeps related gameplay mechanics together
+  - Type-based organization (Campaign, Tension, Trace) aligns with game mechanics
+  - Batch operations for advancing clocks by type improves usability
+- **Decision**: Implement as a tab in the Quest screen with circular visualization and type-based operations
+
+### Clock Progress Tracking
+- **Current Approach**: Segment-based visualization with manual advancement
+- **Considerations**:
+  - Segment counts (4, 6, 8, 10) align with game mechanics
+  - Manual advancement provides control over pacing
+  - Type-based batch operations allow for efficient gameplay
+  - Visual feedback on progress is important for user engagement
+- **Decision**: Use a segment-based visualization with both individual and batch advancement options
+
+### Clock-Journal Integration
+- **Current Approach**: Automatic journal entries for clock completion
+- **Considerations**:
+  - Automatic entries provide a record of significant events
+  - Integration enhances the narrative experience
+  - Balance between automation and manual control
+- **Decision**: Create automatic journal entries when clocks are filled completely
 
 ### Quest System Design
 - **Current Approach**: Tab-based organization with status filtering
@@ -362,23 +413,31 @@ Following the successful pattern used in the Move dialog restructuring, Oracle d
 
 ## Open Questions
 
-1. **Quest Complexity**: How can we balance quest complexity with usability?
-2. **Progress Visualization**: What's the most intuitive way to visualize quest progress?
-3. **Quest Dependencies**: Should we implement quest dependencies and prerequisites?
-4. **Quest Rewards**: How should quest completion rewards be handled?
-5. **Rich Text Persistence**: What's the most efficient way to store and retrieve rich text content?
-6. **Autocompletion UX**: How can we make the autocompletion experience more intuitive without being intrusive?
-7. **Image Handling**: What's the best approach for handling and storing embedded images?
-8. **Performance Limits**: How can we ensure good performance with large journal entries and many references?
-9. **Mobile Experience**: How can we optimize the rich text editor for smaller touch screens?
+1. **Clock Complexity**: How can we balance clock complexity with usability?
+2. **Clock Visualization**: What's the most intuitive way to visualize clock progress for different segment counts?
+3. **Clock Dependencies**: Should we implement dependencies between clocks?
+4. **Clock Triggers**: How should clock completion triggers be handled?
+5. **Clock Types**: Should we add more clock types beyond Campaign, Tension, and Trace?
+6. **Quest Complexity**: How can we balance quest complexity with usability?
+7. **Progress Visualization**: What's the most intuitive way to visualize quest progress?
+8. **Quest Dependencies**: Should we implement quest dependencies and prerequisites?
+9. **Quest Rewards**: How should quest completion rewards be handled?
+10. **Rich Text Persistence**: What's the most efficient way to store and retrieve rich text content?
+11. **Autocompletion UX**: How can we make the autocompletion experience more intuitive without being intrusive?
+12. **Image Handling**: What's the best approach for handling and storing embedded images?
+13. **Performance Limits**: How can we ensure good performance with large journal entries and many references?
+14. **Mobile Experience**: How can we optimize the rich text editor for smaller touch screens?
 
 ## Current Challenges
 
-1. **Quest Management Complexity**: Balancing feature richness with simplicity and usability
-2. **Progress Tracking**: Ensuring progress tracking is intuitive and aligns with game mechanics
-3. **Status Transitions**: Making quest status changes clear and intuitive
-4. **Text Editor Complexity**: Balancing feature richness with simplicity and usability
-5. **Reference Management**: Ensuring references remain valid even when characters or locations are renamed
-6. **Performance**: Maintaining smooth performance with complex journal entries and many references
-7. **Intuitive Interaction**: Making the editor interaction intuitive for users of all experience levels
-8. **Cross-platform Consistency**: Ensuring consistent behavior across different platforms and screen sizes
+1. **Clock Management Complexity**: Balancing feature richness with simplicity and usability
+2. **Clock Progress Visualization**: Ensuring clock visualization is intuitive and clear for different segment counts
+3. **Clock Type Differentiation**: Making clock types visually distinct and meaningful
+4. **Quest Management Complexity**: Balancing feature richness with simplicity and usability
+5. **Progress Tracking**: Ensuring progress tracking is intuitive and aligns with game mechanics
+6. **Status Transitions**: Making quest status changes clear and intuitive
+7. **Text Editor Complexity**: Balancing feature richness with simplicity and usability
+8. **Reference Management**: Ensuring references remain valid even when characters or locations are renamed
+9. **Performance**: Maintaining smooth performance with complex journal entries and many references
+10. **Intuitive Interaction**: Making the editor interaction intuitive for users of all experience levels
+11. **Cross-platform Consistency**: Ensuring consistent behavior across different platforms and screen sizes

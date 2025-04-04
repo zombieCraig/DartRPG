@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:dart_rpg/models/location.dart';
 import 'package:dart_rpg/models/game.dart';
 import 'package:dart_rpg/models/character.dart';
+import 'package:dart_rpg/models/clock.dart';
 import 'package:dart_rpg/models/session.dart';
 import 'package:dart_rpg/models/journal_entry.dart';
 import 'package:dart_rpg/models/quest.dart';
@@ -152,6 +153,27 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   
   @override
   Future<void> updateBaseRigAssets(DataswornProvider dataswornProvider) async {}
+  
+  // Clock-related methods
+  @override
+  Future<Clock> createClock(String title, int segments, ClockType type) async {
+    throw UnimplementedError();
+  }
+  
+  @override
+  Future<void> updateClockTitle(String clockId, String title) async {}
+  
+  @override
+  Future<void> advanceClock(String clockId) async {}
+  
+  @override
+  Future<void> resetClock(String clockId) async {}
+  
+  @override
+  Future<void> deleteClock(String clockId) async {}
+  
+  @override
+  Future<void> advanceAllClocksOfType(ClockType type) async {}
 }
 
 void main() {

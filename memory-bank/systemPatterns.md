@@ -118,13 +118,14 @@ Game
 │   └── Assets[]
 ├── Location[]
 ├── Quest[]
+├── Clock[]
 └── Session[]
     └── JournalEntry[]
         ├── MoveRoll?
         └── OracleRoll?
 ```
 
-- A `Game` contains multiple `Character`s, `Location`s, `Quest`s, and `Session`s
+- A `Game` contains multiple `Character`s, `Location`s, `Quest`s, `Clock`s, and `Session`s
 - Each `Session` contains multiple `JournalEntry` objects
 - `JournalEntry` objects can be linked to `Character`s and `Location`s
 - `JournalEntry` objects can contain `MoveRoll` and `OracleRoll` data
@@ -165,7 +166,7 @@ GameSelectionScreen
    LogViewerScreen
 ```
 
-### Quest System Architecture
+### Quest and Clock System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -175,6 +176,9 @@ GameSelectionScreen
 │  │  ┌───────────┐  ┌───────────┐  ┌───────────┐    │   │
 │  │  │  Ongoing  │  │ Completed │  │ Forsaken  │    │   │
 │  │  └───────────┘  └───────────┘  └───────────┘    │   │
+│  │  ┌───────────┐                                  │   │
+│  │  │  Clocks   │                                  │   │
+│  │  └───────────┘                                  │   │
 │  └─────────────────────────────────────────────────┘   │
 │                                                         │
 │  ┌─────────────────────────────────────────────────┐   │
@@ -200,14 +204,31 @@ GameSelectionScreen
 └─────────────────────────────────────────────────────────┘
 ```
 
-The Quest system follows these key architectural patterns:
+The Quest and Clock system follows these key architectural patterns:
 
-1. **Tab-based Organization**: Quests are organized into tabs based on their status (Ongoing, Completed, Forsaken)
-2. **Card-based UI**: Each quest is displayed as a card with title, rank, progress bar, and action buttons
-3. **Progress Tracking**: Uses a 10-segment progress bar with manual adjustment and progress roll functionality
-4. **State Management**: Quest status changes are managed through the GameProvider
-5. **Character Association**: Quests are associated with specific characters
-6. **Journal Integration**: Quest status changes create journal entries to document progress
+1. **Tab-based Organization**: 
+   - Quests are organized into tabs based on their status (Ongoing, Completed, Forsaken)
+   - Clocks are displayed in a separate tab within the same screen
+
+2. **Card-based UI**: 
+   - Each quest is displayed as a card with title, rank, progress bar, and action buttons
+   - Each clock is displayed as a card with title, type, segment visualization, and action buttons
+
+3. **Progress Tracking**: 
+   - Quests use a 10-segment progress bar with manual adjustment and progress roll functionality
+   - Clocks use a circular segment visualization with 4, 6, 8, or 10 segments
+
+4. **State Management**: 
+   - Quest status changes are managed through the GameProvider
+   - Clock advancement and completion are managed through the GameProvider
+
+5. **Type-based Organization**:
+   - Clocks are categorized by type (Campaign, Tension, Trace)
+   - Batch operations are available for advancing all clocks of a specific type
+
+6. **Journal Integration**: 
+   - Quest status changes create journal entries to document progress
+   - Clock completion creates journal entries to document significant events
 
 ## Technical Decisions
 
@@ -336,6 +357,7 @@ This pattern has been applied to:
 - **Journal Entry Editor System**: JournalEntryEditor, EditorToolbar, AutocompleteSystem, LinkedItemsManager, AutosaveService
 - **Quest Management System**: QuestDialog, QuestForm, QuestProgressPanel, QuestTabList, QuestCard, QuestActionsPanel, QuestService
 - **Location Graph System**: LocationDialog, LocationForm, ConnectionPanel, LocationNodeWidget, LocationService, LocationListView
+- **Clock System**: ClockDialog, ClockForm, ClockProgressPanel, ClockCard, ClockService, ClocksTabView, ClockSegmentPainter
 
 Future candidates for this pattern:
 - Character Management System
@@ -479,6 +501,100 @@ The Location Graph System follows a modular architecture that separates concerns
    - The LocationNodeWidget renders individual nodes in the graph
 
 3. **Benefits of this Architecture**:
+   - **Separation of Concerns**: Each component has a specific responsibility
+   - **Modularity**: Components can be developed and tested independently
+   - **Reusability**: Components can be reused in different contexts
+   - **Maintainability**: Changes to one component don't affect others
+   - **Testability**: Components can be tested in isolation
+
+This architecture follows the same pattern as other refactored systems in the application, providing a consistent approach to component organization and interaction.
+
+## Countdown Clock System Architecture
+
+The Countdown Clock system follows a modular architecture that separates concerns and improves maintainability:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   QuestsScreen                          │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              ClocksTabView                       │   │
+│  └───────────────────────┬─────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                     ClockDialog                         │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │                 showCreateDialog()               │   │
+│  │                 showEditDialog()                 │   │
+│  │                 showDeleteConfirmation()         │   │
+│  │                 showResetConfirmation()          │   │
+│  └───────────────────────┬─────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                 Specialized Components                  │
+│                                                         │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
+│  │  ClockForm  │  │ClockProgressPanel│ │ClockCard │    │
+│  └─────────────┘  └─────────────┘  └─────────────┘     │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              ClockSegmentPainter                 │   │
+│  └─────────────────────────────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                    ClockService                         │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │         createClock()                            │   │
+│  │         updateClockTitle()                       │   │
+│  │         advanceClock()                           │   │
+│  │         resetClock()                             │   │
+│  │         deleteClock()                            │   │
+│  │         advanceAllClocksOfType()                 │   │
+│  └─────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+```
+
+1. **Component Responsibilities**:
+   - `QuestsScreen`: Container for the quest and clock management UI
+   - `ClocksTabView`: Displays the clocks tab with list of clocks and batch operation buttons
+   - `ClockDialog`: A utility class that handles clock creation, editing, deletion, and reset confirmation
+   - `ClockForm`: Handles clock data entry and validation
+   - `ClockProgressPanel`: Displays and manages clock progress
+   - `ClockCard`: Displays individual clocks in the list
+   - `ClockSegmentPainter`: Custom painter for drawing circular segmented clocks
+   - `ClockService`: Handles clock-related business logic
+
+2. **Process Flow**:
+   - The QuestsScreen provides a tab for Clocks
+   - The ClocksTabView displays all clocks and provides batch operation buttons
+   - When creating or editing a clock, the ClockDialog is shown
+   - The ClockDialog uses ClockForm for data entry
+   - The ClockProgressPanel visualizes clock progress and provides advance/reset buttons
+   - The ClockSegmentPainter draws the circular clock visualization
+   - The ClockService handles all clock operations
+
+3. **Clock Model**:
+   - `title`: The name of the clock
+   - `segments`: The total number of segments (4, 6, 8, or 10)
+   - `type`: The type of clock (Campaign, Tension, Trace)
+   - `progress`: The current number of filled segments
+   - `isComplete`: Whether the clock is completely filled
+   - `completedAt`: When the clock was completed
+
+4. **Clock Types**:
+   - `Campaign`: Clocks that track campaign-level events
+   - `Tension`: Clocks that track tension or threat levels
+   - `Trace`: Clocks that track trace or detection levels
+
+5. **Benefits of this Architecture**:
    - **Separation of Concerns**: Each component has a specific responsibility
    - **Modularity**: Components can be developed and tested independently
    - **Reusability**: Components can be reused in different contexts

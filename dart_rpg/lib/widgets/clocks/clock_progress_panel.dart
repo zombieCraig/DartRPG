@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/clock.dart';
 import '../../widgets/clock_segment_painter.dart';
+import '../../widgets/animated_clock_widget.dart';
 
 /// A panel for displaying and managing clock progress
 class ClockProgressPanel extends StatelessWidget {
@@ -34,14 +35,14 @@ class ClockProgressPanel extends StatelessWidget {
         SizedBox(
           height: 150,
           width: 150,
-          child: CustomPaint(
-            painter: ClockSegmentPainter(
-              segments: clock.segments,
-              filledSegments: clock.progress,
-              fillColor: clock.type.color,
-              emptyColor: Colors.grey.shade200,
-              borderColor: Colors.grey.shade600,
-            ),
+          child: AnimatedClockWidget(
+            label: '',
+            segments: clock.segments,
+            filledSegments: clock.progress,
+            fillColor: clock.type.color,
+            emptyColor: Colors.grey.shade200,
+            borderColor: Colors.grey.shade600,
+            isEditable: false,
           ),
         ),
         

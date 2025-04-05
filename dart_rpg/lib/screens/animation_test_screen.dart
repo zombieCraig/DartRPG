@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../widgets/progress_track_widget.dart';
+import '../widgets/animated_clock_widget.dart';
 import '../providers/settings_provider.dart';
+import '../models/clock.dart';
 
 /// A test screen to demonstrate the progress track animations.
 class AnimationTestScreen extends StatefulWidget {
@@ -12,8 +14,14 @@ class AnimationTestScreen extends StatefulWidget {
 }
 
 class _AnimationTestScreenState extends State<AnimationTestScreen> {
+  // Progress track state
   int _progressValue = 0;
   int _progressTicks = 0;
+  
+  // Clock state
+  int _clockSegments = 6; // Default to 6 segments
+  int _filledSegments = 0;
+  ClockType _clockType = ClockType.campaign; // Default to Campaign
   
   void _incrementProgress() {
     setState(() {
@@ -47,6 +55,54 @@ class _AnimationTestScreenState extends State<AnimationTestScreen> {
     });
   }
   
+  void _incrementClock() {
+    setState(() {
+      if (_filledSegments < _clockSegments) {
+        _filledSegments += 1;
+      }
+    });
+  }
+  
+  void _decrementClock() {
+    setState(() {
+      if (_filledSegments > 0) {
+        _filledSegments -= 1;
+      }
+    });
+  }
+  
+  void _resetClock() {
+    setState(() {
+      _filledSegments = 0;
+    });
+  }
+  
+  void _fillClock() {
+    setState(() {
+      _filledSegments = _clockSegments;
+    });
+  }
+  
+  void _setClockType(ClockType? type) {
+    if (type != null) {
+      setState(() {
+        _clockType = type;
+      });
+    }
+  }
+  
+  void _setClockSegments(int? segments) {
+    if (segments != null) {
+      setState(() {
+        _clockSegments = segments;
+        // Adjust filled segments if needed
+        if (_filledSegments > segments) {
+          _filledSegments = segments;
+        }
+      });
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,13 +111,14 @@ class _AnimationTestScreenState extends State<AnimationTestScreen> {
         backgroundColor: Colors.blueGrey[800],
       ),
       body: Container(
-        color: Colors.blueGrey[900], // Dark background for cyberpunk feel
+        color: Colors.blueGrey[900],
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Progress Track Section
                 const Text(
                   'Progress Track Animation',
                   style: TextStyle(
@@ -155,6 +212,181 @@ class _AnimationTestScreenState extends State<AnimationTestScreen> {
                       'Progress: $_progressValue boxes, $_progressTicks ticks',
                       style: const TextStyle(
                         color: Colors.cyan,
+                        fontSize: 18,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 48),
+                const Divider(color: Colors.cyan, thickness: 1),
+                const SizedBox(height: 32),
+                
+                // Clock Animation Section
+                const Text(
+                  'Clock Animation',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Clock type and segment selectors
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<ClockType>(
+                        decoration: const InputDecoration(
+                          labelText: 'Clock Type',
+                          labelStyle: TextStyle(color: Colors.white70),
+                          border: OutlineInputBorder(),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.white30),
+                          ),
+                          filled: true,
+                          fillColor: Colors.black45,
+                        ),
+                        dropdownColor: Colors.grey[850],
+                        value: _clockType,
+                        style: const TextStyle(color: Colors.white),
+                        onChanged: _setClockType,
+                        items: ClockType.values.map((type) {
+                          return DropdownMenuItem<ClockType>(
+                            value: type,
+                            child: Row(
+                              children: [
+                                Icon(type.icon, color: type.color),
+                                const SizedBox(width: 8),
+                                Text(type.displayName),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        decoration: const InputDecoration(
+                          labelText: 'Segments',
+                          labelStyle: TextStyle(color: Colors.white70),
+                          border: OutlineInputBorder(),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.white30),
+                          ),
+                          filled: true,
+                          fillColor: Colors.black45,
+                        ),
+                        dropdownColor: Colors.grey[850],
+                        value: _clockSegments,
+                        style: const TextStyle(color: Colors.white),
+                        onChanged: _setClockSegments,
+                        items: [4, 6, 8, 10].map((segments) {
+                          return DropdownMenuItem<int>(
+                            value: segments,
+                            child: Text('$segments segments'),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Clock widget
+                Center(
+                  child: SizedBox(
+                    width: 200,
+                    height: 200,
+                    child: AnimatedClockWidget(
+                      label: '${_clockType.displayName} Clock',
+                      segments: _clockSegments,
+                      filledSegments: _filledSegments,
+                      fillColor: _clockType.color,
+                      emptyColor: Colors.black45,
+                      borderColor: Colors.white70,
+                      onChanged: (value) {
+                        setState(() {
+                          _filledSegments = value;
+                        });
+                      },
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 32),
+                
+                // Clock control buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: _decrementClock,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Decrease'),
+                    ),
+                    const SizedBox(width: 16),
+                    ElevatedButton(
+                      onPressed: _incrementClock,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.greenAccent,
+                        foregroundColor: Colors.black,
+                      ),
+                      child: const Text('Increase'),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 16),
+                
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
+                      onPressed: _resetClock,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orangeAccent,
+                        foregroundColor: Colors.black,
+                      ),
+                      child: const Text('Reset'),
+                    ),
+                    const SizedBox(width: 16),
+                    ElevatedButton(
+                      onPressed: _fillClock,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.cyanAccent,
+                        foregroundColor: Colors.black,
+                      ),
+                      child: const Text('Fill'),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 32),
+                
+                // Current clock display
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: _clockType.color,
+                        width: 2,
+                      ),
+                    ),
+                    child: Text(
+                      'Clock: $_filledSegments/$_clockSegments segments filled',
+                      style: TextStyle(
+                        color: _clockType.color,
                         fontSize: 18,
                         fontFamily: 'monospace',
                       ),
@@ -289,11 +521,60 @@ class _AnimationTestScreenState extends State<AnimationTestScreen> {
                       ),
                       SizedBox(height: 8),
                       Text(
+                        'Progress Track:',
+                        style: TextStyle(
+                          color: Colors.cyan,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
                         '• Use the Increase/Decrease buttons to change progress\n'
                         '• Use Reset to set progress to 0\n'
                         '• Use Fill to set progress to maximum\n'
-                        '• You can also tap directly on the progress boxes\n'
-                        '• Adjust animation settings to see different effects',
+                        '• You can also tap directly on the progress boxes',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      ),
+                      SizedBox(height: 12),
+                      Text(
+                        'Clock:',
+                        style: TextStyle(
+                          color: Colors.cyan,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        '• Select clock type and number of segments from dropdowns\n'
+                        '• Use the Increase/Decrease buttons to fill or empty segments\n'
+                        '• Use Reset to clear all segments\n'
+                        '• Use Fill to fill all segments\n'
+                        '• You can also tap directly on the clock to fill segments',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      ),
+                      SizedBox(height: 12),
+                      Text(
+                        'Animation Settings:',
+                        style: TextStyle(
+                          color: Colors.cyan,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        '• Toggle animations on/off\n'
+                        '• Adjust animation speed\n'
+                        '• Enable/disable glitch effects\n'
+                        '• Enable/disable glow effects',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,

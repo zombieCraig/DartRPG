@@ -36,13 +36,21 @@ class ClockSegmentPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = min(size.width, size.height) / 2 - strokeWidth;
     
-    // Draw the outer circle
-    final outerCirclePaint = Paint()
-      ..color = borderColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
+    // Draw the background circle (optional, for debugging)
+    // final backgroundPaint = Paint()
+    //   ..color = Colors.grey.withAlpha(30)
+    //   ..style = PaintingStyle.fill;
+    // canvas.drawCircle(center, radius, backgroundPaint);
     
-    canvas.drawCircle(center, radius, outerCirclePaint);
+    // Draw the outer circle if borderColor is not transparent
+    if (borderColor != Colors.transparent) {
+      final outerCirclePaint = Paint()
+        ..color = borderColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth;
+      
+      canvas.drawCircle(center, radius, outerCirclePaint);
+    }
     
     // Calculate the angle for each segment
     final segmentAngle = 2 * pi / segments;
@@ -53,6 +61,9 @@ class ClockSegmentPainter extends CustomPainter {
       
       // Determine if this segment should be filled
       final isFilled = i < filledSegments;
+      
+      // Skip drawing empty segments if emptyColor is transparent
+      if (!isFilled && emptyColor == Colors.transparent) continue;
       
       // Create the segment path
       final path = Path()
@@ -76,13 +87,15 @@ class ClockSegmentPainter extends CustomPainter {
       
       canvas.drawPath(path, segmentPaint);
       
-      // Draw the segment border
-      final borderPaint = Paint()
-        ..color = borderColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth;
-      
-      canvas.drawPath(path, borderPaint);
+      // Draw the segment border if borderColor is not transparent
+      if (borderColor != Colors.transparent) {
+        final borderPaint = Paint()
+          ..color = borderColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeWidth;
+        
+        canvas.drawPath(path, borderPaint);
+      }
     }
   }
   

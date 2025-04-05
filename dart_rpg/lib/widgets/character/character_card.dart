@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/character.dart';
 import '../../utils/asset_utils.dart';
 import 'panels/character_key_stats_panel.dart';
+import 'panels/mobile_stats_summary.dart';
 
 /// A component for displaying a character card.
 class CharacterCard extends StatelessWidget {
@@ -18,12 +19,16 @@ class CharacterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get screen width to adjust height on mobile
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         child: SizedBox(
-          height: 220, // Fixed height to ensure scrolling works
+          height: isMobile ? 180 : 220, // Smaller height on mobile
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -92,15 +97,27 @@ class CharacterCard extends StatelessWidget {
                       // Key stats for main characters
                       if (character.isMainCharacter && isMainCharacter) ...[
                         const SizedBox(height: 4),
-                        // Use the CharacterKeyStatsPanel with compact mode and always editable
-                        CharacterKeyStatsPanel(
-                          character: character,
-                          isEditable: true, // Always enable the + and - buttons
-                          useCompactMode: true, // Use the compact layout
-                          initiallyExpanded: true, // Show without needing to expand
-                          onStatsChanged: (momentum, health, spirit, supply) {
-                            // The panel already updates the character object
-                            // No need to do anything else here
+                        // Use LayoutBuilder to determine if we're on a small screen
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            // If the width is less than 300 pixels, use the mobile summary
+                            if (constraints.maxWidth < 300) {
+                              return MobileStatsSummary(
+                                character: character,
+                              );
+                            } else {
+                              // Otherwise use the regular panel
+                              return CharacterKeyStatsPanel(
+                                character: character,
+                                isEditable: true, // Always enable the + and - buttons
+                                useCompactMode: true, // Use the compact layout
+                                initiallyExpanded: true, // Show without needing to expand
+                                onStatsChanged: (momentum, health, spirit, supply) {
+                                  // The panel already updates the character object
+                                  // No need to do anything else here
+                                },
+                              );
+                            }
                           },
                         ),
                       ],

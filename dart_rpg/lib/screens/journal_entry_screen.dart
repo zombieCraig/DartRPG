@@ -7,7 +7,6 @@ import '../providers/game_provider.dart';
 import '../models/journal_entry.dart';
 import '../models/character.dart';
 import '../models/location.dart';
-import '../models/oracle.dart';
 import '../utils/logging_service.dart';
 import '../widgets/journal/journal_entry_editor.dart';
 import '../widgets/journal/linked_items_summary.dart';
@@ -783,16 +782,6 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   }
   
   // Move-related methods have been moved to the MoveDialog class
-  
-  void _rollOracleTable(BuildContext context, OracleTable table) {
-    // Implementation of _rollOracleTable
-    // This is a placeholder to fix the build error
-  }
-  
-  Future<void> _pickImage() async {
-    // Implementation of _pickImage
-    // This is a placeholder to fix the build error
-  }
   
   void _showRollMoveDialog(BuildContext context) {
     // Only show the dialog if we're in editing mode

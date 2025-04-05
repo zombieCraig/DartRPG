@@ -118,12 +118,16 @@ void main() {
       // Calculate what the outcome should be based on the actual dice rolled
       final actionValue = result['actionDie'] + 3; // actionDie + statValue
       final challengeDice = result['challengeDice'] as List<int>;
+      final isMatch = challengeDice[0] == challengeDice[1];
       
-      final expectedOutcome = actionValue > challengeDice[0] && actionValue > challengeDice[1]
-          ? 'strong hit'
-          : (actionValue > challengeDice[0] || actionValue > challengeDice[1])
-              ? 'weak hit'
-              : 'miss';
+      String expectedOutcome;
+      if (actionValue > challengeDice[0] && actionValue > challengeDice[1]) {
+        expectedOutcome = isMatch ? 'strong hit with a match' : 'strong hit';
+      } else if (actionValue > challengeDice[0] || actionValue > challengeDice[1]) {
+        expectedOutcome = 'weak hit';
+      } else {
+        expectedOutcome = isMatch ? 'miss with a match' : 'miss';
+      }
       
       expect(result['outcome'], equals(expectedOutcome));
     });
@@ -202,10 +206,10 @@ void main() {
       // We should have found at least one match or non-match in 20 tries
       // If not, the test will still pass, but it's less comprehensive
       if (!foundMatch) {
-        print('Warning: No matching challenge dice found in test. Test is less comprehensive.');
+        printOnFailure('Warning: No matching challenge dice found in test. Test is less comprehensive.');
       }
       if (!foundNonMatch) {
-        print('Warning: No non-matching challenge dice found in test. Test is less comprehensive.');
+        printOnFailure('Warning: No non-matching challenge dice found in test. Test is less comprehensive.');
       }
     });
   });
@@ -259,10 +263,10 @@ void main() {
       
       // We should have found at least one match or non-match in 20 tries
       if (!foundMatch) {
-        print('Warning: No matching challenge dice found in test. Test is less comprehensive.');
+        printOnFailure('Warning: No matching challenge dice found in test. Test is less comprehensive.');
       }
       if (!foundNonMatch) {
-        print('Warning: No non-matching challenge dice found in test. Test is less comprehensive.');
+        printOnFailure('Warning: No non-matching challenge dice found in test. Test is less comprehensive.');
       }
     });
     

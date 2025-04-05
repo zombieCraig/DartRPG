@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../providers/game_provider.dart';
-import '../models/character.dart' show Asset, AssetAbility;
+import '../models/character.dart' show Asset;
 import '../utils/asset_utils.dart';
 import '../widgets/asset_content_widget.dart';
 
@@ -15,7 +15,6 @@ class AssetsScreen extends StatefulWidget {
 
 class _AssetsScreenState extends State<AssetsScreen> {
   String? _selectedCategory;
-  Asset? _selectedAsset;
   
   @override
   Widget build(BuildContext context) {

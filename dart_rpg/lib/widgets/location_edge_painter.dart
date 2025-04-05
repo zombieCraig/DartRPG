@@ -65,13 +65,13 @@ class LocationEdgePainter extends CustomPainter {
   Color _getSegmentColor(LocationSegment segment) {
     switch (segment) {
       case LocationSegment.core:
-        return Colors.green.shade400.withOpacity(0.8);
+        return Colors.green.shade400.withAlpha(204); // 0.8 opacity = 204 alpha
       case LocationSegment.corpNet:
-        return Colors.yellow.shade600.withOpacity(0.8);
+        return Colors.yellow.shade600.withAlpha(204); // 0.8 opacity = 204 alpha
       case LocationSegment.govNet:
-        return Colors.blue.shade300.withOpacity(0.8); // Using blue instead of grey for better visibility
+        return Colors.blue.shade300.withAlpha(204); // 0.8 opacity = 204 alpha, using blue instead of grey for better visibility
       case LocationSegment.darkNet:
-        return Colors.purple.shade300.withOpacity(0.8); // Using purple instead of black for better visibility
+        return Colors.purple.shade300.withAlpha(204); // 0.8 opacity = 204 alpha, using purple instead of black for better visibility
     }
   }
   
@@ -86,7 +86,7 @@ class LocationEdgePainter extends CustomPainter {
     // Draw shadow/glow effect for better visibility if enabled
     if (useShadow) {
       final shadowPaint = Paint()
-        ..color = color.withOpacity(0.3)
+        ..color = color.withAlpha(77) // 0.3 opacity = 77 alpha
         ..strokeWidth = strokeWidth + 2.0
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round
@@ -102,7 +102,11 @@ class LocationEdgePainter extends CustomPainter {
     final gradient = ui.Gradient.linear(
       source,
       target,
-      [color.withOpacity(0.8), color.withOpacity(0.4), color.withOpacity(0.8)],
+      [
+        color.withAlpha(204), // 0.8 opacity = 204 alpha
+        color.withAlpha(102), // 0.4 opacity = 102 alpha
+        color.withAlpha(204), // 0.8 opacity = 204 alpha
+      ],
       [0.0, 0.5, 1.0],
     );
     

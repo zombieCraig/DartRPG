@@ -122,7 +122,6 @@ class GameSelectionScreen extends StatelessWidget {
                           
                           // If there's a main character, start with Journal tab (0)
                           // Otherwise, start with Characters tab (1)
-                          final initialTabIndex = hasMainCharacter ? 0 : 1;
                           
                           Navigator.pushReplacement(
                             context,
@@ -242,7 +241,6 @@ class GameSelectionScreen extends StatelessWidget {
                                   
                                   // If there's a main character, start with Journal tab (0)
                                   // Otherwise, start with Characters tab (1)
-                                  final initialTabIndex = hasMainCharacter ? 0 : 1;
                                   
                                   Navigator.pushReplacement(
                                     context,
@@ -270,7 +268,6 @@ class GameSelectionScreen extends StatelessWidget {
                             
                             // If there's a main character, start with Journal tab (0)
                             // Otherwise, start with Characters tab (1)
-                            final initialTabIndex = hasMainCharacter ? 0 : 1;
                             
                             Navigator.pushReplacement(
                               context,

@@ -141,6 +141,6 @@ class OracleService {
   static Color getCategoryColor(String categoryName) {
     // Generate a color based on the category name
     final hash = categoryName.hashCode;
-    return Color(0xFF000000 + (hash & 0x00FFFFFF)).withOpacity(0.8);
+    return Color(0xFF000000 + (hash & 0x00FFFFFF)).withAlpha(204); // 0.8 opacity = 204 alpha
   }
 }

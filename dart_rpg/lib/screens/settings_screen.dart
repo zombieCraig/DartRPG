@@ -122,19 +122,19 @@ class SettingsScreen extends StatelessWidget {
                   },
                   items: [
                     DropdownMenuItem(
-                      value: LoggingService.LEVEL_DEBUG,
+                      value: LoggingService.levelDebug,
                       child: const Text('Debug'),
                     ),
                     DropdownMenuItem(
-                      value: LoggingService.LEVEL_INFO,
+                      value: LoggingService.levelInfo,
                       child: const Text('Info'),
                     ),
                     DropdownMenuItem(
-                      value: LoggingService.LEVEL_WARNING,
+                      value: LoggingService.levelWarning,
                       child: const Text('Warning'),
                     ),
                     DropdownMenuItem(
-                      value: LoggingService.LEVEL_ERROR,
+                      value: LoggingService.levelError,
                       child: const Text('Error'),
                     ),
                   ],

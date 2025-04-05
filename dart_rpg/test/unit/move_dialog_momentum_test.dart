@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dart_rpg/models/journal_entry.dart';
-import 'package:dart_rpg/models/move.dart';
 import 'package:dart_rpg/models/character.dart';
 
 // This test focuses on the logic for updating the journal entry when momentum is burned

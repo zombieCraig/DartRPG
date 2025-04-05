@@ -44,7 +44,7 @@ class _ClockCardState extends State<ClockCard> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: widget.clock.type.color.withOpacity(0.5),
+          color: widget.clock.type.color.withAlpha(128), // 0.5 opacity = 128 alpha
           width: 2,
         ),
       ),

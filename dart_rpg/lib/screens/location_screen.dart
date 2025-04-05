@@ -13,10 +13,10 @@ class LocationScreen extends StatefulWidget {
   const LocationScreen({super.key, required this.gameId});
 
   @override
-  _LocationScreenState createState() => _LocationScreenState();
+  LocationScreenState createState() => LocationScreenState();
 }
 
-class _LocationScreenState extends State<LocationScreen> {
+class LocationScreenState extends State<LocationScreen> {
   bool _showListView = false; // Toggle between graph and list view
   String _searchQuery = '';
   String? _focusLocationId;

@@ -583,7 +583,7 @@ class GameProvider extends ChangeNotifier {
     }
     
     // Verify the character exists
-    final character = _currentGame!.characters.firstWhere(
+    _currentGame!.characters.firstWhere(
       (c) => c.id == characterId,
       orElse: () => throw Exception('Character not found'),
     );

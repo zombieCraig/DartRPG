@@ -4,9 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:dart_rpg/models/character.dart';
 import 'package:dart_rpg/models/game.dart';
 import 'package:dart_rpg/providers/game_provider.dart';
+import 'package:dart_rpg/providers/datasworn_provider.dart';
 import 'package:dart_rpg/screens/character_screen.dart';
 
-// Mock GameProvider for testing
+// Mock Providers for testing
 class MockGameProvider extends GameProvider {
   final Game _mockGame;
   
@@ -14,6 +15,16 @@ class MockGameProvider extends GameProvider {
   
   @override
   Game? get currentGame => _mockGame;
+}
+
+class MockDataswornProvider extends DataswornProvider {
+  MockDataswornProvider();
+  
+  @override
+  Future<void> loadDatasworn([String? path]) async {
+    // Mock implementation - do nothing
+    return;
+  }
 }
 
 void main() {
@@ -54,7 +65,7 @@ void main() {
     );
   }
 
-  // Create a mock GameProvider
+  // Create a mock app with necessary providers
   Widget createTestApp({
     required List<Character> characters,
     Character? mainCharacter,
@@ -68,12 +79,16 @@ void main() {
       sessions: [],
     );
 
-    // Create a mock GameProvider with the current game set
+    // Create mock providers
     final mockGameProvider = MockGameProvider(mockGame);
+    final mockDataswornProvider = MockDataswornProvider();
 
     return MaterialApp(
-      home: ChangeNotifierProvider<GameProvider>.value(
-        value: mockGameProvider,
+      home: MultiProvider(
+        providers: [
+          ChangeNotifierProvider<GameProvider>.value(value: mockGameProvider),
+          ChangeNotifierProvider<DataswornProvider>.value(value: mockDataswornProvider),
+        ],
         child: const CharacterScreen(gameId: 'test-game'),
       ),
     );
@@ -119,8 +134,8 @@ void main() {
       ));
 
       // Verify character cards are displayed
-      expect(find.text('Alice'), findsOneWidget);
-      expect(find.text('Bob'), findsOneWidget);
+      expect(find.text('alice'), findsOneWidget);
+      expect(find.text('bob'), findsOneWidget);
 
       // Verify assets section is displayed
       expect(find.text('Assets:'), findsNWidgets(2)); // One for each character
@@ -159,7 +174,7 @@ void main() {
       ));
 
       // Verify character card is displayed
-      expect(find.text('Alice'), findsOneWidget);
+      expect(find.text('alice'), findsOneWidget);
 
       // Verify add card is displayed
       expect(find.text('Add Character'), findsOneWidget);

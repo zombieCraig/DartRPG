@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/quest.dart';
 import '../models/character.dart';
-import '../models/clock.dart';
 import '../providers/game_provider.dart';
 import '../widgets/quests/quest_dialog.dart';
 import '../widgets/quests/quest_service.dart';

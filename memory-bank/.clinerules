@@ -31,6 +31,60 @@
 - **Observer Pattern**: Implemented via `ChangeNotifier` and `Consumer` widgets
 - **State Pattern**: Used in the Quest model to manage different quest states
 
+### Code Quality Best Practices
+- **Run static analysis regularly**: Use `flutter analyze` to catch issues early
+- **Fix warnings promptly**: Address warnings as they appear rather than letting them accumulate
+- **Document complex logic**: Add comments to explain non-obvious code
+- **Write self-documenting code**: Use clear variable and method names
+- **Keep methods focused**: Each method should do one thing well
+- **Limit method length**: Break down long methods into smaller, focused methods
+- **Limit class size**: Extract functionality into new classes when a class grows too large
+
+#### Avoiding Deprecated Functions
+- Run `flutter analyze` regularly to catch deprecation warnings early
+- Address deprecation warnings as they appear rather than letting them accumulate
+- Include deprecation checks in your CI/CD pipeline
+
+##### Color Opacity Management
+Instead of using the deprecated `withOpacity()` method:
+```dart
+// AVOID: Using deprecated withOpacity
+color: Colors.blue.withOpacity(0.5)
+```
+
+Use `withAlpha()` instead:
+```dart
+// RECOMMENDED: Using withAlpha
+color: Colors.blue.withAlpha(128) // 0.5 opacity = 128 alpha
+```
+
+##### Opacity to Alpha Conversion
+When converting from opacity to alpha:
+- Alpha = Opacity × 255 (rounded to nearest integer)
+- Common conversions:
+  - 0.1 opacity = 26 alpha
+  - 0.2 opacity = 51 alpha
+  - 0.3 opacity = 77 alpha
+  - 0.4 opacity = 102 alpha
+  - 0.5 opacity = 128 alpha
+  - 0.6 opacity = 153 alpha
+  - 0.7 opacity = 179 alpha
+  - 0.8 opacity = 204 alpha
+  - 0.9 opacity = 230 alpha
+
+##### For Dynamic Opacity Values
+When dealing with animation-based or dynamic opacity:
+```dart
+// RECOMMENDED: Dynamic alpha calculation
+color: Colors.blue.withAlpha(((animationValue * 0.5) * 255).toInt())
+```
+
+##### Code Review Checklist for Deprecation
+- Check for deprecated method usage
+- Verify proper alpha value calculations when setting transparency
+- Ensure comments explain the conversion from opacity to alpha values
+- Consider creating helper methods for common opacity-to-alpha conversions
+
 ### Error Handling
 - Use try-catch blocks for operations that might fail
 - Log errors using the `LoggingService` with appropriate level and context

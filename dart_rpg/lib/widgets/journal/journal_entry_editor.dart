@@ -571,7 +571,7 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
                                 _autocompleteSystem.currentSearchText.length
                               ),
                               style: TextStyle(
-                                color: Colors.grey.withOpacity(0.7),
+                                color: Colors.grey.withAlpha(179), // 0.7 opacity = 179 alpha
                                 fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
                               ),
                             ),

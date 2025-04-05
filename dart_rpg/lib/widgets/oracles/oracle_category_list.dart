@@ -57,7 +57,7 @@ class OracleCategoryList extends StatelessWidget {
                         : null,
                     leading: Icon(
                       Icons.subdirectory_arrow_right,
-                      color: categoryColor.withOpacity(0.7),
+                      color: categoryColor.withAlpha(179), // 0.7 opacity = 179 alpha
                     ),
                     children: [
                       ...subcategory.tables.map((table) => 

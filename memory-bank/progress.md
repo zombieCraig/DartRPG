@@ -40,13 +40,28 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Comprehensive logging system and log viewer
 
 ### Recently Completed
+- ✅ Fixed deprecated `withOpacity()` method usage throughout the codebase
+- ✅ Replaced all instances with `withAlpha()` for better precision and future compatibility
+- ✅ Updated multiple files including location_graph_widget.dart, location_node_widget.dart, oracle_category_list.dart, and quest_card.dart
+- ✅ Documented conversion formula (Alpha = Opacity × 255) for future reference
+- ✅ Added code quality best practices to `.clinerules` file
+- ✅ Created a comprehensive guide for handling color opacity in Flutter
+- ✅ Documented common opacity-to-alpha conversions for reference
+- ✅ Added special handling patterns for dynamic opacity with animations
+- ✅ Created a code review checklist for catching deprecation issues
 - ✅ Implemented a countdown clock system for tracking game events
-- ✅ Created Clock model with properties for title, segments, type, and progress
+- ✅ Created Clock model with properties for title, segments (4, 6, 8, or 10), type (Campaign, Tension, or Trace), and progress
 - ✅ Developed a custom ClockSegmentPainter for drawing circular segmented clocks
 - ✅ Added clock-related methods to the Game model and GameProvider
-- ✅ Created specialized components for the clock system (ClockService, ClockForm, etc.)
+- ✅ Created specialized components for the clock system:
+  - ✅ ClockService: Service for clock operations
+  - ✅ ClockForm: Component for clock data entry
+  - ✅ ClockDialog: Component for clock creation and editing
+  - ✅ ClockProgressPanel: Component for displaying and managing clock progress
+  - ✅ ClockCard: Component for displaying individual clocks
+  - ✅ ClocksTabView: Component for displaying the clocks tab
 - ✅ Added a new "Clocks" tab to the Quests screen
-- ✅ Implemented "Advance all Campaign" and "Advance all Tension" buttons
+- ✅ Implemented "Advance all Campaign" and "Advance all Tension" buttons for batch operations
 - ✅ Added journal entry creation when clocks are filled completely
 - ✅ Created unit tests for the Clock model and Game model's clock-related methods
 - ✅ Enhanced the UI with clear, high-contrast buttons for better readability
@@ -227,6 +242,8 @@ The DartRPG application is in active development with core functionality impleme
 - **Tablet Support**: UI not fully optimized for tablet screens
 
 ### Recently Fixed Issues
+- ✅ **Deprecated Functions**: Fixed deprecated `withOpacity()` method usage throughout the codebase, replacing with `withAlpha()` for better precision and future compatibility
+- ✅ **Code Quality Documentation**: Added comprehensive guide for handling color opacity in Flutter to `.clinerules` file
 - ✅ **Move Oracle Results**: Fixed issue with oracle results from moves not showing in the journal
 - ✅ **Asset Card Display**: Fixed layout issues in asset cards and improved ability display with toggle circles
 - ✅ **Asset Detail Dialog**: Updated character asset detail dialog to use the improved AssetDetailDialog
@@ -248,6 +265,18 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Journal Navigation**: Added "Jump to last entry" button on journal screen when entries are scrollable
 
 ## Recent Milestones
+
+### Milestone: Code Quality Improvements (April 2025)
+- ✅ Fixed deprecated `withOpacity()` method usage throughout the codebase
+- ✅ Replaced all instances with `withAlpha()` for better precision and future compatibility
+- ✅ Updated multiple files including location_graph_widget.dart, location_node_widget.dart, oracle_category_list.dart, and quest_card.dart
+- ✅ Documented conversion formula (Alpha = Opacity × 255) for future reference
+- ✅ Added code quality best practices to `.clinerules` file
+- ✅ Created a comprehensive guide for handling color opacity in Flutter
+- ✅ Documented common opacity-to-alpha conversions for reference
+- ✅ Added special handling patterns for dynamic opacity with animations
+- ✅ Created a code review checklist for catching deprecation issues
+- ✅ Ran `flutter analyze` and `flutter test` to verify fixes
 
 ### Milestone: Countdown Clock Feature Implementation (April 2025)
 - ✅ Implemented a countdown clock system for tracking game events
@@ -391,6 +420,14 @@ The DartRPG application is in active development with core functionality impleme
 
 ## Upcoming Milestones
 
+### Milestone: Code Quality Improvements (April 2025)
+- ✅ Fix deprecated `withOpacity()` method usage throughout the codebase
+- ✅ Document best practices for handling color opacity in Flutter
+- ⬜ Continue to run `flutter analyze` regularly to catch new deprecation warnings
+- ⬜ Address any remaining code quality issues
+- ⬜ Implement the code review checklist for new code
+- ⬜ Consider creating helper methods for common opacity-to-alpha conversions
+
 ### Milestone: Countdown Clock Enhancements (April 2025)
 - ⬜ Add widget tests for ClocksTabView and components
 - ⬜ Test clock advancement and reset functionality
@@ -463,11 +500,12 @@ The DartRPG application is in active development with core functionality impleme
 
 The immediate focus will be on:
 
-1. **Testing Countdown Clock Features**: Ensuring clock creation, advancement, and completion work correctly
-2. **Countdown Clock UI Refinements**: Improving the visual design and interaction of clock visualization
-3. **Testing Quest System Features**: Ensuring quest creation, progress tracking, and status changes work correctly
-4. **Quest UI Refinements**: Improving the visual design and interaction of quest cards
-5. **Performance Optimization**: Addressing potential performance issues with large numbers of quests and clocks
-6. **Mobile Experience**: Enhancing the touch interaction for mobile devices
+1. **Continuing Code Quality Improvements**: Regularly running `flutter analyze` to catch new deprecation warnings
+2. **Testing Countdown Clock Features**: Ensuring clock creation, advancement, and completion work correctly
+3. **Countdown Clock UI Refinements**: Improving the visual design and interaction of clock visualization
+4. **Testing Quest System Features**: Ensuring quest creation, progress tracking, and status changes work correctly
+5. **Quest UI Refinements**: Improving the visual design and interaction of quest cards
+6. **Performance Optimization**: Addressing potential performance issues with large numbers of quests and clocks
+7. **Mobile Experience**: Enhancing the touch interaction for mobile devices
 
 Following this, the focus will shift to enhancing the user experience and adding more advanced features such as quest dependencies, full-text search across journal entries, and relationship mapping between characters, locations, and quests.

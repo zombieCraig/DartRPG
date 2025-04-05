@@ -65,13 +65,13 @@ class _MovesScreenState extends State<MovesScreen> {
         List<Move> filteredMoves = [];
         if (_searchQuery.isNotEmpty) {
           for (final category in movesByCategory.keys) {
-            filteredMoves.addAll(
-              movesByCategory[category]!.where((move) => 
-                move.name.toLowerCase().contains(_searchQuery) ||
-                (move.description?.toLowerCase().contains(_searchQuery) ?? false) ||
-                (move.trigger?.toLowerCase().contains(_searchQuery) ?? false)
-              )
-            );
+          filteredMoves.addAll(
+            movesByCategory[category]!.where((move) => 
+              move.name.toLowerCase().contains(_searchQuery) ||
+              (move.description != null && move.description!.toLowerCase().contains(_searchQuery)) ||
+              (move.trigger != null && move.trigger!.toLowerCase().contains(_searchQuery))
+            )
+          );
           }
         }
         
@@ -181,7 +181,7 @@ class _MovesScreenState extends State<MovesScreen> {
     }
     
     // Get the character's momentum
-    final momentum = character.momentum ?? 0;
+    final momentum = character.momentum;
     
     // Use the RollService to perform the roll
     final result = RollService.performActionRoll(

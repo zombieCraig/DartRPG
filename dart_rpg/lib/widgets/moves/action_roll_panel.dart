@@ -167,9 +167,6 @@ class _ActionRollPanelState extends State<ActionRollPanel> {
                       modifier = int.tryParse(_modifierController.text) ?? 0;
                     }
                     
-                    // Get the character's momentum
-                    final momentum = character.momentum ?? 0;
-                    
                     // Call the onRoll callback
                     widget.onRoll(widget.move, _selectedStat!, statValue, modifier);
                   }

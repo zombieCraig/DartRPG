@@ -27,10 +27,10 @@ class LocationGraphWidget extends StatefulWidget {
   });
 
   @override
-  _LocationGraphWidgetState createState() => _LocationGraphWidgetState();
+  LocationGraphWidgetState createState() => LocationGraphWidgetState();
 }
 
-class _LocationGraphWidgetState extends State<LocationGraphWidget> with TickerProviderStateMixin {
+class LocationGraphWidgetState extends State<LocationGraphWidget> with TickerProviderStateMixin {
   late Graph graph;
   late Algorithm algorithm;
   double _scale = 1.0;
@@ -376,15 +376,7 @@ class _LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPr
   
   @override
   Widget build(BuildContext context) {
-    // Filter locations based on search query
-    List<Location> filteredLocations = widget.locations;
-    if (widget.searchQuery != null && widget.searchQuery!.isNotEmpty) {
-      final query = widget.searchQuery!.toLowerCase();
-      filteredLocations = widget.locations.where((loc) => 
-        loc.name.toLowerCase().contains(query) ||
-        (loc.description != null && loc.description!.toLowerCase().contains(query))
-      ).toList();
-    }
+    // We don't need to filter locations here as the highlighting is done in the node builder
     
     return Column(
       children: [
@@ -579,10 +571,10 @@ class _LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPr
             boxShadow: [
               BoxShadow(
                 color: isRig 
-                  ? Colors.blue.withOpacity(0.5 * animationValue)
+                  ? Colors.blue.withAlpha((0.5 * animationValue * 255).round())
                   : isHighlighted || isFocused 
-                    ? Colors.yellow.withOpacity(0.5)
-                    : Colors.black.withOpacity(0.2),
+                    ? Colors.yellow.withAlpha(128) // 0.5 * 255 = 128
+                    : Colors.black.withAlpha(51),  // 0.2 * 255 = 51
                 spreadRadius: isRig ? 3 * animationValue : isHighlighted || isFocused ? 3 : 1,
                 blurRadius: isRig ? 5 * animationValue : isHighlighted || isFocused ? 5 : 3,
                 offset: const Offset(0, 2),
@@ -628,13 +620,13 @@ class _LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPr
   Color _getSegmentEdgeColor(LocationSegment segment) {
     switch (segment) {
       case LocationSegment.core:
-        return Colors.green.shade400.withOpacity(0.8);
+        return Colors.green.shade400.withAlpha(204); // 0.8 * 255 = 204
       case LocationSegment.corpNet:
-        return Colors.yellow.shade600.withOpacity(0.8);
+        return Colors.yellow.shade600.withAlpha(204); // 0.8 * 255 = 204
       case LocationSegment.govNet:
-        return Colors.blue.shade300.withOpacity(0.8); // Using blue instead of grey for better visibility
+        return Colors.blue.shade300.withAlpha(204); // 0.8 * 255 = 204, Using blue instead of grey for better visibility
       case LocationSegment.darkNet:
-        return Colors.purple.shade300.withOpacity(0.8); // Using purple instead of black for better visibility
+        return Colors.purple.shade300.withAlpha(204); // 0.8 * 255 = 204, Using purple instead of black for better visibility
     }
   }
 }

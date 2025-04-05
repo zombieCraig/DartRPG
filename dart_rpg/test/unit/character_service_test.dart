@@ -181,6 +181,7 @@ void main() {
       expect(result, true);
       expect(mockGame.mainCharacter, isNotNull);
       expect(mockGame.mainCharacter!.id, character2.id);
+      expect(mockGame.mainCharacter!.id != character1!.id, true);
     });
     
     test('getCharacterById returns the correct character', () async {
@@ -200,6 +201,7 @@ void main() {
       expect(result, isNotNull);
       expect(result!.id, character2.id);
       expect(result.name, 'Character 2');
+      expect(result.id != character1!.id, true);
     });
     
     test('getAllCharacters returns all characters', () async {

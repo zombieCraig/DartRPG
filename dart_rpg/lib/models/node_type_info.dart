@@ -40,8 +40,6 @@ class NodeTypeUtils {
         return 'government_segment_node_type';
       case LocationSegment.darkNet:
         return 'underground_segment_node_type';
-      default:
-        return 'core_segment_node_type';
     }
   }
   

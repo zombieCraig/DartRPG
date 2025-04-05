@@ -351,7 +351,6 @@ class OraclesScreen extends StatefulWidget {
 }
 
 class _OraclesScreenState extends State<OraclesScreen> {
-  String? _selectedCategoryId;
   OracleTable? _selectedTable;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -504,12 +503,6 @@ class _OraclesScreenState extends State<OraclesScreen> {
                   )
                 : const Icon(Icons.arrow_forward_ios),
             onTap: () {
-              // Show the tables for this category
-              setState(() {
-                _selectedCategoryId = category.id;
-                _selectedTable = null;
-              });
-              
               // Navigate to the oracle list for this category
               Navigator.push(
                 context,
@@ -524,68 +517,10 @@ class _OraclesScreenState extends State<OraclesScreen> {
     );
   }
   
-  OracleCategory? _getSelectedCategory(List<OracleCategory> categories) {
-    if (_selectedCategoryId == null) return null;
-    try {
-      return categories.firstWhere((c) => c.id == _selectedCategoryId);
-    } catch (e) {
-      return null;
-    }
-  }
-  
   Widget _buildOracleTableList(List<OracleTable> tables) {
     if (tables.isEmpty) {
       return const Center(
         child: Text('No matching oracle tables found'),
-      );
-    }
-    
-    final sortedTables = List<OracleTable>.from(tables)..sort((a, b) => a.name.compareTo(b.name));
-    
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: sortedTables.length,
-      itemBuilder: (context, index) {
-        final table = sortedTables[index];
-        
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            title: Text(table.name),
-            subtitle: Text(
-              table.description ?? 'No description available',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            trailing: IconButton(
-              icon: const Icon(Icons.casino),
-              tooltip: 'Roll on this oracle',
-              onPressed: () {
-                _rollOnOracle(context, table);
-              },
-            ),
-            onTap: () {
-              setState(() {
-                _selectedTable = table;
-              });
-            },
-          ),
-        );
-      },
-    );
-  }
-  
-  Widget _buildOracleList(OracleCategory? category) {
-    if (category == null) {
-      return const Center(
-        child: Text('Category not found'),
-      );
-    }
-    
-    final tables = category.tables;
-    if (tables.isEmpty) {
-      return const Center(
-        child: Text('No oracle tables in this category'),
       );
     }
     

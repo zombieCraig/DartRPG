@@ -46,6 +46,7 @@ dependencies:
   http: ^1.2.1
   uuid: ^4.3.3
   localstorage: ^5.0.0
+  collection: ^1.18.0
   
   # UI components
   flutter_markdown: ^0.7.6+2

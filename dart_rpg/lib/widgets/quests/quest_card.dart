@@ -94,7 +94,7 @@ class _QuestCardState extends State<QuestCard> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: widget.quest.rank.color.withOpacity(0.5),
+          color: widget.quest.rank.color.withAlpha(128), // 0.5 opacity = 128 alpha
           width: 2,
         ),
       ),

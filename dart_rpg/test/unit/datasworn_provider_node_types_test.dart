@@ -6,14 +6,8 @@ import 'package:dart_rpg/utils/logging_service.dart';
 
 // Create a mock version of the DataswornProvider to test the getAllNodeTypes logic
 class MockDataswornProvider extends ChangeNotifier {
-  List<OracleCategory> _oracles = [];
-  
-  // Expose a setter for testing
-  set oracles(List<OracleCategory> value) {
-    _oracles = value;
-  }
-  
-  List<OracleCategory> get oracles => _oracles;
+  // Public field instead of getter/setter
+  List<OracleCategory> oracles = [];
   
   // Copy of the getAllNodeTypes method from DataswornProvider
   List<NodeTypeInfo> getAllNodeTypes() {
@@ -22,13 +16,13 @@ class MockDataswornProvider extends ChangeNotifier {
     
     // Log all top-level categories to help with debugging
     loggingService.debug(
-      'Oracle categories: ${_oracles.map((c) => "${c.id}: ${c.name} (${c.subcategories.length} subcategories)").join(", ")}',
+      'Oracle categories: ${oracles.map((c) => "${c.id}: ${c.name} (${c.subcategories.length} subcategories)").join(", ")}',
       tag: 'MockDataswornProvider',
     );
     
     // Method 1: Find the node_type category by ID
     try {
-      final nodeTypeCategory = _oracles.firstWhere(
+      final nodeTypeCategory = oracles.firstWhere(
         (category) => category.id == 'node_type',
       );
       
@@ -60,7 +54,7 @@ class MockDataswornProvider extends ChangeNotifier {
       
       // Method 2: Try to find by name if ID search failed
       try {
-        final nodeTypeCategory = _oracles.firstWhere(
+        final nodeTypeCategory = oracles.firstWhere(
           (category) => category.name.toLowerCase().contains('node type'),
         );
         

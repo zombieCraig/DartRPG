@@ -139,7 +139,7 @@ class MockDataswornProvider extends DataswornProvider {
   ];
   
   @override
-  OracleTable? findOracleById(String id) {
+  OracleTable? findOracleTableById(String id) {
     for (final category in oracles) {
       for (final table in category.tables) {
         if (table.id == id) {

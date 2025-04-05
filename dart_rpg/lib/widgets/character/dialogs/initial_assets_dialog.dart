@@ -41,7 +41,6 @@ class InitialAssetsDialog extends StatefulWidget {
 class _InitialAssetsDialogState extends State<InitialAssetsDialog> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<Asset> _selectedAssets = [];
-  String? _selectedCategory;
   List<String> _categories = [];
   
   @override
@@ -55,11 +54,6 @@ class _InitialAssetsDialogState extends State<InitialAssetsDialog> with SingleTi
     
     // Initialize tab controller
     _tabController = TabController(length: _categories.length, vsync: this);
-    
-    // Set initial selected category
-    if (_categories.isNotEmpty) {
-      _selectedCategory = _categories.first;
-    }
     
     // Add Base Rig asset if it's not already in the character's assets
     final hasBaseRig = widget.character.assets.any((a) => a.name == 'Base Rig');
@@ -193,7 +187,7 @@ class _InitialAssetsDialogState extends State<InitialAssetsDialog> with SingleTi
                                       backgroundColor: getAssetCategoryColor(
                                         asset.category,
                                         isDarkMode: Theme.of(context).brightness == Brightness.dark,
-                                      ).withOpacity(0.2),
+                                      ).withAlpha(51), // 0.2 opacity = 51 alpha
                                       deleteIcon: asset.name == 'Base Rig'
                                           ? null // Don't allow removing Base Rig
                                           : const Icon(Icons.close, size: 16),
@@ -220,9 +214,7 @@ class _InitialAssetsDialogState extends State<InitialAssetsDialog> with SingleTi
                     isScrollable: true,
                     tabs: _categories.map((category) => Tab(text: category)).toList(),
                     onTap: (index) {
-                      setState(() {
-                        _selectedCategory = _categories[index];
-                      });
+                      // Tab selection is handled by the TabController
                     },
                   ),
                   
@@ -442,12 +434,8 @@ class _InitialAssetsDialogState extends State<InitialAssetsDialog> with SingleTi
     // Update character's assets
     widget.character.assets = _selectedAssets;
     
-    // Save the game
+    // Save the game - this will also notify listeners
     widget.gameProvider.saveGame();
-    
-    // Notify the game provider that the character has been updated
-    // This will trigger a rebuild of any widgets listening to the game provider
-    widget.gameProvider.notifyListeners();
     
     // Close the dialog
     Navigator.pop(context, true);

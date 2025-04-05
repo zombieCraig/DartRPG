@@ -27,13 +27,13 @@ class LoggingService {
   }
   
   // Log levels
-  static const int LEVEL_DEBUG = 0;
-  static const int LEVEL_INFO = 1;
-  static const int LEVEL_WARNING = 2;
-  static const int LEVEL_ERROR = 3;
+  static const int levelDebug = 0;
+  static const int levelInfo = 1;
+  static const int levelWarning = 2;
+  static const int levelError = 3;
   
   // Current log level (only log messages at this level or higher)
-  int _currentLevel = kDebugMode ? LEVEL_DEBUG : LEVEL_INFO;
+  int _currentLevel = kDebugMode ? levelDebug : levelInfo;
   
   // Set the current log level
   void setLogLevel(int level) {
@@ -59,11 +59,11 @@ class LoggingService {
   
   // Log a debug message
   void debug(String message, {String? tag, dynamic error, StackTrace? stackTrace}) {
-    if (_currentLevel <= LEVEL_DEBUG) {
+    if (_currentLevel <= levelDebug) {
       final formattedMessage = _formatLogMessage('DEBUG', message, tag: tag, error: error, stackTrace: stackTrace);
       debugPrint(formattedMessage);
       _logs.add(LogEntry(
-        level: LEVEL_DEBUG,
+        level: levelDebug,
         levelName: 'DEBUG',
         message: message,
         tag: tag,
@@ -76,11 +76,11 @@ class LoggingService {
   
   // Log an info message
   void info(String message, {String? tag, dynamic error, StackTrace? stackTrace}) {
-    if (_currentLevel <= LEVEL_INFO) {
+    if (_currentLevel <= levelInfo) {
       final formattedMessage = _formatLogMessage('INFO', message, tag: tag, error: error, stackTrace: stackTrace);
       debugPrint(formattedMessage);
       _logs.add(LogEntry(
-        level: LEVEL_INFO,
+        level: levelInfo,
         levelName: 'INFO',
         message: message,
         tag: tag,
@@ -93,11 +93,11 @@ class LoggingService {
   
   // Log a warning message
   void warning(String message, {String? tag, dynamic error, StackTrace? stackTrace}) {
-    if (_currentLevel <= LEVEL_WARNING) {
+    if (_currentLevel <= levelWarning) {
       final formattedMessage = _formatLogMessage('WARNING', message, tag: tag, error: error, stackTrace: stackTrace);
       debugPrint(formattedMessage);
       _logs.add(LogEntry(
-        level: LEVEL_WARNING,
+        level: levelWarning,
         levelName: 'WARNING',
         message: message,
         tag: tag,
@@ -110,11 +110,11 @@ class LoggingService {
   
   // Log an error message
   void error(String message, {String? tag, dynamic error, StackTrace? stackTrace}) {
-    if (_currentLevel <= LEVEL_ERROR) {
+    if (_currentLevel <= levelError) {
       final formattedMessage = _formatLogMessage('ERROR', message, tag: tag, error: error, stackTrace: stackTrace);
       debugPrint(formattedMessage);
       _logs.add(LogEntry(
-        level: LEVEL_ERROR,
+        level: levelError,
         levelName: 'ERROR',
         message: message,
         tag: tag,

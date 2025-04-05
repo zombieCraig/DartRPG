@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:dart_rpg/models/location.dart';
 import 'package:dart_rpg/models/oracle.dart';
-import 'package:dart_rpg/models/journal_entry.dart';
 import 'package:dart_rpg/models/game.dart';
 import 'package:dart_rpg/providers/game_provider.dart';
 import 'package:dart_rpg/providers/datasworn_provider.dart';
@@ -263,10 +262,9 @@ void main() {
       expect(find.text('Social Hub Oracles'), findsOneWidget); // Only the button remains
     });
     
-    testWidgets('calls callbacks when oracle roll is added', (WidgetTester tester) async {
-      OracleRoll? addedOracleRoll;
-      String? insertedText;
-      
+    testWidgets('sets up callbacks correctly', (WidgetTester tester) async {
+      // We're just testing that callbacks are properly passed to the widget,
+      // not that they're actually called
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -277,11 +275,11 @@ void main() {
               ],
               child: LocationOracleShortcuts(
                 linkedLocationIds: [locationWithNodeType.id],
-                onOracleRollAdded: (roll) {
-                  addedOracleRoll = roll;
+                onOracleRollAdded: (_) {
+                  // Just a placeholder function for testing
                 },
-                onInsertText: (text) {
-                  insertedText = text;
+                onInsertText: (_) {
+                  // Just a placeholder function for testing
                 },
               ),
             ),
@@ -298,6 +296,14 @@ void main() {
       expect(find.text('Feature'), findsOneWidget);
       expect(find.text('Peril'), findsOneWidget);
       expect(find.text('Opportunity'), findsOneWidget);
+      
+      // Verify that the callbacks are set up (we're not testing if they're called,
+      // just that they're properly passed to the widget)
+      final widget = tester.widget<LocationOracleShortcuts>(
+        find.byType(LocationOracleShortcuts)
+      );
+      expect(widget.onOracleRollAdded != null, true);
+      expect(widget.onInsertText != null, true);
       
       // Note: We can't easily test the full flow of rolling on an oracle table
       // and adding the result to the journal entry in a widget test, as it involves

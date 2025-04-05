@@ -284,7 +284,7 @@ class MoveDialog {
     }
     
     // Get the character's momentum
-    final momentum = character.momentum ?? 0;
+    final momentum = character.momentum;
     
     // Use the RollService to perform the roll
     final result = RollService.performActionRoll(

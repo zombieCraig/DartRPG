@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../widgets/character/character_list_view.dart';
-import '../widgets/character/character_service.dart';
 import '../widgets/character/character_dialog.dart';
 
 /// A screen for managing characters.
@@ -17,15 +16,11 @@ class CharacterScreen extends StatefulWidget {
 }
 
 class _CharacterScreenState extends State<CharacterScreen> {
-  late CharacterService _characterService;
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final gameProvider = Provider.of<GameProvider>(context);
     final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
-    
-    _characterService = CharacterService(gameProvider);
     
     // Update Base Rig assets for existing characters
     gameProvider.updateBaseRigAssets(dataswornProvider);

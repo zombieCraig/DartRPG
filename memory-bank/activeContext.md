@@ -10,15 +10,32 @@ The current development focus is on restructuring the application's components t
 4. Restructuring the Quest Management System into specialized components (completed)
 5. Restructuring the Location Graph System into specialized components (completed)
 6. Implementing the Countdown Clock feature for tracking game events (completed)
-7. Planning for future restructuring of the Character Management System
-8. Enhancing test coverage for restructured components
-9. Improving performance for complex journal entries and large datasets
-10. Refining UI for better user experience
-11. Documenting the restructured architecture
+7. Addressing code quality issues and deprecated functions (completed)
+8. Planning for future restructuring of the Character Management System
+9. Enhancing test coverage for restructured components
+10. Improving performance for complex journal entries and large datasets
+11. Refining UI for better user experience
+12. Documenting the restructured architecture
 
 This work enhances the overall architecture of the application, making it more maintainable and reducing the risk of data loss when making changes to complex features.
 
 ## Recent Changes
+
+### Code Quality Improvements (April 2025)
+- Fixed deprecated `withOpacity()` method usage throughout the codebase
+- Replaced all instances with `withAlpha()` for better precision and future compatibility
+- Updated multiple files including:
+  - location_graph_widget.dart
+  - location_node_widget.dart
+  - oracle_category_list.dart
+  - quest_card.dart
+- Documented conversion formula (Alpha = Opacity × 255) for future reference
+- Added code quality best practices to `.clinerules` file
+- Created a comprehensive guide for handling color opacity in Flutter
+- Documented common opacity-to-alpha conversions for reference
+- Added special handling patterns for dynamic opacity with animations
+- Created a code review checklist for catching deprecation issues
+- Ran `flutter analyze` and `flutter test` to verify fixes
 
 ### Countdown Clock Feature Implementation (April 2025)
 - Implemented a countdown clock system for tracking game events
@@ -265,31 +282,37 @@ This work enhances the overall architecture of the application, making it more m
 ## Next Steps
 
 ### Short-term Tasks
-1. **Testing Countdown Clock Features**
+1. **Continue Code Quality Improvements**
+   - Run `flutter analyze` regularly to catch new deprecation warnings
+   - Address any remaining code quality issues
+   - Implement the code review checklist for new code
+   - Consider creating helper methods for common opacity-to-alpha conversions
+
+2. **Testing Countdown Clock Features**
    - Add widget tests for ClocksTabView and components
    - Test clock advancement and reset functionality
    - Verify integration with journal entry system
    - Test batch operations for advancing clocks by type
 
-2. **Countdown Clock UI Refinements**
+3. **Countdown Clock UI Refinements**
    - Improve the visual design of the clock visualization
    - Add animations for clock advancement
    - Optimize mobile experience for the clocks tab
    - Enhance accessibility features for the clock components
 
-3. **UI Refinements**
+4. **UI Refinements**
    - Improve the visual design of the quest cards
    - Enhance the progress bar visualization
    - Add animations for status changes
    - Optimize mobile experience for the quest screen
 
-4. **Performance Optimization**
+5. **Performance Optimization**
    - Optimize quest list rendering for large numbers of quests
    - Improve progress tracking and roll calculations
    - Enhance quest filtering and sorting
    - Optimize saving and loading of quest data
 
-5. **Testing Infrastructure**
+6. **Testing Infrastructure**
    - Expand test coverage to other critical components
    - Set up continuous integration for automated testing
    - Create test fixtures for common test scenarios
@@ -325,6 +348,15 @@ Following the successful pattern used in the Move dialog restructuring, Oracle d
    - Add printing support for physical copies
 
 ## Active Decisions and Considerations
+
+### Code Quality Approach
+- **Current Approach**: Proactive identification and fixing of deprecated functions
+- **Considerations**:
+  - Deprecated functions may cause issues in future Flutter versions
+  - Addressing issues early prevents technical debt accumulation
+  - Documentation helps prevent similar issues in future code
+  - Standardized approaches improve code consistency
+- **Decision**: Document best practices in `.clinerules` and fix all instances of deprecated functions
 
 ### Countdown Clock System Design
 - **Current Approach**: Tab-based integration with the Quest screen and circular visualization
@@ -413,31 +445,35 @@ Following the successful pattern used in the Move dialog restructuring, Oracle d
 
 ## Open Questions
 
-1. **Clock Complexity**: How can we balance clock complexity with usability?
-2. **Clock Visualization**: What's the most intuitive way to visualize clock progress for different segment counts?
-3. **Clock Dependencies**: Should we implement dependencies between clocks?
-4. **Clock Triggers**: How should clock completion triggers be handled?
-5. **Clock Types**: Should we add more clock types beyond Campaign, Tension, and Trace?
-6. **Quest Complexity**: How can we balance quest complexity with usability?
-7. **Progress Visualization**: What's the most intuitive way to visualize quest progress?
-8. **Quest Dependencies**: Should we implement quest dependencies and prerequisites?
-9. **Quest Rewards**: How should quest completion rewards be handled?
-10. **Rich Text Persistence**: What's the most efficient way to store and retrieve rich text content?
-11. **Autocompletion UX**: How can we make the autocompletion experience more intuitive without being intrusive?
-12. **Image Handling**: What's the best approach for handling and storing embedded images?
-13. **Performance Limits**: How can we ensure good performance with large journal entries and many references?
-14. **Mobile Experience**: How can we optimize the rich text editor for smaller touch screens?
+1. **Code Quality Automation**: How can we automate the detection of deprecated functions?
+2. **Helper Methods**: Should we create helper methods for common opacity-to-alpha conversions?
+3. **Clock Complexity**: How can we balance clock complexity with usability?
+4. **Clock Visualization**: What's the most intuitive way to visualize clock progress for different segment counts?
+5. **Clock Dependencies**: Should we implement dependencies between clocks?
+6. **Clock Triggers**: How should clock completion triggers be handled?
+7. **Clock Types**: Should we add more clock types beyond Campaign, Tension, and Trace?
+8. **Quest Complexity**: How can we balance quest complexity with usability?
+9. **Progress Visualization**: What's the most intuitive way to visualize quest progress?
+10. **Quest Dependencies**: Should we implement quest dependencies and prerequisites?
+11. **Quest Rewards**: How should quest completion rewards be handled?
+12. **Rich Text Persistence**: What's the most efficient way to store and retrieve rich text content?
+13. **Autocompletion UX**: How can we make the autocompletion experience more intuitive without being intrusive?
+14. **Image Handling**: What's the best approach for handling and storing embedded images?
+15. **Performance Limits**: How can we ensure good performance with large journal entries and many references?
+16. **Mobile Experience**: How can we optimize the rich text editor for smaller touch screens?
 
 ## Current Challenges
 
-1. **Clock Management Complexity**: Balancing feature richness with simplicity and usability
-2. **Clock Progress Visualization**: Ensuring clock visualization is intuitive and clear for different segment counts
-3. **Clock Type Differentiation**: Making clock types visually distinct and meaningful
-4. **Quest Management Complexity**: Balancing feature richness with simplicity and usability
-5. **Progress Tracking**: Ensuring progress tracking is intuitive and aligns with game mechanics
-6. **Status Transitions**: Making quest status changes clear and intuitive
-7. **Text Editor Complexity**: Balancing feature richness with simplicity and usability
-8. **Reference Management**: Ensuring references remain valid even when characters or locations are renamed
-9. **Performance**: Maintaining smooth performance with complex journal entries and many references
-10. **Intuitive Interaction**: Making the editor interaction intuitive for users of all experience levels
-11. **Cross-platform Consistency**: Ensuring consistent behavior across different platforms and screen sizes
+1. **Deprecated Function Detection**: Ensuring all deprecated functions are identified and fixed
+2. **Code Quality Maintenance**: Keeping code quality high as the codebase grows
+3. **Clock Management Complexity**: Balancing feature richness with simplicity and usability
+4. **Clock Progress Visualization**: Ensuring clock visualization is intuitive and clear for different segment counts
+5. **Clock Type Differentiation**: Making clock types visually distinct and meaningful
+6. **Quest Management Complexity**: Balancing feature richness with simplicity and usability
+7. **Progress Tracking**: Ensuring progress tracking is intuitive and aligns with game mechanics
+8. **Status Transitions**: Making quest status changes clear and intuitive
+9. **Text Editor Complexity**: Balancing feature richness with simplicity and usability
+10. **Reference Management**: Ensuring references remain valid even when characters or locations are renamed
+11. **Performance**: Maintaining smooth performance with complex journal entries and many references
+12. **Intuitive Interaction**: Making the editor interaction intuitive for users of all experience levels
+13. **Cross-platform Consistency**: Ensuring consistent behavior across different platforms and screen sizes

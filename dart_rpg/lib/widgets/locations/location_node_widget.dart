@@ -94,10 +94,10 @@ class LocationNodeWidget extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 color: isRig 
-                  ? Colors.blue.withOpacity(0.5 * animationValue)
+                  ? Colors.blue.withAlpha(((0.5 * animationValue) * 255).toInt()) // Dynamic alpha based on animation
                   : isHighlighted || isFocused 
-                    ? Colors.yellow.withOpacity(0.5)
-                    : Colors.black.withOpacity(0.2),
+                    ? Colors.yellow.withAlpha(128) // 0.5 opacity = 128 alpha
+                    : Colors.black.withAlpha(51), // 0.2 opacity = 51 alpha
                 spreadRadius: isRig ? 3 * animationValue : isHighlighted || isFocused ? 3 : 1,
                 blurRadius: isRig ? 5 * animationValue : isHighlighted || isFocused ? 5 : 3,
                 offset: const Offset(0, 2),

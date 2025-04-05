@@ -319,15 +319,15 @@ class _CharacterKeyStatsPanelState extends State<CharacterKeyStatsPanel> {
     String? tooltip,
   }) {
     // Use textColor if provided, otherwise use the main color
-    final labelColor = textColor ?? color.withOpacity(0.8);
+    final labelColor = textColor ?? color.withAlpha(204); // 0.8 opacity = 204 alpha
     final valueColor = textColor ?? color;
     // Create the base widget
     Widget statItem = Container(
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
       decoration: BoxDecoration(
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withAlpha(128)), // 0.5 opacity = 128 alpha
         borderRadius: BorderRadius.circular(4),
-        color: color.withOpacity(0.1),
+        color: color.withAlpha(26), // 0.1 opacity = 26 alpha
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -345,59 +345,62 @@ class _CharacterKeyStatsPanelState extends State<CharacterKeyStatsPanel> {
             overflow: TextOverflow.ellipsis,
           ),
           
-          // Value and adjustment buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Decrease button
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: widget.isEditable && value > minValue ? () => onChanged(value - 1) : null,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                    child: Icon(
-                      Icons.remove,
-                      size: 16,
-                      color: widget.isEditable && value > minValue ? color : Colors.grey.withOpacity(0.5),
+          // Value and adjustment buttons - Wrap in FittedBox to prevent overflow
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Decrease button
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: widget.isEditable && value > minValue ? () => onChanged(value - 1) : null,
+                    child: Container(
+                      padding: const EdgeInsets.all(2), // Reduced padding
+                      constraints: const BoxConstraints(minWidth: 24, minHeight: 24), // Smaller constraints
+                      child: Icon(
+                        Icons.remove,
+                        size: 14, // Smaller icon
+                        color: widget.isEditable && value > minValue ? color : Colors.grey.withAlpha(128), // 0.5 opacity = 128 alpha
+                      ),
                     ),
                   ),
                 ),
-              ),
-              
-              // Value
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                child: Text(
-                  value.toString(),
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: valueColor,
-                  ),
-                ),
-              ),
-              
-              // Increase button
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: widget.isEditable && value < maxValue ? () => onChanged(value + 1) : null,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                    child: Icon(
-                      Icons.add,
-                      size: 16,
-                      color: widget.isEditable && value < maxValue ? color : Colors.grey.withOpacity(0.5),
+                
+                // Value
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2.0), // Reduced padding
+                  child: Text(
+                    value.toString(),
+                    style: TextStyle(
+                      fontSize: 16, // Smaller font
+                      fontWeight: FontWeight.bold,
+                      color: valueColor,
                     ),
                   ),
                 ),
-              ),
-            ],
+                
+                // Increase button
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: widget.isEditable && value < maxValue ? () => onChanged(value + 1) : null,
+                    child: Container(
+                      padding: const EdgeInsets.all(2), // Reduced padding
+                      constraints: const BoxConstraints(minWidth: 24, minHeight: 24), // Smaller constraints
+                      child: Icon(
+                        Icons.add,
+                        size: 14, // Smaller icon
+                        color: widget.isEditable && value < maxValue ? color : Colors.grey.withAlpha(128), // 0.5 opacity = 128 alpha
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

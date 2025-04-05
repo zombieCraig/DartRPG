@@ -50,7 +50,6 @@ class ClockSegmentPainter extends CustomPainter {
     // Draw each segment
     for (int i = 0; i < segments; i++) {
       final startAngle = -pi / 2 + i * segmentAngle; // Start from the top (12 o'clock position)
-      final endAngle = startAngle + segmentAngle;
       
       // Determine if this segment should be filled
       final isFilled = i < filledSegments;

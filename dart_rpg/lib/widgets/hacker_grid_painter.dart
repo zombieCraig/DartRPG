@@ -26,7 +26,7 @@ class HackerGridPainter extends CustomPainter {
 
     // Draw background
     final backgroundPaint = Paint()
-      ..color = Colors.black.withOpacity(0.85);
+      ..color = Colors.black.withAlpha(217); // 0.85 opacity = 217 alpha
     canvas.drawRect(Rect.fromLTWH(0, 0, width, height), backgroundPaint);
 
     // Calculate grid lines
@@ -37,7 +37,7 @@ class HackerGridPainter extends CustomPainter {
     final gridPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5
-      ..color = primaryColor.withOpacity(0.3 + 0.2 * pulseAnimation.value);
+      ..color = primaryColor.withAlpha(((0.3 + 0.2 * pulseAnimation.value) * 255).toInt()); // Dynamic alpha based on animation
 
     // Draw horizontal grid lines
     for (int i = 0; i < horizontalLines; i++) {
@@ -63,7 +63,7 @@ class HackerGridPainter extends CustomPainter {
     final accentPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0
-      ..color = primaryColor.withOpacity(0.5 + 0.3 * pulseAnimation.value);
+      ..color = primaryColor.withAlpha(((0.5 + 0.3 * pulseAnimation.value) * 255).toInt()); // Dynamic alpha based on animation
 
     // Horizontal accent lines (every 4 lines)
     for (int i = 0; i < horizontalLines; i += 4) {
@@ -101,7 +101,7 @@ class HackerGridPainter extends CustomPainter {
     // Data flow paint
     final flowPaint = Paint()
       ..style = PaintingStyle.fill
-      ..color = secondaryColor.withOpacity(0.6 * pulseAnimation.value);
+      ..color = secondaryColor.withAlpha(((0.6 * pulseAnimation.value) * 255).toInt()); // Dynamic alpha based on animation
     
     // Use flowAnimation to determine position of data packets
     final random = math.Random(42); // Fixed seed for deterministic randomness

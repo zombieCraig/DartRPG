@@ -11,7 +11,7 @@ class LogViewerScreen extends StatefulWidget {
 
 class _LogViewerScreenState extends State<LogViewerScreen> {
   final LoggingService _loggingService = LoggingService();
-  int _selectedLogLevel = LoggingService.LEVEL_DEBUG;
+  int _selectedLogLevel = LoggingService.levelDebug;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   
@@ -107,19 +107,19 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
                   },
                   items: [
                     DropdownMenuItem(
-                      value: LoggingService.LEVEL_DEBUG,
+                      value: LoggingService.levelDebug,
                       child: const Text('Debug'),
                     ),
                     DropdownMenuItem(
-                      value: LoggingService.LEVEL_INFO,
+                      value: LoggingService.levelInfo,
                       child: const Text('Info'),
                     ),
                     DropdownMenuItem(
-                      value: LoggingService.LEVEL_WARNING,
+                      value: LoggingService.levelWarning,
                       child: const Text('Warning'),
                     ),
                     DropdownMenuItem(
-                      value: LoggingService.LEVEL_ERROR,
+                      value: LoggingService.levelError,
                       child: const Text('Error'),
                     ),
                   ],
@@ -151,16 +151,16 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
   Widget _buildLogItem(BuildContext context, LogEntry log) {
     Color levelColor;
     switch (log.level) {
-      case LoggingService.LEVEL_DEBUG:
+      case LoggingService.levelDebug:
         levelColor = Colors.grey;
         break;
-      case LoggingService.LEVEL_INFO:
+      case LoggingService.levelInfo:
         levelColor = Colors.blue;
         break;
-      case LoggingService.LEVEL_WARNING:
+      case LoggingService.levelWarning:
         levelColor = Colors.orange;
         break;
-      case LoggingService.LEVEL_ERROR:
+      case LoggingService.levelError:
         levelColor = Colors.red;
         break;
       default:

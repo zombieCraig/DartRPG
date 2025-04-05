@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../models/character.dart';
 
-/// A highly compact, non-editable summary of character stats for mobile displays.
+/// A compact summary of character stats for mobile displays.
 class MobileStatsSummary extends StatelessWidget {
   final Character character;
 
@@ -30,7 +30,7 @@ class MobileStatsSummary extends StatelessWidget {
       ),
     );
   }
-
+  
   Widget _buildStatItem(String label, int value, Color color) {
     return Tooltip(
       message: _getFullStatName(label),
@@ -61,7 +61,7 @@ class MobileStatsSummary extends StatelessWidget {
       ),
     );
   }
-
+  
   String _getFullStatName(String shortLabel) {
     switch (shortLabel) {
       case 'M':

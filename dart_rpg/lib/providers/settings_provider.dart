@@ -9,11 +9,30 @@ class SettingsProvider extends ChangeNotifier {
   int _logLevel = 1; // Default to INFO level
   bool _enableTutorials = true; // Default to enabled
   
+  // Animation settings
+  bool _enableAnimations = true;
+  double _animationSpeed = 1.0;
+  bool _enableGlitchEffects = false; // Disabled by default now
+  bool _enableGlowEffects = false; // Disabled by default now
+  
+  // Get animation duration adjusted by animation speed
+  Duration getAnimationDuration(Duration baseDuration) {
+    return Duration(
+      milliseconds: (baseDuration.inMilliseconds / _animationSpeed).round(),
+    );
+  }
+  
   bool get isDarkMode => _isDarkMode;
   double get fontSize => _fontSize;
   String get fontFamily => _fontFamily;
   int get logLevel => _logLevel;
   bool get enableTutorials => _enableTutorials;
+  
+  // Animation settings getters
+  bool get enableAnimations => _enableAnimations;
+  double get animationSpeed => _animationSpeed;
+  bool get enableGlitchEffects => _enableGlitchEffects;
+  bool get enableGlowEffects => _enableGlowEffects;
   
   ThemeMode get themeMode => _isDarkMode ? ThemeMode.dark : ThemeMode.light;
   
@@ -28,6 +47,12 @@ class SettingsProvider extends ChangeNotifier {
     _fontFamily = prefs.getString('fontFamily') ?? 'Roboto';
     _logLevel = prefs.getInt('logLevel') ?? 0; // Default to DEBUG level for troubleshooting
     _enableTutorials = prefs.getBool('enableTutorials') ?? true;
+    
+    // Load animation settings
+    _enableAnimations = prefs.getBool('enableAnimations') ?? true;
+    _animationSpeed = prefs.getDouble('animationSpeed') ?? 1.0;
+    _enableGlitchEffects = prefs.getBool('enableGlitchEffects') ?? true;
+    _enableGlowEffects = prefs.getBool('enableGlowEffects') ?? true;
     
     // Apply log level to the logging service
     LoggingService().setLogLevel(_logLevel);
@@ -83,6 +108,44 @@ class SettingsProvider extends ChangeNotifier {
     await prefs.setBool('enableTutorials', value);
     notifyListeners();
   }
+  
+  // Animation settings setters
+  Future<void> setEnableAnimations(bool value) async {
+    if (_enableAnimations == value) return;
+    
+    _enableAnimations = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('enableAnimations', value);
+    notifyListeners();
+  }
+  
+  Future<void> setAnimationSpeed(double value) async {
+    if (_animationSpeed == value) return;
+    
+    _animationSpeed = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('animationSpeed', value);
+    notifyListeners();
+  }
+  
+  Future<void> setEnableGlitchEffects(bool value) async {
+    if (_enableGlitchEffects == value) return;
+    
+    _enableGlitchEffects = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('enableGlitchEffects', value);
+    notifyListeners();
+  }
+  
+  Future<void> setEnableGlowEffects(bool value) async {
+    if (_enableGlowEffects == value) return;
+    
+    _enableGlowEffects = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('enableGlowEffects', value);
+    notifyListeners();
+  }
+  
   
   // Get the log level name for display
   String getLogLevelName(int level) {

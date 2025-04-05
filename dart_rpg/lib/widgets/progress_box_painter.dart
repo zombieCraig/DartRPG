@@ -7,6 +7,7 @@ class ProgressBoxPainter extends CustomPainter {
   final Color tickColor;
   final Color borderColor;
   final bool isHighlighted;
+  final double glowIntensity; // New parameter for glow effect
 
   ProgressBoxPainter({
     required this.ticks,
@@ -14,6 +15,7 @@ class ProgressBoxPainter extends CustomPainter {
     required this.tickColor,
     required this.borderColor,
     this.isHighlighted = false,
+    this.glowIntensity = 0.0, // Default to no glow
   }) : assert(ticks >= 0 && ticks <= 4, 'Ticks must be between 0 and 4');
 
   @override
@@ -68,7 +70,7 @@ class ProgressBoxPainter extends CustomPainter {
       paint
         ..color = tickColor
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 3.0; // Thicker lines for better visibility
+        ..strokeWidth = 3.0 + (glowIntensity * 1.0); // Thicker lines when glowing
 
       final center = Offset(size.width / 2, size.height / 2);
       // We can keep the current radius since we're using clipping
@@ -112,6 +114,7 @@ class ProgressBoxPainter extends CustomPainter {
         boxColor != oldDelegate.boxColor ||
         tickColor != oldDelegate.tickColor ||
         borderColor != oldDelegate.borderColor ||
-        isHighlighted != oldDelegate.isHighlighted;
+        isHighlighted != oldDelegate.isHighlighted ||
+        glowIntensity != oldDelegate.glowIntensity;
   }
 }

@@ -456,6 +456,49 @@ class Character {
     }
   }
   
+  // Create a copy of this character for animation purposes
+  Character copy() {
+    return Character(
+      id: id,
+      name: name,
+      handle: handle,
+      bio: bio,
+      imageUrl: imageUrl,
+      stats: stats.map((s) => CharacterStat(name: s.name, value: s.value)).toList(),
+      assets: assets.map((a) => Asset.fromJson(a.toJson())).toList(),
+      notes: List<String>.from(notes),
+      isMainCharacter: isMainCharacter,
+      momentum: momentum,
+      momentumReset: momentumReset,
+      health: health,
+      spirit: spirit,
+      supply: supply,
+      impactWounded: impactWounded,
+      impactShaken: impactShaken,
+      impactUnregulated: impactUnregulated,
+      impactPermanentlyHarmed: impactPermanentlyHarmed,
+      impactTraumatized: impactTraumatized,
+      impactDoomed: impactDoomed,
+      impactTormented: impactTormented,
+      impactIndebted: impactIndebted,
+      impactOverheated: impactOverheated,
+      impactInfected: impactInfected,
+      legacyQuests: legacyQuests,
+      legacyBonds: legacyBonds,
+      legacyDiscoveries: legacyDiscoveries,
+      legacyQuestsTicks: legacyQuestsTicks,
+      legacyBondsTicks: legacyBondsTicks,
+      legacyDiscoveriesTicks: legacyDiscoveriesTicks,
+      gameNotes: gameNotes,
+      firstLook: firstLook,
+      disposition: disposition,
+      trademarkAvatar: trademarkAvatar,
+      role: role,
+      details: details,
+      goals: goals,
+    );
+  }
+  
   // Helper methods for legacy ticks and boxes
   void updateLegacyQuestsTicks(int ticks) {
     legacyQuestsTicks = ticks.clamp(0, 40);

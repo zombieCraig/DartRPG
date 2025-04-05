@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../providers/settings_provider.dart';
 import '../utils/logging_service.dart';
 import '../services/tutorial_service.dart';
+import 'animation_test_screen.dart';
 import 'log_viewer_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -101,6 +102,71 @@ class SettingsScreen extends StatelessWidget {
                   ],
                 ),
               ),
+              
+              const Divider(),
+              
+              // Animation settings
+              const Text(
+                'Animations',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              
+              // Master toggle for all animations
+              SwitchListTile(
+                title: const Text('Enable Animations'),
+                subtitle: const Text('Toggle all animation effects'),
+                value: settings.enableAnimations,
+                onChanged: (value) {
+                  settings.setEnableAnimations(value);
+                },
+              ),
+              
+              // Only show these options if animations are enabled
+              if (settings.enableAnimations) ...[
+                // Animation speed slider
+                ListTile(
+                  title: const Text('Animation Speed'),
+                  subtitle: Slider(
+                    min: 0.5,
+                    max: 2.0,
+                    divisions: 6,
+                    label: '${settings.animationSpeed.toStringAsFixed(1)}x',
+                    value: settings.animationSpeed,
+                    onChanged: (value) {
+                      settings.setAnimationSpeed(value);
+                    },
+                  ),
+                  trailing: Text(
+                    '${settings.animationSpeed.toStringAsFixed(1)}x',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                
+                
+                // Animation preview options
+                const Text(
+                  'Preview Animations',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                
+                // Progress animation test
+                ListTile(
+                  title: const Text('Progress Animations'),
+                  subtitle: const Text('Test progress track animations'),
+                  trailing: const Icon(Icons.animation),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AnimationTestScreen(),
+                      ),
+                    );
+                  },
+                ),
+                
+              ],
               
               const Divider(),
               

@@ -137,6 +137,7 @@ class _MovesScreenState extends State<MovesScreen> {
                       onActionRoll: _rollActionMove,
                       onProgressRoll: _rollProgressMove,
                       onNoRoll: _performNoRollMove,
+                      onOracleRollAdded: _addOracleToJournal,
                     )
                   : _searchQuery.isNotEmpty
                       ? MoveList(
@@ -213,6 +214,7 @@ class _MovesScreenState extends State<MovesScreen> {
                 _rollActionMove(move, stat, statValue, modifier);
               },
               onAddToJournal: _addMoveToJournal,
+              onOracleRollAdded: _addOracleToJournal,
               canBurnMomentum: rollResult['couldBurnMomentum'] == true,
               onBurnMomentum: rollResult['couldBurnMomentum'] == true ? () {
                 // Calculate new result with burned momentum
@@ -284,6 +286,7 @@ class _MovesScreenState extends State<MovesScreen> {
             _rollProgressMove(move, progressValue);
           },
           onAddToJournal: _addMoveToJournal,
+          onOracleRollAdded: _addOracleToJournal,
         );
       },
     );
@@ -339,6 +342,22 @@ class _MovesScreenState extends State<MovesScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('${moveRoll.moveName} added to journal'),
+        action: SnackBarAction(
+          label: 'View',
+          onPressed: () {
+            // Navigate to the journal entry screen
+            // This would be implemented in a real app
+          },
+        ),
+      ),
+    );
+  }
+  
+  void _addOracleToJournal(OracleRoll oracleRoll) {
+    // Show a snackbar to indicate the oracle roll was added to the journal
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${oracleRoll.oracleName} roll added to journal'),
         action: SnackBarAction(
           label: 'View',
           onPressed: () {

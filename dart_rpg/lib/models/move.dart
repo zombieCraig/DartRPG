@@ -1,4 +1,6 @@
 import 'move_oracle.dart';
+import '../utils/oracle_markdown_parser.dart';
+import '../utils/logging_service.dart';
 
 class MoveOutcome {
   final String type; // "strong hit", "weak hit", or "miss"
@@ -44,6 +46,9 @@ class Move {
   // Embedded oracles
   Map<String, MoveOracle>? _oracles;
   final Map<String, dynamic>? _oraclesData; // Raw oracles data from JSON
+  
+  // Outcome-specific oracle references
+  final Map<String, List<String>> _outcomeOracleRefs = {};
 
   Move({
     required this.id,
@@ -119,6 +124,7 @@ class Move {
 
   // Parse a move from the Datasworn JSON format
   factory Move.fromDatasworn(Map<String, dynamic> json, String moveId) {
+    final loggingService = LoggingService();
     final String name = json['name'] ?? 'Unknown Move';
     final String? description = json['text'];
     final String? trigger = json['trigger']?['text'];
@@ -126,26 +132,59 @@ class Move {
     
     List<MoveOutcome> outcomes = [];
     
+    // Map to store outcome oracle references
+    final Map<String, List<String>> outcomeOracleRefs = {};
+    
     if (json['outcomes'] != null) {
       if (json['outcomes']['strong_hit'] != null) {
+        final outcomeText = json['outcomes']['strong_hit']['text'] ?? '';
         outcomes.add(MoveOutcome(
           type: 'strong hit',
-          description: json['outcomes']['strong_hit']['text'] ?? '',
+          description: outcomeText,
         ));
+        
+        // Check for oracle references in the outcome text
+        if (OracleMarkdownParser.containsOracleReferences(outcomeText)) {
+          outcomeOracleRefs['strong hit'] = OracleMarkdownParser.parseOracleReferences(outcomeText);
+          loggingService.debug(
+            'Found oracle references in strong hit outcome: ${outcomeOracleRefs['strong hit']}',
+            tag: 'Move.fromDatasworn',
+          );
+        }
       }
       
       if (json['outcomes']['weak_hit'] != null) {
+        final outcomeText = json['outcomes']['weak_hit']['text'] ?? '';
         outcomes.add(MoveOutcome(
           type: 'weak hit',
-          description: json['outcomes']['weak_hit']['text'] ?? '',
+          description: outcomeText,
         ));
+        
+        // Check for oracle references in the outcome text
+        if (OracleMarkdownParser.containsOracleReferences(outcomeText)) {
+          outcomeOracleRefs['weak hit'] = OracleMarkdownParser.parseOracleReferences(outcomeText);
+          loggingService.debug(
+            'Found oracle references in weak hit outcome: ${outcomeOracleRefs['weak hit']}',
+            tag: 'Move.fromDatasworn',
+          );
+        }
       }
       
       if (json['outcomes']['miss'] != null) {
+        final outcomeText = json['outcomes']['miss']['text'] ?? '';
         outcomes.add(MoveOutcome(
           type: 'miss',
-          description: json['outcomes']['miss']['text'] ?? '',
+          description: outcomeText,
         ));
+        
+        // Check for oracle references in the outcome text
+        if (OracleMarkdownParser.containsOracleReferences(outcomeText)) {
+          outcomeOracleRefs['miss'] = OracleMarkdownParser.parseOracleReferences(outcomeText);
+          loggingService.debug(
+            'Found oracle references in miss outcome: ${outcomeOracleRefs['miss']}',
+            tag: 'Move.fromDatasworn',
+          );
+        }
       }
     }
 
@@ -198,7 +237,8 @@ class Move {
       }
     }
 
-    return Move(
+    // Create the move
+    final move = Move(
       id: moveId,
       name: name,
       description: description,
@@ -213,6 +253,13 @@ class Move {
       oraclesData: json['oracles'],
       sentientAi: json['sentient_ai'] ?? false,
     );
+    
+    // Add outcome oracle references to the move
+    outcomeOracleRefs.forEach((outcome, refs) {
+      move._outcomeOracleRefs[outcome] = refs;
+    });
+    
+    return move;
   }
   
   /// Gets the embedded oracles for this move, if any.
@@ -233,6 +280,52 @@ class Move {
   
   /// Checks if this move has embedded oracles.
   bool get hasEmbeddedOracles => oracles.isNotEmpty;
+  
+  /// Gets the outcome oracle references for this move.
+  Map<String, List<String>> get outcomeOracleRefs => _outcomeOracleRefs;
+  
+  /// Checks if an outcome has associated oracles.
+  bool hasOraclesForOutcome(String outcome) {
+    return _outcomeOracleRefs.containsKey(outcome) && 
+           _outcomeOracleRefs[outcome]!.isNotEmpty;
+  }
+  
+  /// Gets oracles for a specific outcome.
+  /// 
+  /// This method returns a list of MoveOracle objects for the specified outcome.
+  /// If the outcome has no associated oracles, an empty list is returned.
+  List<MoveOracle> getOraclesForOutcome(String outcome) {
+    if (!hasOraclesForOutcome(outcome)) return [];
+    
+    final List<MoveOracle> outcomeOracles = [];
+    for (final ref in _outcomeOracleRefs[outcome]!) {
+      // The ref might be a direct key or a path that needs to be resolved
+      // For now, we'll just check if it's a direct key in the oracles map
+      if (oracles.containsKey(ref)) {
+        outcomeOracles.add(oracles[ref]!);
+      }
+    }
+    
+    return outcomeOracles;
+  }
+  
+  /// Gets the appropriate oracle for a stat.
+  /// 
+  /// This method is specifically for the "Explore the System" move, which
+  /// has oracles for edge, shadow, and wits.
+  MoveOracle? getOracleForStat(String stat) {
+    // Convert stat to lowercase for case-insensitive comparison
+    final lowerStat = stat.toLowerCase();
+    
+    // Try to find an oracle with a key that matches the stat
+    for (final entry in oracles.entries) {
+      if (entry.key.toLowerCase() == lowerStat) {
+        return entry.value;
+      }
+    }
+    
+    return null;
+  }
   
   // Enhanced method to get available stats and condition meters
   List<Map<String, dynamic>> getAvailableOptions() {

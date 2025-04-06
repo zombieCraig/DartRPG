@@ -401,6 +401,32 @@ class MoveDialog {
                   ),
                 );
               },
+              onOracleRollAdded: (oracleRoll) {
+                // Add the oracle roll to the journal entry
+                onMoveRollAdded(MoveRoll(
+                  moveName: move.name,
+                  moveDescription: move.description,
+                  rollType: 'oracle_roll',
+                  outcome: 'performed',
+                  actionDie: 0,
+                  challengeDice: [],
+                  moveData: {'moveId': move.id, 'oracleResult': oracleRoll.result},
+                ));
+                
+                // Insert the oracle roll text at the cursor position
+                if (isEditing) {
+                  final formattedText = oracleRoll.getFormattedText();
+                  onInsertText(formattedText);
+                }
+                
+                // Show confirmation
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Oracle roll added to journal entry'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
               canBurnMomentum: rollResult['couldBurnMomentum'] == true,
               onBurnMomentum: rollResult['couldBurnMomentum'] == true ? () {
                 // Calculate new result with burned momentum
@@ -571,6 +597,32 @@ class MoveDialog {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Progress roll added to journal entry'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          },
+          onOracleRollAdded: (oracleRoll) {
+            // Add the oracle roll to the journal entry
+            onMoveRollAdded(MoveRoll(
+              moveName: move.name,
+              moveDescription: move.description,
+              rollType: 'oracle_roll',
+              outcome: 'performed',
+              actionDie: 0,
+              challengeDice: [],
+              moveData: {'moveId': move.id, 'oracleResult': oracleRoll.result},
+            ));
+            
+            // Insert the oracle roll text at the cursor position
+            if (isEditing) {
+              final formattedText = oracleRoll.getFormattedText();
+              onInsertText(formattedText);
+            }
+            
+            // Show confirmation
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Oracle roll added to journal entry'),
                 duration: Duration(seconds: 2),
               ),
             );

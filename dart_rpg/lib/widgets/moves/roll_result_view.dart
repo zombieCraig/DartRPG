@@ -3,6 +3,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../models/move.dart';
 import '../../models/journal_entry.dart';
 import '../../services/roll_service.dart';
+import 'outcome_oracle_panel.dart';
 
 /// A widget for displaying the results of a move roll.
 class RollResultView extends StatefulWidget {
@@ -12,6 +13,7 @@ class RollResultView extends StatefulWidget {
   final VoidCallback onClose;
   final VoidCallback onRollAgain;
   final Function(MoveRoll) onAddToJournal;
+  final Function(OracleRoll)? onOracleRollAdded;
   final bool canBurnMomentum;
   final Function()? onBurnMomentum;
   
@@ -23,6 +25,7 @@ class RollResultView extends StatefulWidget {
     required this.onClose,
     required this.onRollAgain,
     required this.onAddToJournal,
+    this.onOracleRollAdded,
     this.canBurnMomentum = false,
     this.onBurnMomentum,
   });
@@ -128,6 +131,20 @@ class _RollResultViewState extends State<RollResultView> {
                 ),
               ),
               Text('New Momentum: ${widget.rollResult['momentum']}'),
+            ],
+            
+            // Add outcome oracle panel if appropriate
+            if (widget.onOracleRollAdded != null && 
+                (widget.move.hasOraclesForOutcome(widget.moveRoll.outcome) || 
+                 (widget.move.id == 'fe_runners/exploration/explore_the_system' && 
+                  widget.moveRoll.outcome == 'weak hit'))) ...[
+              const SizedBox(height: 16),
+              OutcomeOraclePanel(
+                move: widget.move,
+                outcome: widget.moveRoll.outcome,
+                statUsed: widget.moveRoll.stat,
+                onOracleRollAdded: widget.onOracleRollAdded!,
+              ),
             ],
           ],
         ),

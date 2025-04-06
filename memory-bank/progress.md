@@ -40,6 +40,7 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Comprehensive logging system and log viewer
 
 ### Recently Completed
+- ✅ Enhanced screen transitions with improved visual effects and added a new Circuit Reveal transition
 - ✅ Fixed deprecated `withOpacity()` method usage throughout the codebase
 - ✅ Replaced all instances with `withAlpha()` for better precision and future compatibility
 - ✅ Updated multiple files including location_graph_widget.dart, location_node_widget.dart, oracle_category_list.dart, and quest_card.dart
@@ -242,6 +243,7 @@ The DartRPG application is in active development with core functionality impleme
 - **Tablet Support**: UI not fully optimized for tablet screens
 
 ### Recently Fixed Issues
+- ✅ **Screen Transitions**: Enhanced the Hacker Fade transition with improved visual effects and added a new Circuit Reveal transition
 - ✅ **Deprecated Functions**: Fixed deprecated `withOpacity()` method usage throughout the codebase, replacing with `withAlpha()` for better precision and future compatibility
 - ✅ **Code Quality Documentation**: Added comprehensive guide for handling color opacity in Flutter to `.clinerules` file
 - ✅ **Move Oracle Results**: Fixed issue with oracle results from moves not showing in the journal
@@ -265,6 +267,23 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Journal Navigation**: Added "Jump to last entry" button on journal screen when entries are scrollable
 
 ## Recent Milestones
+
+### Milestone: Screen Transition Enhancements (April 2025)
+- ✅ Enhanced the Hacker Fade transition with improved visual effects
+  - ✅ Increased matrix rain animation opacity and visibility during transition
+  - ✅ Added glitch-like transformations with subtle position offsets
+  - ✅ Implemented perspective transformations for 3D-like effects
+  - ✅ Added scanline shader effect for a more authentic cyberpunk look
+  - ✅ Made the matrix rain animation always visible during transition
+- ✅ Added a new Circuit Reveal transition
+  - ✅ Created CircuitRevealAnimation widget with custom painter
+  - ✅ Implemented circuit board pattern that progressively reveals the screen
+  - ✅ Added support for different reveal directions (center-out, left-to-right, etc.)
+  - ✅ Used cyan accent color for a distinct cyberpunk aesthetic
+  - ✅ Implemented fade-in effect for the content as the circuit pattern reveals
+- ✅ Updated TransitionType enum to include the new Circuit Reveal transition
+- ✅ Added appropriate icon (developer_board) and description for the new transition
+- ✅ Ensured all transitions work consistently with the animation speed settings
 
 ### Milestone: Code Quality Improvements (April 2025)
 - ✅ Fixed deprecated `withOpacity()` method usage throughout the codebase

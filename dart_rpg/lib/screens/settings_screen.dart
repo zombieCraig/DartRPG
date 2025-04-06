@@ -4,11 +4,75 @@ import 'package:url_launcher/url_launcher.dart';
 import '../providers/settings_provider.dart';
 import '../utils/logging_service.dart';
 import '../services/tutorial_service.dart';
+import '../transitions/transition_type.dart';
+import '../transitions/navigation_service.dart';
 import 'animation_test_screen.dart';
 import 'log_viewer_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
+  
+  // Method to show a preview of the selected transition
+  static void _showTransitionPreview(BuildContext context, TransitionType type) {
+    // Create a simple preview screen
+    final previewScreen = Scaffold(
+      appBar: AppBar(
+        title: Text('${type.displayName} Preview'),
+        backgroundColor: Colors.blueGrey[800],
+      ),
+      body: Container(
+        color: Colors.blueGrey[900],
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                type.icon,
+                color: Colors.greenAccent,
+                size: 64,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Transition Preview',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  type.description,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text('Return to Settings'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    // Use the NavigationService to show the preview with the selected transition
+    final navigationService = NavigationService();
+    navigationService.navigateTo(
+      context,
+      previewScreen,
+      transitionType: type,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -143,6 +207,64 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
                 
+                // Screen transition settings
+                const Text(
+                  'Screen Transitions',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                
+                // Transition type dropdown
+                ListTile(
+                  title: const Text('Transition Style'),
+                  subtitle: DropdownButton<TransitionType>(
+                    value: settings.transitionType,
+                    isExpanded: true,
+                    onChanged: (TransitionType? newValue) {
+                      if (newValue != null) {
+                        settings.setTransitionType(newValue);
+                      }
+                    },
+                    items: TransitionType.values.map((type) {
+                      return DropdownMenuItem<TransitionType>(
+                        value: type,
+                        child: Row(
+                          children: [
+                            Icon(type.icon, size: 16),
+                            const SizedBox(width: 8),
+                            Text(type.displayName),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                
+                // Transition description
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    settings.transitionType.description,
+                    style: const TextStyle(
+                      fontStyle: FontStyle.italic,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                
+                // Preview transition button
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.preview),
+                    label: const Text('Preview Transition'),
+                    onPressed: () => _showTransitionPreview(context, settings.transitionType),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                ),
                 
                 // Animation preview options
                 const Text(
@@ -157,11 +279,10 @@ class SettingsScreen extends StatelessWidget {
                   subtitle: const Text('Test progress track animations'),
                   trailing: const Icon(Icons.animation),
                   onTap: () {
-                    Navigator.push(
+                    final navigationService = NavigationService();
+                    navigationService.navigateTo(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const AnimationTestScreen(),
-                      ),
+                      const AnimationTestScreen(),
                     );
                   },
                 ),
@@ -211,11 +332,10 @@ class SettingsScreen extends StatelessWidget {
                 subtitle: const Text('View and manage application logs'),
                 leading: const Icon(Icons.list_alt),
                 onTap: () {
-                  Navigator.push(
+                  final navigationService = NavigationService();
+                  navigationService.navigateTo(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const LogViewerScreen(),
-                    ),
+                    const LogViewerScreen(),
                   );
                 },
               ),

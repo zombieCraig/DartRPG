@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
 import '../providers/datasworn_provider.dart';
+import '../transitions/navigation_service.dart';
 
 class NewGameScreen extends StatefulWidget {
   const NewGameScreen({super.key});
@@ -119,7 +120,8 @@ class _NewGameScreenState extends State<NewGameScreen> {
           );
           
           // Return to the game selection screen
-          Navigator.pop(context);
+          final navigationService = NavigationService();
+          navigationService.goBack(context);
         }
       } catch (e) {
         if (context.mounted) {

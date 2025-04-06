@@ -5,6 +5,7 @@ import 'providers/game_provider.dart';
 import 'providers/datasworn_provider.dart';
 import 'screens/game_selection_screen.dart';
 import 'utils/logging_service.dart';
+import 'transitions/navigation_service.dart';
 
 void main() {
   // Initialize logging service
@@ -33,6 +34,28 @@ class MyApp extends StatelessWidget {
             darkTheme: settings.getTheme(true),
             themeMode: settings.themeMode,
             home: const GameSelectionScreen(),
+            // Custom page transitions
+            onGenerateRoute: (settings) {
+              // Only apply custom transitions if animations are enabled
+              if (!context.read<SettingsProvider>().enableAnimations) {
+                return null; // Use default transitions
+              }
+              
+              // Get the route settings
+              final name = settings.name;
+              final arguments = settings.arguments;
+              
+              // Handle specific named routes if needed
+              if (name == '/') {
+                return MaterialPageRoute(
+                  builder: (_) => const GameSelectionScreen(),
+                  settings: settings,
+                );
+              }
+              
+              // For other routes, return null to use the default behavior
+              return null;
+            },
           );
         },
       ),

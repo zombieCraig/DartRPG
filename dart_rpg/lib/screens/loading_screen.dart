@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../providers/game_provider.dart';
 import '../widgets/console_text_animation.dart';
+import '../transitions/navigation_service.dart';
 import 'game_screen.dart';
 import '../utils/logging_service.dart';
 
@@ -300,13 +301,12 @@ class _LoadingScreenState extends State<LoadingScreen> {
     // Use Future.microtask to ensure we're not in the middle of a build cycle
     Future.microtask(() {
       if (mounted) {
-        Navigator.pushReplacement(
+        final navigationService = NavigationService();
+        navigationService.replaceWith(
           context,
-          MaterialPageRoute(
-            builder: (context) => GameScreen(
-              gameId: widget.gameId,
-              initialTabIndex: initialTabIndex,
-            ),
+          GameScreen(
+            gameId: widget.gameId,
+            initialTabIndex: initialTabIndex,
           ),
         );
       }

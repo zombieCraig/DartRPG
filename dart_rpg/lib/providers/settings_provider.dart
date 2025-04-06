@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/logging_service.dart';
+import '../transitions/transition_type.dart';
 
 class SettingsProvider extends ChangeNotifier {
   bool _isDarkMode = false;
@@ -14,6 +15,9 @@ class SettingsProvider extends ChangeNotifier {
   double _animationSpeed = 1.0;
   bool _enableGlitchEffects = false; // Disabled by default now
   bool _enableGlowEffects = false; // Disabled by default now
+  
+  // Screen transition settings
+  TransitionType _transitionType = TransitionType.cyberSlide; // Default to cyber slide effect
   
   // Get animation duration adjusted by animation speed
   Duration getAnimationDuration(Duration baseDuration) {
@@ -34,6 +38,9 @@ class SettingsProvider extends ChangeNotifier {
   bool get enableGlitchEffects => _enableGlitchEffects;
   bool get enableGlowEffects => _enableGlowEffects;
   
+  // Screen transition getter
+  TransitionType get transitionType => _transitionType;
+  
   ThemeMode get themeMode => _isDarkMode ? ThemeMode.dark : ThemeMode.light;
   
   SettingsProvider() {
@@ -53,6 +60,20 @@ class SettingsProvider extends ChangeNotifier {
     _animationSpeed = prefs.getDouble('animationSpeed') ?? 1.0;
     _enableGlitchEffects = prefs.getBool('enableGlitchEffects') ?? true;
     _enableGlowEffects = prefs.getBool('enableGlowEffects') ?? true;
+    
+    // Load transition type
+    final transitionTypeStr = prefs.getString('transitionType');
+    if (transitionTypeStr != null) {
+      try {
+        final enumStr = transitionTypeStr.split('.').last;
+        _transitionType = TransitionType.values.firstWhere(
+          (t) => t.name == enumStr,
+          orElse: () => TransitionType.cyberSlide,
+        );
+      } catch (_) {
+        _transitionType = TransitionType.cyberSlide;
+      }
+    }
     
     // Apply log level to the logging service
     LoggingService().setLogLevel(_logLevel);
@@ -146,6 +167,15 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
   
+  // Screen transition setter
+  Future<void> setTransitionType(TransitionType value) async {
+    if (_transitionType == value) return;
+    
+    _transitionType = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('transitionType', value.toString());
+    notifyListeners();
+  }
   
   // Get the log level name for display
   String getLogLevelName(int level) {

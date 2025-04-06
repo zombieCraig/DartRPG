@@ -21,6 +21,23 @@ This work enhances the overall architecture of the application, making it more m
 
 ## Recent Changes
 
+### Screen Transition Enhancements (April 2025)
+- Enhanced the Hacker Fade transition with improved visual effects:
+  - Increased matrix rain animation opacity and visibility during transition
+  - Added glitch-like transformations with subtle position offsets
+  - Implemented perspective transformations for 3D-like effects
+  - Added scanline shader effect for a more authentic cyberpunk look
+  - Made the matrix rain animation always visible during transition
+- Added a new Circuit Reveal transition:
+  - Created CircuitRevealAnimation widget with custom painter
+  - Implemented circuit board pattern that progressively reveals the screen
+  - Added support for different reveal directions (center-out, left-to-right, etc.)
+  - Used cyan accent color for a distinct cyberpunk aesthetic
+  - Implemented fade-in effect for the content as the circuit pattern reveals
+- Updated TransitionType enum to include the new Circuit Reveal transition
+- Added appropriate icon (developer_board) and description for the new transition
+- Ensured all transitions work consistently with the animation speed settings
+
 ### Code Quality Improvements (April 2025)
 - Fixed deprecated `withOpacity()` method usage throughout the codebase
 - Replaced all instances with `withAlpha()` for better precision and future compatibility

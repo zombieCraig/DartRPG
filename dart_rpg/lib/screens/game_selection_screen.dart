@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
+import '../transitions/navigation_service.dart';
 import 'loading_screen.dart';
 import 'new_game_screen.dart';
 import 'settings_screen.dart';
@@ -52,11 +53,10 @@ class GameSelectionScreen extends StatelessWidget {
             icon: const Icon(Icons.settings),
             tooltip: 'Settings',
             onPressed: () {
-              Navigator.push(
+              final navigationService = NavigationService();
+              navigationService.navigateTo(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const SettingsScreen(),
-                ),
+                const SettingsScreen(),
               );
             },
           ),
@@ -102,11 +102,10 @@ class GameSelectionScreen extends StatelessWidget {
                       icon: const Icon(Icons.add),
                       label: const Text('Create New Game'),
                       onPressed: () {
-                        Navigator.push(
+                        final navigationService = NavigationService();
+                        navigationService.navigateTo(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => const NewGameScreen(),
-                          ),
+                          const NewGameScreen(),
                         );
                       },
                     ),
@@ -123,14 +122,13 @@ class GameSelectionScreen extends StatelessWidget {
                           // If there's a main character, start with Journal tab (0)
                           // Otherwise, start with Characters tab (1)
                           
-                          Navigator.pushReplacement(
+                          final navigationService = NavigationService();
+                          navigationService.replaceWith(
                             context,
-                            MaterialPageRoute(
-                              builder: (context) => LoadingScreen(
-                                gameId: game.id,
-                                dataswornSource: game.dataswornSource,
-                                hasMainCharacter: hasMainCharacter,
-                              ),
+                            LoadingScreen(
+                              gameId: game.id,
+                              dataswornSource: game.dataswornSource,
+                              hasMainCharacter: hasMainCharacter,
                             ),
                           );
                         }
@@ -158,11 +156,10 @@ class GameSelectionScreen extends StatelessWidget {
                       icon: const Icon(Icons.add),
                       label: const Text('New Game'),
                       onPressed: () {
-                        Navigator.push(
+                        final navigationService = NavigationService();
+                        navigationService.navigateTo(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => const NewGameScreen(),
-                          ),
+                          const NewGameScreen(),
                         );
                       },
                     ),
@@ -242,14 +239,13 @@ class GameSelectionScreen extends StatelessWidget {
                                   // If there's a main character, start with Journal tab (0)
                                   // Otherwise, start with Characters tab (1)
                                   
-                                  Navigator.pushReplacement(
+                                  final navigationService = NavigationService();
+                                  navigationService.replaceWith(
                                     context,
-                                    MaterialPageRoute(
-                                      builder: (context) => LoadingScreen(
-                                        gameId: game.id,
-                                        dataswornSource: game.dataswornSource,
-                                        hasMainCharacter: hasMainCharacter,
-                                      ),
+                                    LoadingScreen(
+                                      gameId: game.id,
+                                      dataswornSource: game.dataswornSource,
+                                      hasMainCharacter: hasMainCharacter,
                                     ),
                                   );
                                 }
@@ -269,14 +265,13 @@ class GameSelectionScreen extends StatelessWidget {
                             // If there's a main character, start with Journal tab (0)
                             // Otherwise, start with Characters tab (1)
                             
-                            Navigator.pushReplacement(
+                            final navigationService = NavigationService();
+                            navigationService.replaceWith(
                               context,
-                              MaterialPageRoute(
-                                builder: (context) => LoadingScreen(
-                                  gameId: game.id,
-                                  dataswornSource: game.dataswornSource,
-                                  hasMainCharacter: hasMainCharacter,
-                                ),
+                              LoadingScreen(
+                                gameId: game.id,
+                                dataswornSource: game.dataswornSource,
+                                hasMainCharacter: hasMainCharacter,
                               ),
                             );
                           }

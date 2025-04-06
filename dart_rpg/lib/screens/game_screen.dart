@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
 import '../models/game.dart';
+import '../transitions/navigation_service.dart';
 import 'journal_screen.dart';
 import 'character_screen.dart';
 import 'location_screen.dart';
@@ -78,11 +79,10 @@ class _GameScreenState extends State<GameScreen> {
                 icon: const Icon(Icons.settings),
                 tooltip: 'Settings',
                 onPressed: () {
-                  Navigator.push(
+                  final navigationService = NavigationService();
+                  navigationService.navigateTo(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const SettingsScreen(),
-                    ),
+                    const SettingsScreen(),
                   );
                 },
               ),

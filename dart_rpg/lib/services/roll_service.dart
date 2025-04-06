@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/move.dart';
 import '../models/journal_entry.dart';
+import '../models/game.dart';
 import '../utils/dice_roller.dart';
 
 /// Service for handling dice rolls and move outcomes.
@@ -12,6 +13,7 @@ class RollService {
     required int statValue,
     int modifier = 0,
     int momentum = 0,
+    Game? game,
   }) {
     // Roll the dice
     final rollResult = DiceRoller.rollMove(
@@ -35,9 +37,19 @@ class RollService {
       moveData: {'moveId': move.id},
     );
     
+    // Check for Sentient AI trigger
+    bool sentientAiTriggered = false;
+    if (game != null && 
+        game.sentientAiEnabled && 
+        move.sentientAi && 
+        (rollResult['challengeDice'] as List<int>).any((die) => die == 10)) {
+      sentientAiTriggered = true;
+    }
+    
     return {
       'rollResult': rollResult,
       'moveRoll': moveRoll,
+      'sentientAiTriggered': sentientAiTriggered,
     };
   }
   
@@ -45,6 +57,7 @@ class RollService {
   static Map<String, dynamic> performProgressRoll({
     required Move move,
     required int progressValue,
+    Game? game,
   }) {
     // Roll the dice
     final rollResult = DiceRoller.rollProgressMove(progressValue: progressValue);
@@ -62,9 +75,19 @@ class RollService {
       moveData: {'moveId': move.id},
     );
     
+    // Check for Sentient AI trigger
+    bool sentientAiTriggered = false;
+    if (game != null && 
+        game.sentientAiEnabled && 
+        move.sentientAi && 
+        (rollResult['challengeDice'] as List<int>).any((die) => die == 10)) {
+      sentientAiTriggered = true;
+    }
+    
     return {
       'rollResult': rollResult,
       'moveRoll': moveRoll,
+      'sentientAiTriggered': sentientAiTriggered,
     };
   }
   

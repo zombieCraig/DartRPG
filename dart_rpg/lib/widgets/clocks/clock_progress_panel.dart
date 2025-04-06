@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../models/clock.dart';
-import '../../widgets/clock_segment_painter.dart';
 import '../../widgets/animated_clock_widget.dart';
 
 /// A panel for displaying and managing clock progress

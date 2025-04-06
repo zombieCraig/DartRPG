@@ -11,6 +11,7 @@ import 'moves_screen.dart';
 import 'oracles_screen.dart';
 import 'assets_screen.dart';
 import 'settings_screen.dart';
+import 'game_settings_screen.dart';
 
 class GameScreen extends StatefulWidget {
   final String gameId;
@@ -75,16 +76,45 @@ class _GameScreenState extends State<GameScreen> {
                 tooltip: 'Export Game',
                 onPressed: () => _exportGame(context, gameProvider, game),
               ),
-              IconButton(
+              PopupMenuButton<String>(
                 icon: const Icon(Icons.settings),
                 tooltip: 'Settings',
-                onPressed: () {
+                onSelected: (value) {
                   final navigationService = NavigationService();
-                  navigationService.navigateTo(
-                    context,
-                    const SettingsScreen(),
-                  );
+                  if (value == 'app_settings') {
+                    navigationService.navigateTo(
+                      context,
+                      const SettingsScreen(),
+                    );
+                  } else if (value == 'game_settings') {
+                    navigationService.navigateTo(
+                      context,
+                      const GameSettingsScreen(),
+                    );
+                  }
                 },
+                itemBuilder: (context) => [
+                  const PopupMenuItem<String>(
+                    value: 'game_settings',
+                    child: Row(
+                      children: [
+                        Icon(Icons.videogame_asset),
+                        SizedBox(width: 8),
+                        Text('Game Settings'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem<String>(
+                    value: 'app_settings',
+                    child: Row(
+                      children: [
+                        Icon(Icons.app_settings_alt),
+                        SizedBox(width: 8),
+                        Text('App Settings'),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

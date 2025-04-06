@@ -13,6 +13,7 @@ import '../models/journal_entry.dart';
 import '../models/quest.dart';
 import '../utils/logging_service.dart';
 import '../utils/dice_roller.dart';
+import '../services/oracle_service.dart';
 import 'datasworn_provider.dart';
 
 class GameProvider extends ChangeNotifier {
@@ -172,11 +173,23 @@ class GameProvider extends ChangeNotifier {
   }
   
   // Create a new game
-  Future<Game> createGame(String name, {String? dataswornSource, bool tutorialsEnabled = true}) async {
+  Future<Game> createGame(
+    String name, {
+    String? dataswornSource,
+    bool tutorialsEnabled = true,
+    bool sentientAiEnabled = false,
+    String? sentientAiName,
+    String? sentientAiPersona,
+    String? sentientAiImagePath,
+  }) async {
     final game = Game(
       name: name,
       dataswornSource: dataswornSource,
       tutorialsEnabled: tutorialsEnabled,
+      sentientAiEnabled: sentientAiEnabled,
+      sentientAiName: sentientAiName,
+      sentientAiPersona: sentientAiPersona,
+      sentientAiImagePath: sentientAiImagePath,
     );
     
     _games.add(game);
@@ -797,6 +810,86 @@ class GameProvider extends ChangeNotifier {
     
     await _saveGames();
     notifyListeners();
+  }
+  
+  // Sentient AI-related methods
+  
+  // Update sentientAiEnabled setting
+  Future<void> updateSentientAiEnabled(bool enabled) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    _currentGame!.sentientAiEnabled = enabled;
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Update sentientAiName setting
+  Future<void> updateSentientAiName(String? name) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    _currentGame!.sentientAiName = name;
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Update sentientAiPersona setting
+  Future<void> updateSentientAiPersona(String? persona) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    _currentGame!.sentientAiPersona = persona;
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Update sentientAiImagePath setting
+  Future<void> updateSentientAiImagePath(String? imagePath) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    _currentGame!.sentientAiImagePath = imagePath;
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Get AI personas from the datasworn provider
+  List<Map<String, String>> getAiPersonas(DataswornProvider dataswornProvider) {
+    // Use the recursive search function from OracleService with just "persona" as the key
+    final personaTable = OracleService.findOracleTableByKeyAnywhere('persona', dataswornProvider);
+    if (personaTable == null) return [];
+    
+    return personaTable.rows.map((row) {
+      final text = row.result;
+      final parts = text.split(' - ');
+      final name = parts[0];
+      final description = parts.length > 1 ? parts[1] : '';
+      
+      return {
+        'id': text,
+        'name': name,
+        'description': description,
+      };
+    }).toList();
+  }
+  
+  // Get a random AI persona
+  String? getRandomAiPersona(DataswornProvider dataswornProvider) {
+    final personas = getAiPersonas(dataswornProvider);
+    if (personas.isEmpty) return null;
+    
+    final random = math.Random();
+    final randomIndex = random.nextInt(personas.length);
+    return personas[randomIndex]['id'];
   }
   
   // Clock-related methods

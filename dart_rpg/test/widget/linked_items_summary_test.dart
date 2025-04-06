@@ -48,7 +48,15 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   }
   
   @override
-  Future<Game> createGame(String name, {String? dataswornSource, bool tutorialsEnabled = true}) async {
+  Future<Game> createGame(
+    String name, {
+    String? dataswornSource,
+    bool tutorialsEnabled = true,
+    bool sentientAiEnabled = false,
+    String? sentientAiName,
+    String? sentientAiPersona,
+    String? sentientAiImagePath,
+  }) async {
     throw UnimplementedError();
   }
   
@@ -174,6 +182,29 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   
   @override
   Future<void> advanceAllClocksOfType(ClockType type) async {}
+  
+  // Sentient AI-related methods
+  @override
+  Future<void> updateSentientAiEnabled(bool enabled) async {}
+  
+  @override
+  Future<void> updateSentientAiName(String? name) async {}
+  
+  @override
+  Future<void> updateSentientAiPersona(String? persona) async {}
+  
+  @override
+  Future<void> updateSentientAiImagePath(String? imagePath) async {}
+  
+  @override
+  List<Map<String, String>> getAiPersonas(DataswornProvider dataswornProvider) {
+    return [];
+  }
+  
+  @override
+  String? getRandomAiPersona(DataswornProvider dataswornProvider) {
+    return null;
+  }
 }
 
 void main() {

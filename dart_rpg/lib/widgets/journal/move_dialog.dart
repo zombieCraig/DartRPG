@@ -5,6 +5,7 @@ import '../../models/journal_entry.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../services/roll_service.dart';
+import '../sentient_ai_dialog.dart';
 import '../moves/move_list.dart';
 import '../moves/move_details.dart';
 import '../moves/roll_result_view.dart';
@@ -286,6 +287,9 @@ class MoveDialog {
     // Get the character's momentum
     final momentum = character.momentum;
     
+    // Get the current game
+    final game = gameProvider.currentGame;
+    
     // Use the RollService to perform the roll
     final result = RollService.performActionRoll(
       move: move,
@@ -293,6 +297,7 @@ class MoveDialog {
       statValue: statValue,
       modifier: modifier,
       momentum: momentum,
+      game: game,
     );
     
     final rollResult = result['rollResult'] as Map<String, dynamic>;
@@ -301,7 +306,61 @@ class MoveDialog {
     // Add the move roll to the journal entry
     onMoveRollAdded(moveRoll);
     
-    // Show the result
+    // Check if Sentient AI was triggered
+    final sentientAiTriggered = result['sentientAiTriggered'] as bool? ?? false;
+    
+    // If Sentient AI was triggered, show the dialog
+    if (sentientAiTriggered && game != null && game.sentientAiEnabled) {
+      // Show the Sentient AI dialog
+      SentientAiDialog.show(
+        context: context,
+        aiName: game.sentientAiName,
+        aiPersona: game.sentientAiPersona,
+        aiImagePath: game.sentientAiImagePath,
+        onOracleSelected: (oracleKey) async {
+          // Roll on the selected oracle
+          final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+          final oracleResult = await SentientAiDialog.rollOnAiOracle(
+            oracleKey: oracleKey,
+            dataswornProvider: dataswornProvider,
+          );
+          
+          if (oracleResult['success'] == true) {
+            final oracleRoll = oracleResult['oracleRoll'] as OracleRoll;
+            
+            // Insert the oracle roll text at the cursor position
+            if (isEditing) {
+              final formattedText = '\n\n**AI Outcome:** ${oracleRoll.result}\n\n';
+              onInsertText(formattedText);
+            }
+            
+            // Show confirmation
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('AI Outcome: ${oracleRoll.result}'),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          } else {
+            // Show error
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: ${oracleResult['error']}'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        },
+        onAskOraclePressed: () {
+          // Navigate to the Oracles screen
+          Navigator.pop(context);
+          Navigator.pushNamed(context, '/oracles');
+        },
+      );
+    }
+    
+    // Show the roll result
     showDialog(
       context: context,
       builder: (context) {
@@ -408,10 +467,15 @@ class MoveDialog {
     Function(String text) onInsertText,
     bool isEditing,
   ) {
+    // Get the current game
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final game = gameProvider.currentGame;
+    
     // Use the RollService to perform the roll
     final result = RollService.performProgressRoll(
       move: move,
       progressValue: progressValue,
+      game: game,
     );
     
     final rollResult = result['rollResult'] as Map<String, dynamic>;
@@ -420,7 +484,61 @@ class MoveDialog {
     // Add the move roll to the journal entry
     onMoveRollAdded(moveRoll);
     
-    // Show the result
+    // Check if Sentient AI was triggered
+    final sentientAiTriggered = result['sentientAiTriggered'] as bool? ?? false;
+    
+    // If Sentient AI was triggered, show the dialog
+    if (sentientAiTriggered && game != null && game.sentientAiEnabled) {
+      // Show the Sentient AI dialog
+      SentientAiDialog.show(
+        context: context,
+        aiName: game.sentientAiName,
+        aiPersona: game.sentientAiPersona,
+        aiImagePath: game.sentientAiImagePath,
+        onOracleSelected: (oracleKey) async {
+          // Roll on the selected oracle
+          final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+          final oracleResult = await SentientAiDialog.rollOnAiOracle(
+            oracleKey: oracleKey,
+            dataswornProvider: dataswornProvider,
+          );
+          
+          if (oracleResult['success'] == true) {
+            final oracleRoll = oracleResult['oracleRoll'] as OracleRoll;
+            
+            // Insert the oracle roll text at the cursor position
+            if (isEditing) {
+              final formattedText = '\n\n**AI Outcome:** ${oracleRoll.result}\n\n';
+              onInsertText(formattedText);
+            }
+            
+            // Show confirmation
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('AI Outcome: ${oracleRoll.result}'),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          } else {
+            // Show error
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: ${oracleResult['error']}'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        },
+        onAskOraclePressed: () {
+          // Navigate to the Oracles screen
+          Navigator.pop(context);
+          Navigator.pushNamed(context, '/oracles');
+        },
+      );
+    }
+    
+    // Show the roll result
     showDialog(
       context: context,
       builder: (context) {

@@ -39,6 +39,7 @@ class Move {
   final String rollType; // "action_roll", "progress_roll", or "no_roll"
   final List<Map<String, dynamic>> triggerConditions; // Conditions from the trigger
   final List<Map<String, dynamic>> rollOptions; // Options for rolling
+  final bool sentientAi; // Whether this move can trigger the Sentient AI
   
   // Embedded oracles
   Map<String, MoveOracle>? _oracles;
@@ -58,6 +59,7 @@ class Move {
     List<Map<String, dynamic>>? triggerConditions,
     List<Map<String, dynamic>>? rollOptions,
     Map<String, dynamic>? oraclesData,
+    this.sentientAi = false,
   }) : 
     outcomes = outcomes ?? [],
     rollType = rollType ?? (isProgressMove ? 'progress_roll' : (stat != null ? 'action_roll' : 'no_roll')),
@@ -92,6 +94,7 @@ class Move {
           ? List<Map<String, dynamic>>.from(json['rollOptions'])
           : null,
       oraclesData: json['oracles'],
+      sentientAi: json['sentient_ai'] ?? false,
     );
   }
 
@@ -110,6 +113,7 @@ class Move {
       'triggerConditions': triggerConditions,
       'rollOptions': rollOptions,
       'oracles': _oraclesData,
+      'sentient_ai': sentientAi,
     };
   }
 
@@ -207,6 +211,7 @@ class Move {
       triggerConditions: triggerConditions,
       rollOptions: rollOptions,
       oraclesData: json['oracles'],
+      sentientAi: json['sentient_ai'] ?? false,
     );
   }
   

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dart_rpg/providers/settings_provider.dart';
 import 'package:dart_rpg/widgets/clock_segment_painter.dart';
-import 'package:dart_rpg/models/clock.dart';
 
 class AnimatedClockWidget extends StatefulWidget {
   final String label;

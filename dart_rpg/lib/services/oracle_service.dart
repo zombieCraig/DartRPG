@@ -13,30 +13,45 @@ class OracleService {
     final loggingService = LoggingService();
     loggingService.debug('Finding oracle table by key anywhere: $key', tag: 'OracleService');
     
+    // Log all top-level categories to help with debugging
+    loggingService.debug(
+      'Oracle categories: ${dataswornProvider.oracles.map((c) => "${c.id}: ${c.name}").join(", ")}',
+      tag: 'OracleService',
+    );
+    
     // Recursively search through all categories and subcategories
     for (final category in dataswornProvider.oracles) {
+      loggingService.debug('Searching in category: ${category.id} (${category.name})', tag: 'OracleService');
       final table = _findTableAnywhere(category, key);
       if (table != null) {
+        loggingService.debug('Found table: ${table.id} (${table.name})', tag: 'OracleService');
         return table;
       }
     }
     
+    loggingService.debug('No oracle table found with key: $key', tag: 'OracleService');
     return null;
   }
 
   /// Helper method to recursively find a table in a category or its subcategories.
   static OracleTable? _findTableAnywhere(OracleCategory category, String key) {
+    final loggingService = LoggingService();
+    
     // Check tables in this category
     for (final table in category.tables) {
+      loggingService.debug('Checking table: ${table.id} (${table.name})', tag: 'OracleService');
+      
       if (table.id == key || 
           table.id.endsWith('/$key') || 
           table.name.toLowerCase() == key.toLowerCase()) {
+        loggingService.debug('Match found for key: $key in table: ${table.id}', tag: 'OracleService');
         return table;
       }
     }
     
     // Check subcategories
     for (final subcategory in category.subcategories) {
+      loggingService.debug('Searching in subcategory: ${subcategory.id} (${subcategory.name})', tag: 'OracleService');
       final table = _findTableAnywhere(subcategory, key);
       if (table != null) {
         return table;

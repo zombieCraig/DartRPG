@@ -5,7 +5,6 @@ import 'providers/game_provider.dart';
 import 'providers/datasworn_provider.dart';
 import 'screens/game_selection_screen.dart';
 import 'utils/logging_service.dart';
-import 'transitions/navigation_service.dart';
 
 void main() {
   // Initialize logging service

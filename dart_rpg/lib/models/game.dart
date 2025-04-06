@@ -20,6 +20,12 @@ class Game {
   String? dataswornSource;
   Location? rigLocation;
   bool tutorialsEnabled;
+  
+  // Sentient AI settings
+  bool sentientAiEnabled;
+  String? sentientAiName;
+  String? sentientAiPersona;
+  String? sentientAiImagePath;
 
   Game({
     String? id,
@@ -35,6 +41,10 @@ class Game {
     this.dataswornSource,
     this.rigLocation,
     this.tutorialsEnabled = true,
+    this.sentientAiEnabled = false,
+    this.sentientAiName,
+    this.sentientAiPersona,
+    this.sentientAiImagePath,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now(),
         lastPlayedAt = lastPlayedAt ?? DateTime.now(),
@@ -74,6 +84,10 @@ class Game {
       'quests': quests.map((q) => q.toJson()).toList(),
       'clocks': clocks.map((c) => c.toJson()).toList(),
       'tutorialsEnabled': tutorialsEnabled,
+      'sentientAiEnabled': sentientAiEnabled,
+      'sentientAiName': sentientAiName,
+      'sentientAiPersona': sentientAiPersona,
+      'sentientAiImagePath': sentientAiImagePath,
     };
   }
 
@@ -129,6 +143,10 @@ class Game {
       dataswornSource: json['dataswornSource'],
       rigLocation: rigLoc,
       tutorialsEnabled: json['tutorialsEnabled'] ?? true,
+      sentientAiEnabled: json['sentientAiEnabled'] ?? false,
+      sentientAiName: json['sentientAiName'],
+      sentientAiPersona: json['sentientAiPersona'],
+      sentientAiImagePath: json['sentientAiImagePath'],
     );
   }
 

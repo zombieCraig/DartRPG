@@ -35,6 +35,10 @@ class QuestProgressPanel extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
+    // Check if we're on a mobile device (width < 600)
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -62,27 +66,52 @@ class QuestProgressPanel extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.remove),
-                  label: const Text('Decrease'),
-                  onPressed: onDecrease,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.errorContainer,
-                    foregroundColor: Theme.of(context).colorScheme.onErrorContainer,
-                  ),
-                ),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.add),
-                  label: const Text('Advance'),
-                  onPressed: onAdvance,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
-                  ),
-                ),
+                // Decrease button - show just "-" on mobile
+                isMobile
+                    ? ElevatedButton(
+                        onPressed: onDecrease,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.errorContainer,
+                          foregroundColor: Theme.of(context).colorScheme.onErrorContainer,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                        child: const Icon(Icons.remove),
+                      )
+                    : ElevatedButton.icon(
+                        icon: const Icon(Icons.remove),
+                        label: const Text('Decrease'),
+                        onPressed: onDecrease,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.errorContainer,
+                          foregroundColor: Theme.of(context).colorScheme.onErrorContainer,
+                        ),
+                      ),
+                
+                // Advance button - show just "+" on mobile
+                isMobile
+                    ? ElevatedButton(
+                        onPressed: onAdvance,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                          foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                        child: const Icon(Icons.add),
+                      )
+                    : ElevatedButton.icon(
+                        icon: const Icon(Icons.add),
+                        label: const Text('Advance'),
+                        onPressed: onAdvance,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                          foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                
+                // Progress Roll button - show compact "Roll" text on mobile
                 ElevatedButton.icon(
                   icon: const Icon(Icons.casino),
-                  label: const Text('Progress Roll'),
+                  label: Text(isMobile ? 'Roll' : 'Progress Roll'),
                   onPressed: onProgressRoll,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.secondaryContainer,

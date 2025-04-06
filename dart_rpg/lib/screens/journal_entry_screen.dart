@@ -142,6 +142,9 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   String? _createdEntryId;
   bool _isAutoSaving = false;
   
+  // Focus node for the editor
+  final FocusNode _editorFocusNode = FocusNode();
+  
   void _autoSave() async {
     // Prevent multiple auto-saves from running simultaneously
     if (_isAutoSaving) return;
@@ -853,6 +856,129 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   }
   
   // Show the character edit dialog for the main character
+  // Save the current entry and create a new one
+  Future<void> _saveAndCreateNew() async {
+    // First save the current entry
+    if (_content.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot save an empty entry'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    
+    try {
+      if (widget.entryId != null) {
+        // Update existing entry
+        await gameProvider.updateJournalEntry(widget.entryId!, _content);
+        
+        // Update the entry object with additional data
+        final entry = gameProvider.currentSession!.entries.firstWhere(
+          (e) => e.id == widget.entryId,
+        );
+        
+        entry.richContent = _richContent;
+        entry.linkedCharacterIds = _linkedCharacterIds;
+        entry.linkedLocationIds = _linkedLocationIds;
+        entry.moveRolls = _moveRolls;
+        entry.oracleRolls = _oracleRolls;
+        entry.embeddedImages = _embeddedImages;
+        
+        // Save the game to persist the changes
+        await gameProvider.saveGame();
+      } else if (_createdEntryId != null) {
+        // Update the entry that was already created by autosave
+        final entry = gameProvider.currentSession!.entries.firstWhere(
+          (e) => e.id == _createdEntryId,
+        );
+        
+        // Update content
+        entry.update(_content);
+        entry.richContent = _richContent;
+        
+        // Update linked entities
+        entry.linkedCharacterIds = _linkedCharacterIds;
+        entry.linkedLocationIds = _linkedLocationIds;
+        
+        // Update rolls
+        entry.moveRolls = _moveRolls;
+        entry.oracleRolls = _oracleRolls;
+        
+        // Update embedded images
+        entry.embeddedImages = _embeddedImages;
+        
+        // Save the changes
+        await gameProvider.updateJournalEntry(_createdEntryId!, _content);
+        await gameProvider.saveGame();
+      } else {
+        // Create new entry
+        final entry = await gameProvider.createJournalEntry(_content);
+        
+        // Update the entry object with additional data
+        entry.richContent = _richContent;
+        entry.linkedCharacterIds = _linkedCharacterIds;
+        entry.linkedLocationIds = _linkedLocationIds;
+        entry.moveRolls = _moveRolls;
+        entry.oracleRolls = _oracleRolls;
+        entry.embeddedImages = _embeddedImages;
+        
+        // Save the game to persist the changes
+        await gameProvider.saveGame();
+        
+        setState(() {
+          _createdEntryId = entry.id;
+        });
+      }
+      
+      // Reset state for new entry
+      setState(() {
+        _content = '';
+        _richContent = null;
+        _linkedCharacterIds = [];
+        _linkedLocationIds = [];
+        _moveRolls = [];
+        _oracleRolls = [];
+        _embeddedImages = [];
+        _createdEntryId = null;
+        
+        // Reset the editor controller
+        _editorController.clear();
+        
+        // Update the linked items manager
+        _linkedItemsManager = LinkedItemsManager(
+          linkedCharacterIds: _linkedCharacterIds,
+          linkedLocationIds: _linkedLocationIds,
+          moveRolls: _moveRolls,
+          oracleRolls: _oracleRolls,
+          embeddedImages: _embeddedImages,
+        );
+      });
+      
+      // Show confirmation
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Entry saved. Started new entry.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      
+      // Focus the editor
+      _editorFocusNode.requestFocus();
+      
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving journal entry: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+  
   void _showCharacterEditDialog(BuildContext context) {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final currentGame = gameProvider.currentGame;
@@ -912,6 +1038,13 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         ),
       },
       child: Scaffold(
+        floatingActionButton: _isEditing
+          ? FloatingActionButton(
+              onPressed: _saveAndCreateNew,
+              tooltip: 'Save and Create New Entry',
+              child: const Icon(Icons.note_add),
+            )
+          : null,
         appBar: AppBar(
           title: Text(widget.entryId == null ? 'New Journal Entry' : 'Edit Journal Entry'),
           actions: [
@@ -952,6 +1085,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                       initialRichText: _richContent,
                       readOnly: false,
                       controller: _editorController,
+                      focusNode: _editorFocusNode,
                       linkedItemsManager: _linkedItemsManager,
                       onChanged: (plainText, richText) {
                         setState(() {

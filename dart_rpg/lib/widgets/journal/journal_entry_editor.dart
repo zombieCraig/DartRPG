@@ -44,6 +44,9 @@ class JournalEntryEditor extends StatefulWidget {
   /// The controller for the text field.
   final TextEditingController? controller;
   
+  /// The focus node for the text field.
+  final FocusNode? focusNode;
+  
   /// The autosave service to use.
   final AutosaveService? autosaveService;
   
@@ -64,6 +67,7 @@ class JournalEntryEditor extends StatefulWidget {
     this.onOracleRequested,
     this.onQuestRequested,
     this.controller,
+    this.focusNode,
     this.autosaveService,
     this.linkedItemsManager,
   });
@@ -92,7 +96,7 @@ class JournalEntryEditor extends StatefulWidget {
 
 class _JournalEntryEditorState extends State<JournalEntryEditor> {
   late TextEditingController _controller;
-  final FocusNode _focusNode = FocusNode();
+  late FocusNode _focusNode;
   final ScrollController _scrollController = ScrollController();
   
   late AutocompleteSystem _autocompleteSystem;
@@ -105,6 +109,9 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
     
     // Use the controller provided by the parent widget or create a new one
     _controller = widget.controller ?? TextEditingController();
+    
+    // Use the focus node provided by the parent widget or create a new one
+    _focusNode = widget.focusNode ?? FocusNode();
     
     // Initialize the controller with the initial text if it's empty
     if (_controller.text.isEmpty) {
@@ -130,7 +137,12 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
     if (widget.controller == null) {
       _controller.dispose();
     }
-    _focusNode.dispose();
+    
+    // Only dispose the focus node if it was created by this widget
+    if (widget.focusNode == null) {
+      _focusNode.dispose();
+    }
+    
     _scrollController.dispose();
     super.dispose();
   }

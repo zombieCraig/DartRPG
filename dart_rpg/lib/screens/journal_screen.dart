@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../providers/game_provider.dart';
 import '../models/journal_entry.dart';
 import '../models/session.dart';
@@ -268,13 +269,17 @@ class _JournalScreenState extends State<JournalScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Entry content with scroll bar
+              // Entry content with scroll bar and markdown rendering
               Container(
                 constraints: const BoxConstraints(maxHeight: 200),
                 child: SingleChildScrollView(
-                  child: Text(
-                    entry.content,
-                    style: const TextStyle(fontSize: 16),
+                  child: MarkdownBody(
+                    data: entry.content,
+                    styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                      p: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 16),
+                      textAlign: WrapAlignment.start,
+                    ),
+                    softLineBreak: true,
                   ),
                 ),
               ),

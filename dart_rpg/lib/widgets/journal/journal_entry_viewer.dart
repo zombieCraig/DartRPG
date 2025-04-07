@@ -34,25 +34,19 @@ class JournalEntryViewer extends StatelessWidget {
     final currentGame = gameProvider.currentGame;
     
     if (currentGame == null) {
-      return Text(content);
+      return MarkdownBody(data: content);
     }
     
-    // Parse the content and create rich text with clickable spans
-    return _buildRichText(context, currentGame);
+    // Parse the content and create a widget that handles both markdown and clickable references
+    return _buildMarkdownWithReferences(context, currentGame);
   }
   
-  Widget _buildRichText(BuildContext context, Game currentGame) {
+  Widget _buildMarkdownWithReferences(BuildContext context, Game currentGame) {
     // Regular expressions for finding references
     final characterRegex = RegExp(r'@(\w+)');
     final locationRegex = RegExp(r'#([^\s\[\]]+)');
     final moveRegex = RegExp(r'\[(.*?) - (.*?)\]');
     final oracleRegex = RegExp(r'\[(.*?): (.*?)\]');
-    
-    // Create a list to hold all the text spans
-    final List<TextSpan> spans = [];
-    
-    // Current position in the text
-    int currentPosition = 0;
     
     // Find all matches and sort them by position
     final allMatches = <_TextMatch>[];
@@ -119,15 +113,31 @@ class JournalEntryViewer extends StatelessWidget {
       }
     }
     
+    // If no special references, just use MarkdownBody
+    if (allMatches.isEmpty) {
+      return MarkdownBody(
+        data: content,
+        styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)),
+        softLineBreak: true,
+      );
+    }
+    
     // Sort matches by position
     allMatches.sort((a, b) => a.start.compareTo(b.start));
     
+    // Create a list to hold all the text spans
+    final List<TextSpan> spans = [];
+    
+    // Current position in the text
+    int currentPosition = 0;
+    
     // Process matches in order
     for (final match in allMatches) {
-      // Add any text before this match
+      // Add any text before this match as markdown
       if (match.start > currentPosition) {
+        final textBefore = content.substring(currentPosition, match.start);
         spans.add(TextSpan(
-          text: content.substring(currentPosition, match.start),
+          children: _buildMarkdownSpans(context, textBefore),
         ));
       }
       
@@ -143,10 +153,11 @@ class JournalEntryViewer extends StatelessWidget {
       currentPosition = match.end;
     }
     
-    // Add any remaining text
+    // Add any remaining text as markdown
     if (currentPosition < content.length) {
+      final textAfter = content.substring(currentPosition);
       spans.add(TextSpan(
-        text: content.substring(currentPosition),
+        children: _buildMarkdownSpans(context, textAfter),
       ));
     }
     
@@ -157,6 +168,53 @@ class JournalEntryViewer extends StatelessWidget {
         children: spans,
       ),
     );
+  }
+  
+  // Helper method to build markdown spans for text segments
+  List<InlineSpan> _buildMarkdownSpans(BuildContext context, String text) {
+    // For simplicity, we'll handle basic markdown formatting here
+    // Bold: **text**
+    // Italic: *text*
+    // Headers: # text, ## text, etc.
+    // Lists: - item, 1. item
+    
+    // For now, we'll handle basic formatting manually
+    // This is a simplified approach - a more complete solution would use a markdown parser
+    
+    // Handle bold: **text**
+    final boldRegex = RegExp(r'\*\*(.*?)\*\*');
+    text = text.replaceAllMapped(boldRegex, (match) {
+      return '<b>${match.group(1)}</b>';
+    });
+    
+    // Handle italic: *text*
+    final italicRegex = RegExp(r'\*(.*?)\*');
+    text = text.replaceAllMapped(italicRegex, (match) {
+      return '<i>${match.group(1)}</i>';
+    });
+    
+    // Handle headers: # text
+    final headerRegex = RegExp(r'^(#{1,6})\s+(.*?)$', multiLine: true);
+    text = text.replaceAllMapped(headerRegex, (match) {
+      final level = match.group(1)!.length;
+      final headerText = match.group(2);
+      return '<h$level>$headerText</h$level>';
+    });
+    
+    // Handle unordered lists: - item
+    final ulRegex = RegExp(r'^-\s+(.*?)$', multiLine: true);
+    text = text.replaceAllMapped(ulRegex, (match) {
+      return '• ${match.group(1)}';
+    });
+    
+    // Handle ordered lists: 1. item
+    final olRegex = RegExp(r'^(\d+)\.\s+(.*?)$', multiLine: true);
+    text = text.replaceAllMapped(olRegex, (match) {
+      return '${match.group(1)}. ${match.group(2)}';
+    });
+    
+    // Parse the HTML-like tags
+    return _parseFormattedText(context, text);
   }
   
   TextSpan _createClickableSpan(
@@ -510,6 +568,70 @@ class JournalEntryViewer extends StatelessWidget {
     } catch (e) {
       return null;
     }
+  }
+  
+  // Helper method to parse formatted text with HTML-like tags
+  List<InlineSpan> _parseFormattedText(BuildContext context, String text) {
+    final List<InlineSpan> spans = [];
+    
+    // Parse <b>, <i>, <h1>-<h6> tags
+    final regex = RegExp(r'<(b|i|h[1-6])>(.*?)</\1>|([^<]+)', dotAll: true);
+    
+    for (final match in regex.allMatches(text)) {
+      final tag = match.group(1);
+      final content = match.group(2);
+      final plainText = match.group(3);
+      
+      if (plainText != null) {
+        spans.add(TextSpan(text: plainText));
+      } else if (tag != null && content != null) {
+        TextStyle style = DefaultTextStyle.of(context).style;
+        
+        if (tag == 'b') {
+          style = style.copyWith(fontWeight: FontWeight.bold);
+        } else if (tag == 'i') {
+          style = style.copyWith(fontStyle: FontStyle.italic);
+        } else if (tag.startsWith('h')) {
+          final level = int.parse(tag.substring(1));
+          double fontSize;
+          
+          switch (level) {
+            case 1:
+              fontSize = 24.0;
+              break;
+            case 2:
+              fontSize = 22.0;
+              break;
+            case 3:
+              fontSize = 20.0;
+              break;
+            case 4:
+              fontSize = 18.0;
+              break;
+            case 5:
+              fontSize = 16.0;
+              break;
+            case 6:
+              fontSize = 14.0;
+              break;
+            default:
+              fontSize = 16.0;
+          }
+          
+          style = style.copyWith(
+            fontSize: fontSize,
+            fontWeight: FontWeight.bold,
+          );
+        }
+        
+        spans.add(TextSpan(
+          text: content,
+          style: style,
+        ));
+      }
+    }
+    
+    return spans;
   }
   
   Color _getOutcomeColor(String outcome) {

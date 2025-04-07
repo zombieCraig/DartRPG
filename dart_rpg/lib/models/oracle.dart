@@ -140,7 +140,7 @@ class OracleTable {
         
         // Log the text2 value for debugging
         loggingService.debug(
-          'OracleTable.fromDatasworn: row text2=${text2Value}',
+          'OracleTable.fromDatasworn: row text2=$text2Value',
           tag: 'OracleTable',
         );
         

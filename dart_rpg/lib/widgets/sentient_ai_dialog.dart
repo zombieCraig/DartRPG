@@ -25,13 +25,13 @@ class SentientAiDialog extends StatefulWidget {
   
   /// Creates a new SentientAiDialog.
   const SentientAiDialog({
-    Key? key,
+    super.key,
     this.aiName,
     this.aiPersona,
     this.aiImagePath,
     required this.onOracleSelected,
     this.onAskOraclePressed,
-  }) : super(key: key);
+  });
   
   /// Shows the SentientAiDialog.
   static Future<void> show({

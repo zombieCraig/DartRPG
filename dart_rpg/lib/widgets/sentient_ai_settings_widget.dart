@@ -42,7 +42,7 @@ class SentientAiSettingsWidget extends StatefulWidget {
       onNewGameSettingsChanged;
 
   const SentientAiSettingsWidget({
-    Key? key,
+    super.key,
     required this.game,
     required this.gameProvider,
     required this.dataswornProvider,
@@ -53,7 +53,7 @@ class SentientAiSettingsWidget extends StatefulWidget {
     this.isNewGame = false,
     this.disablePersonaSelection = false,
     this.onNewGameSettingsChanged,
-  }) : super(key: key);
+  });
 
   @override
   State<SentientAiSettingsWidget> createState() => _SentientAiSettingsWidgetState();

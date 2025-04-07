@@ -208,22 +208,17 @@ class LocationGraphController {
   
   /// Fits the graph to the screen
   void fitToScreen(BuildContext context, Size size, List<Location> locations) {
-    print("DEBUG: fitToScreen called with ${locations.length} locations");
-    
     // Early return if size is invalid
     if (size.width <= 0 || size.height <= 0) {
-      print("DEBUG: Cannot fit to screen - invalid size: $size");
       return;
     }
     
     // Early return if no locations
     if (locations.isEmpty) {
-      print("DEBUG: Cannot fit to screen - no locations");
       return;
     }
     
     // Always arrange nodes in a circle to ensure they're all visible
-    print("DEBUG: Arranging nodes in a circle for fit to screen");
     _arrangeNodesInCircle(locations);
     
     // Calculate the bounds of all nodes
@@ -236,7 +231,6 @@ class LocationGraphController {
     int validPositions = 0;
     for (final location in locations) {
       final position = nodePositionsByLocationId[location.id];
-      print("DEBUG: Location ${location.name} position: $position");
       if (position != null) {
         minX = math.min(minX, position.dx);
         minY = math.min(minY, position.dy);
@@ -248,15 +242,11 @@ class LocationGraphController {
     
     // If no valid positions were found, use default values
     if (validPositions == 0) {
-      print("DEBUG: No valid positions found, using default bounds");
       minX = -500;
       minY = -500;
       maxX = 500;
       maxY = 500;
     }
-    
-    print("DEBUG: Found $validPositions locations with valid positions");
-    print("DEBUG: Bounds before padding: minX=$minX, minY=$minY, maxX=$maxX, maxY=$maxY");
     
     // Add some padding
     final paddingX = (maxX - minX) * 0.2; // 20% padding
@@ -267,14 +257,9 @@ class LocationGraphController {
     maxX += paddingX;
     maxY += paddingY;
     
-    print("DEBUG: Bounds after padding: minX=$minX, minY=$minY, maxX=$maxX, maxY=$maxY");
-    
     // Calculate the scale needed to fit the graph in the container
     final graphWidth = maxX - minX;
     final graphHeight = maxY - minY;
-    
-    print("DEBUG: Graph dimensions: width=$graphWidth, height=$graphHeight");
-    print("DEBUG: Container size: $size");
     
     if (graphWidth > 0 && graphHeight > 0) {
       final scaleX = size.width / graphWidth;
@@ -285,26 +270,18 @@ class LocationGraphController {
       
       scale = math.min(scaleX, effectiveScaleY) * 0.9; // 90% to add some padding
       
-      print("DEBUG: Calculated scale: $scale (scaleX=$scaleX, scaleY=$effectiveScaleY)");
-      
       // Calculate the center of the graph
       final centerX = (minX + maxX) / 2;
       final centerY = (minY + maxY) / 2;
-      
-      print("DEBUG: Graph center in original coordinates: ($centerX, $centerY)");
       
       // Convert to the adjusted coordinate system (adding halfSize)
       const double halfSize = 1000.0; // Half of the background size
       final adjustedCenterX = centerX + halfSize;
       final adjustedCenterY = centerY + halfSize;
       
-      print("DEBUG: Graph center in adjusted coordinates: ($adjustedCenterX, $adjustedCenterY)");
-      
       // Calculate the translation needed to center the graph
       final tx = size.width / 2 - adjustedCenterX * scale;
       final ty = size.height / 2 - adjustedCenterY * scale;
-      
-      print("DEBUG: Translation values with adjustment: tx=$tx, ty=$ty");
       
       // Create a matrix with translation and scale
       final matrix = Matrix4.identity();
@@ -314,9 +291,6 @@ class LocationGraphController {
       matrix.setEntry(1, 1, scale); // Scale Y
       matrix.setEntry(2, 2, 1.0); // Scale Z
       
-      print("DEBUG: Created transformation matrix with direct entries");
-      print("DEBUG: Final matrix: ${matrix.storage}");
-      
       // Apply the transformation in a post-frame callback to ensure it happens after layout
       WidgetsBinding.instance.addPostFrameCallback((_) {
         transformationController.value = matrix;
@@ -324,11 +298,7 @@ class LocationGraphController {
         if (onScaleChanged != null) {
           onScaleChanged!(scale);
         }
-        
-        print("DEBUG: fitToScreen complete and transformation applied");
       });
-    } else {
-      print("DEBUG: Invalid graph dimensions: width=$graphWidth, height=$graphHeight");
     }
   }
   
@@ -336,20 +306,17 @@ class LocationGraphController {
   void focusOnLocation(String locationId, BuildContext context, Size size) {
     // Early return if size is invalid
     if (size.width <= 0 || size.height <= 0) {
-      print("DEBUG: Cannot focus on location - invalid size: $size");
       return;
     }
     
     final node = nodeMap[locationId];
     if (node == null) {
-      print("DEBUG: Cannot focus on location - node not found for ID: $locationId");
       return;
     }
     
     // Get the node position immediately to avoid timing issues
     final position = _getNodePosition(node);
     if (position == null) {
-      print("DEBUG: Cannot focus on location - position not found for node: $locationId");
       return;
     }
     
@@ -481,8 +448,6 @@ class LocationGraphController {
   void _arrangeNodesInCircle(List<Location> locations) {
     if (locations.isEmpty) return;
     
-    print("DEBUG: Arranging ${locations.length} nodes in a circle");
-    
     // Group locations by segment
     final Map<LocationSegment, List<Location>> locationsBySegment = {};
     for (final location in locations) {
@@ -496,8 +461,6 @@ class LocationGraphController {
     // Ensure the radius is not too large for the fixed-size background (2000x2000)
     // The maximum safe radius is around 800 to keep nodes within the background
     final calculatedRadius = math.min(800.0, math.max(200.0, locations.length * 20.0));
-    
-    print("DEBUG: Using radius $calculatedRadius for circle arrangement");
     
     // Position each segment's locations in a circle
     double segmentStartAngle = 0.0;
@@ -529,14 +492,11 @@ class LocationGraphController {
         // Update the location's position in the model
         if (onLocationMoved != null) {
           onLocationMoved!(location.id, boundedX, boundedY);
-          print("DEBUG: Positioned ${location.name} at ($boundedX, $boundedY)");
         }
       }
       
       segmentStartAngle += segmentAngle;
     });
-    
-    print("DEBUG: Finished arranging nodes in a circle");
   }
   
   /// Flag to track if a drag operation is in progress
@@ -602,27 +562,6 @@ class LocationGraphController {
 extension AlgorithmExtension on Algorithm {
   Offset? getNodePosition(Node node) {
     try {
-      // For FruchtermanReingoldAlgorithm, we can't directly access the node positions
-      // Instead, we'll use the positions stored in the controller's nodePositions map
-      
-      // Cast 'this' to dynamic to access private fields (not recommended in production)
-      // This is a workaround for demonstration purposes
-      
-      // In a real implementation, you would need to find a way to access the actual positions
-      // from the algorithm, or use a different approach to manage node positions
-      
-      // For now, we'll just return the position from the nodePositions map
-      // which is populated in the buildGraph method
-      
-      // The actual implementation would depend on the specific algorithm being used
-      // and how it stores node positions
-      
-      // Since we can't access the algorithm's internal state directly,
-      // we'll rely on the positions stored in the controller
-      
-      // This is a placeholder that will be replaced by the actual implementation
-      // when the controller's _getNodePosition method is called
-      
       return null;
     } catch (e) {
       return null;

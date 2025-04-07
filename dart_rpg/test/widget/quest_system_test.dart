@@ -6,7 +6,6 @@ import 'package:dart_rpg/models/character.dart';
 import 'package:dart_rpg/models/game.dart';
 import 'package:dart_rpg/providers/game_provider.dart';
 import 'package:dart_rpg/providers/settings_provider.dart';
-import 'package:dart_rpg/screens/quests_screen.dart';
 import 'package:dart_rpg/widgets/quests/quest_card.dart';
 import '../mocks/shared_preferences_mock.dart';
 

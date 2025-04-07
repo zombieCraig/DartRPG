@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import 'dart:async';
 import '../../../models/location.dart';
 import 'location_graph_controller.dart';
 

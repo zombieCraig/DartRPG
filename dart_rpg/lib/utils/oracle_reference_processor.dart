@@ -127,29 +127,42 @@ class OracleReferenceProcessor {
         continue;
       }
       
-      // Create an OracleRoll object
+      // Process nested references in the result
+      String processedResult = matchingRow.result;
+      List<OracleRoll> nestedRolls = [];
+      
+      if (DataswornLinkParser.containsLinks(processedResult)) {
+        // Create a new list to store nested rolls
+        List<OracleRoll> tempRolls = [];
+        
+        // Process nested references recursively
+        processedResult = await _processReferencesRecursively(
+          processedResult,
+          provider,
+          tempRolls,
+          currentDepth + 1,
+          maxDepth,
+        );
+        
+        // Store the nested rolls
+        nestedRolls = List.from(tempRolls);
+        
+        // Also add the nested rolls to the main rolls list
+        // This is important for the test that checks the total number of rolls
+        rolls.addAll(tempRolls);
+      }
+      
+      // Create an OracleRoll object with nested rolls
       final oracleRoll = OracleRoll(
         oracleName: oracle.name,
         oracleTable: oracle.id,
         dice: [total],
         result: matchingRow.result,
+        nestedRolls: nestedRolls,
       );
       
       // Add the roll to the list
       rolls.add(oracleRoll);
-      
-      // Process nested references in the result
-      String processedResult = matchingRow.result;
-      if (DataswornLinkParser.containsLinks(processedResult)) {
-        // Process nested references recursively
-        processedResult = await _processReferencesRecursively(
-          processedResult,
-          provider,
-          rolls,
-          currentDepth + 1,
-          maxDepth,
-        );
-      }
       
       // Replace the reference with the processed result
       final pattern = RegExp(

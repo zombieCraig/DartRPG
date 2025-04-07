@@ -135,11 +135,20 @@ class OracleTable {
     if ((oracleType == 'table_text' || oracleType == 'table_text2') && json['rows'] != null) {
       rows = (json['rows'] as List).map((rowJson) {
         final roll = rowJson['roll'];
+        final String result = rowJson['text'] ?? '';
+        final String? text2Value = rowJson['text2'];
+        
+        // Log the text2 value for debugging
+        loggingService.debug(
+          'OracleTable.fromDatasworn: row text2=${text2Value}',
+          tag: 'OracleTable',
+        );
+        
         return OracleTableRow(
           minRoll: roll['min'],
           maxRoll: roll['max'],
-          result: rowJson['text'] ?? '',
-          text2: rowJson['text2'], // Add text2 field from the row
+          result: result,
+          text2: text2Value,
         );
       }).toList();
       

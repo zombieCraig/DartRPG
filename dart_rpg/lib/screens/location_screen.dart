@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
 import '../models/location.dart';
-import '../widgets/location_graph_widget.dart';
+import '../widgets/locations/graph/index.dart';
 import '../widgets/locations/location_service.dart';
 import '../widgets/locations/location_dialog.dart';
 import '../widgets/locations/location_list_view.dart';

@@ -73,6 +73,13 @@ class LocationNodeWidget extends StatelessWidget {
     // Format the node text
     final nodeText = _formatNodeText(location.name);
     
+    // Create a border color for better visibility
+    final borderColor = isHighlighted || isFocused 
+        ? Colors.white 
+        : isRig 
+            ? Colors.blue.shade300 
+            : Colors.black;
+    
     return Tooltip(
       message: location.name,
       waitDuration: const Duration(milliseconds: 500),
@@ -88,18 +95,15 @@ class LocationNodeWidget extends StatelessWidget {
             shape: isRig ? BoxShape.rectangle : BoxShape.circle,
             borderRadius: isRig ? BorderRadius.circular(8) : null,
             border: Border.all(
-              color: isHighlighted || isFocused ? Colors.white : Colors.black,
-              width: isHighlighted || isFocused ? 3 : 2,
+              color: borderColor,
+              width: isHighlighted || isFocused || isRig ? 3 : 2,
             ),
             boxShadow: [
+              // Simple shadow for depth - no expensive glow effects
               BoxShadow(
-                color: isRig 
-                  ? Colors.blue.withAlpha(((0.5 * animationValue) * 255).toInt()) // Dynamic alpha based on animation
-                  : isHighlighted || isFocused 
-                    ? Colors.yellow.withAlpha(128) // 0.5 opacity = 128 alpha
-                    : Colors.black.withAlpha(51), // 0.2 opacity = 51 alpha
-                spreadRadius: isRig ? 3 * animationValue : isHighlighted || isFocused ? 3 : 1,
-                blurRadius: isRig ? 5 * animationValue : isHighlighted || isFocused ? 5 : 3,
+                color: Colors.black.withAlpha(77), // 0.3 opacity = 77 alpha
+                spreadRadius: 1,
+                blurRadius: 3,
                 offset: const Offset(0, 2),
               ),
             ],
@@ -109,6 +113,7 @@ class LocationNodeWidget extends StatelessWidget {
             style: TextStyle(
               color: _getTextColor(location.segment.color),
               fontWeight: FontWeight.bold,
+              fontSize: 14, // Standard text size for better performance
             ),
           ),
         ),

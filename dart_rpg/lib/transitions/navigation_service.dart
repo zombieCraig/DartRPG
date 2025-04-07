@@ -78,8 +78,7 @@ class NavigationService {
           routeName: routeName,
         );
       case TransitionType.none:
-      default:
-        return MaterialPageRoute<T>(
+      return MaterialPageRoute<T>(
           builder: (_) => page,
           settings: RouteSettings(name: routeName),
         );

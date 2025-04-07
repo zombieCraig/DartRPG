@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:graphview/GraphView.dart';
 import '../../models/location.dart';
-import 'dart:ui' as ui;
 
 /// A custom painter for drawing edges between location nodes with colors based on their segments.
 class LocationEdgePainter extends CustomPainter {

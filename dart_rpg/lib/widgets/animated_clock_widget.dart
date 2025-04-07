@@ -40,14 +40,10 @@ class _AnimatedClockWidgetState extends State<AnimatedClockWidget>
   // Glitch effect animation
   late Animation<double> _glitchAnimation;
   
-  // Glow effect animation
-  late Animation<double> _glowAnimation;
   
   // Track the previous value for animation
   late int _previousFilledSegments;
   
-  // Track which segment was most recently filled
-  int? _lastFilledSegmentIndex;
   
   @override
   void initState() {
@@ -83,14 +79,6 @@ class _AnimatedClockWidgetState extends State<AnimatedClockWidget>
     ));
     
     // Glow effect animation - builds up and fades out
-    _glowAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      // Glow builds up quickly, then fades out slowly
-      curve: const Interval(0.1, 1.0, curve: Curves.easeOutCubic),
-    ));
   }
   
   @override
@@ -105,17 +93,14 @@ class _AnimatedClockWidgetState extends State<AnimatedClockWidget>
       // If animations are disabled, just update the values immediately
       if (!settings.enableAnimations) {
         _previousFilledSegments = widget.filledSegments;
-        _lastFilledSegmentIndex = null;
         return;
       }
       
       // Determine which segment was filled (for glow effect)
       if (widget.filledSegments > oldWidget.filledSegments) {
         // A new segment was filled
-        _lastFilledSegmentIndex = oldWidget.filledSegments;
       } else {
         // No new segment was filled or segments were removed
-        _lastFilledSegmentIndex = null;
       }
       
       // Update animations with new values
@@ -144,7 +129,6 @@ class _AnimatedClockWidgetState extends State<AnimatedClockWidget>
             // Clear last filled segment after animation
             if (mounted) {
               setState(() {
-                _lastFilledSegmentIndex = null;
               });
             }
           });

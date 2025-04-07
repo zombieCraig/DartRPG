@@ -11,8 +11,6 @@ class LocationInteractionHandler {
   /// Flag to track if a drag operation is in progress
   bool _isDragging = false;
   
-  /// The ID of the location being dragged
-  String? _draggingLocationId;
   
   /// Creates a new LocationInteractionHandler
   LocationInteractionHandler({
@@ -51,7 +49,6 @@ class LocationInteractionHandler {
     if (controller.autoArrangeEnabled) return;
     
     _isDragging = true;
-    _draggingLocationId = locationId;
     
     // Tell the controller to disable autosaving during drag
     controller.setDragInProgress(true);
@@ -79,7 +76,6 @@ class LocationInteractionHandler {
     
     // Reset drag state
     _isDragging = false;
-    _draggingLocationId = null;
     
     // Tell the controller to re-enable autosaving and save the current state
     controller.setDragInProgress(false);

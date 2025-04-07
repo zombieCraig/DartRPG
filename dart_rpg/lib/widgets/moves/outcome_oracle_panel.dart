@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/move.dart';
 import '../../models/journal_entry.dart';
-import '../../models/move_oracle.dart';
 import '../../utils/dice_roller.dart';
 import '../oracles/oracle_result_view.dart';
 

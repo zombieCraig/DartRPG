@@ -27,8 +27,6 @@ class LocationGraphController {
   /// The current scale of the graph
   double scale = 1.0;
   
-  /// Flag to track if a drag operation is in progress
-  bool _dragInProgress = false;
   
   /// Map to store positions that need to be saved after drag
   final Map<String, Offset> _pendingSavePositions = {};
@@ -457,7 +455,6 @@ class LocationGraphController {
   
   /// Set whether a drag operation is in progress
   void setDragInProgress(bool inProgress) {
-    _dragInProgress = inProgress;
   }
   
   /// Updates the position of a node without saving to the game state

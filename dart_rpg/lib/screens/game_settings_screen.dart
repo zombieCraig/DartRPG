@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
 import '../providers/datasworn_provider.dart';
-import '../models/game.dart';
 import '../widgets/sentient_ai_settings_widget.dart';
 
 class GameSettingsScreen extends StatefulWidget {
-  const GameSettingsScreen({Key? key}) : super(key: key);
+  const GameSettingsScreen({super.key});
 
   @override
   State<GameSettingsScreen> createState() => _GameSettingsScreenState();

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
-import 'dart:math' as math;
 import '../../../models/location.dart';
 import '../../../models/game.dart';
 import 'location_graph_controller.dart';
@@ -456,78 +455,4 @@ class LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPro
     return nodes;
   }
   
-  List<Widget> _buildNodes() {
-    final nodes = <Widget>[];
-    
-    for (final location in widget.locations) {
-      final node = _controller.nodeMap[location.id];
-      if (node == null) continue;
-      
-      // Get the node position
-      final position = _controller.nodePositionsByLocationId[location.id] ?? Offset.zero;
-      
-      // Determine if the node should be highlighted
-      bool isHighlighted = false;
-      if (widget.searchQuery != null && widget.searchQuery!.isNotEmpty) {
-        final query = widget.searchQuery!.toLowerCase();
-        isHighlighted = location.name.toLowerCase().contains(query) ||
-          (location.description != null && location.description!.toLowerCase().contains(query));
-      }
-      
-      // Determine if the node is focused
-      bool isFocused = widget.focusLocationId == location.id;
-      
-      // Check if this is the rig location
-      bool isRig = _controller.isRigLocation(location.id);
-      
-      // For rig node, use animated builder to apply pulse effect
-      Widget nodeWidget;
-      if (isRig) {
-        nodeWidget = AnimatedBuilder(
-          animation: _pulseAnimation,
-          builder: (context, child) {
-            return _nodeRenderer.buildNode(
-              location: location,
-              isHighlighted: isHighlighted,
-              isFocused: isFocused,
-              isRig: isRig,
-              animationValue: _pulseAnimation.value,
-              onTap: () => _interactionHandler.handleNodeTap(location.id),
-              onPositionChanged: !_controller.autoArrangeEnabled
-                ? (delta) => _interactionHandler.handleNodeDragUpdate(location.id, DragUpdateDetails(
-                    delta: delta,
-                    globalPosition: Offset.zero, // Placeholder, not used in our implementation
-                  ))
-                : null,
-            );
-          },
-        );
-      } else {
-        nodeWidget = _nodeRenderer.buildNode(
-          location: location,
-          isHighlighted: isHighlighted,
-          isFocused: isFocused,
-          isRig: isRig,
-          onTap: () => _interactionHandler.handleNodeTap(location.id),
-          onPositionChanged: !_controller.autoArrangeEnabled
-            ? (delta) => _interactionHandler.handleNodeDragUpdate(location.id, DragUpdateDetails(
-                delta: delta,
-                globalPosition: Offset.zero, // Placeholder, not used in our implementation
-              ))
-            : null,
-        );
-      }
-      
-      // Position the node
-      nodes.add(
-        Positioned(
-          left: position.dx,
-          top: position.dy,
-          child: nodeWidget,
-        ),
-      );
-    }
-    
-    return nodes;
-  }
 }

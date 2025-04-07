@@ -1,0 +1,115 @@
+name: Multi-Platform Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build-and-release:
+    name: Build for ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false  # Continue with other platforms if one fails
+      matrix:
+        include:
+          - platform: Linux
+            os: ubuntu-latest
+            build_target: linux
+            build_path: build/linux/x64/release/bundle
+            asset_extension: .tar.gz
+            asset_content_type: application/gzip
+          - platform: macOS
+            os: macos-latest
+            build_target: macos
+            build_path: build/macos/Build/Products/Release
+            asset_extension: .zip
+            asset_content_type: application/zip
+          - platform: Windows
+            os: windows-latest
+            build_target: windows
+            build_path: build/windows/runner/Release
+            asset_extension: .zip
+            asset_content_type: application/zip
+            
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Extract version from tag
+        run: |
+          # Extract version from GitHub release tag (e.g., v1.2.3 -> 1.2.3)
+          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+          echo "Building version: ${GITHUB_REF#refs/tags/v}"
+        
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.2'
+          channel: 'stable'
+          
+      - name: Update pubspec version
+        run: |
+          cd dart_rpg
+          # Replace version line with new version and build number
+          sed -i.bak "s/version: .*/version: ${{ env.VERSION }}+${{ github.run_number }}/" pubspec.yaml
+          cat pubspec.yaml | grep "version:"
+          
+      - name: Install dependencies
+        run: |
+          cd dart_rpg
+          flutter pub get
+          
+      # Linux-specific setup
+      - name: Linux setup
+        if: matrix.platform == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+          
+      # macOS-specific setup
+      - name: macOS setup
+        if: matrix.platform == 'macOS'
+        run: |
+          brew update
+          brew install create-dmg || true  # Optional for DMG creation
+          
+      - name: Build for ${{ matrix.platform }}
+        run: |
+          cd dart_rpg
+          flutter build ${{ matrix.build_target }} --release
+          
+      # Package the application based on platform
+      - name: Package application
+        shell: bash
+        run: |
+          APP_NAME="dart_rpg"
+          VERSION="${{ env.VERSION }}"
+          ARTIFACT_NAME="${APP_NAME}-${{ matrix.platform }}-${VERSION}${{ matrix.asset_extension }}"
+          
+          if [ "${{ matrix.platform }}" == "Linux" ]; then
+            cd dart_rpg
+            tar -czf "../${ARTIFACT_NAME}" -C ${{ matrix.build_path }} .
+            cd ..
+          elif [ "${{ matrix.platform }}" == "macOS" ]; then
+            cd dart_rpg
+            # For a proper DMG, you'd use create-dmg, but for simplicity:
+            cd ${{ matrix.build_path }}
+            zip -r "../../../../${ARTIFACT_NAME}" .
+            cd ../../../../
+          elif [ "${{ matrix.platform }}" == "Windows" ]; then
+            cd dart_rpg/${{ matrix.build_path }}
+            powershell Compress-Archive -Path * -DestinationPath "../../../../${ARTIFACT_NAME}"
+            cd ../../../../
+          fi
+          
+          echo "ARTIFACT_PATH=${ARTIFACT_NAME}" >> $GITHUB_ENV
+          
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./${{ env.ARTIFACT_PATH }}
+          asset_name: ${{ env.ARTIFACT_PATH }}
+          asset_content_type: ${{ matrix.asset_content_type }}

@@ -1,6 +1,6 @@
-# Deploying DartRPG to GitHub Pages
+# Deploying DartRPG
 
-This document outlines the process for deploying the DartRPG Flutter web app to GitHub Pages.
+This document outlines the process for deploying the DartRPG Flutter web app to GitHub Pages. For information about building and releasing multi-platform versions (Linux, macOS, and Windows), see [MULTI_PLATFORM_RELEASE.md](MULTI_PLATFORM_RELEASE.md).
 
 ## Automatic Deployment with GitHub Actions
 

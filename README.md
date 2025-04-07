@@ -64,7 +64,18 @@ The app is automatically deployed to GitHub Pages when changes are pushed to the
 
 [https://zombiecraig.github.io/DartRPG/](https://zombiecraig.github.io/DartRPG/)
 
-For more information about the deployment process, see [DEPLOYMENT.md](DEPLOYMENT.md).
+For more information about the web deployment process, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
+## Releases
+
+Multi-platform releases (Linux, macOS, and Windows) are automatically built when a new GitHub Release is created. The workflow:
+
+1. Builds the application for all three platforms
+2. Updates the version in `pubspec.yaml` to match the release tag
+3. Packages the builds appropriately for each platform
+4. Uploads the packages as assets to the GitHub release
+
+For detailed instructions on creating releases, see [MULTI_PLATFORM_RELEASE.md](MULTI_PLATFORM_RELEASE.md).
 
 ## Documentation
 

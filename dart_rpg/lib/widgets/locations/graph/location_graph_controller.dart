@@ -209,7 +209,18 @@ class LocationGraphController {
   /// Fits the graph to the screen
   void fitToScreen(BuildContext context, Size size, List<Location> locations) {
     print("DEBUG: fitToScreen called with ${locations.length} locations");
-    if (locations.isEmpty) return;
+    
+    // Early return if size is invalid
+    if (size.width <= 0 || size.height <= 0) {
+      print("DEBUG: Cannot fit to screen - invalid size: $size");
+      return;
+    }
+    
+    // Early return if no locations
+    if (locations.isEmpty) {
+      print("DEBUG: Cannot fit to screen - no locations");
+      return;
+    }
     
     // Always arrange nodes in a circle to ensure they're all visible
     print("DEBUG: Arranging nodes in a circle for fit to screen");
@@ -233,6 +244,15 @@ class LocationGraphController {
         maxY = math.max(maxY, position.dy);
         validPositions++;
       }
+    }
+    
+    // If no valid positions were found, use default values
+    if (validPositions == 0) {
+      print("DEBUG: No valid positions found, using default bounds");
+      minX = -500;
+      minY = -500;
+      maxX = 500;
+      maxY = 500;
     }
     
     print("DEBUG: Found $validPositions locations with valid positions");
@@ -297,7 +317,7 @@ class LocationGraphController {
       print("DEBUG: Created transformation matrix with direct entries");
       print("DEBUG: Final matrix: ${matrix.storage}");
       
-      // Force a rebuild of the widget tree after setting the transformation
+      // Apply the transformation in a post-frame callback to ensure it happens after layout
       WidgetsBinding.instance.addPostFrameCallback((_) {
         transformationController.value = matrix;
         
@@ -314,29 +334,41 @@ class LocationGraphController {
   
   /// Focuses on a specific location
   void focusOnLocation(String locationId, BuildContext context, Size size) {
-    final node = nodeMap[locationId];
-    if (node == null) return;
+    // Early return if size is invalid
+    if (size.width <= 0 || size.height <= 0) {
+      print("DEBUG: Cannot focus on location - invalid size: $size");
+      return;
+    }
     
-    // Wait for the layout to be calculated
+    final node = nodeMap[locationId];
+    if (node == null) {
+      print("DEBUG: Cannot focus on location - node not found for ID: $locationId");
+      return;
+    }
+    
+    // Get the node position immediately to avoid timing issues
+    final position = _getNodePosition(node);
+    if (position == null) {
+      print("DEBUG: Cannot focus on location - position not found for node: $locationId");
+      return;
+    }
+    
+    // For the fixed-size background (2000x2000), we need to adjust the position
+    // The background is centered at (0,0), so we need to add 1000 to each coordinate
+    // to get the position relative to the top-left corner of the background
+    const double halfSize = 1000.0;
+    
+    // Create a transformation matrix that centers on the node
+    // We need to account for the fixed-size background and the node's position within it
+    final matrix = Matrix4.identity()
+      ..translate(
+        size.width / 2 - (position.dx + halfSize) * scale, 
+        size.height / 2 - (position.dy + halfSize) * scale
+      )
+      ..scale(scale, scale);
+    
+    // Apply the transformation in a post-frame callback to ensure it happens after layout
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Get the node position from the algorithm
-      final position = _getNodePosition(node);
-      if (position == null) return;
-      
-      // For the fixed-size background (2000x2000), we need to adjust the position
-      // The background is centered at (0,0), so we need to add 1000 to each coordinate
-      // to get the position relative to the top-left corner of the background
-      const double halfSize = 1000.0;
-      
-      // Create a transformation matrix that centers on the node
-      // We need to account for the fixed-size background and the node's position within it
-      final matrix = Matrix4.identity()
-        ..translate(
-          size.width / 2 - (position.dx + halfSize) * scale, 
-          size.height / 2 - (position.dy + halfSize) * scale
-        )
-        ..scale(scale, scale);
-      
       transformationController.value = matrix;
     });
   }

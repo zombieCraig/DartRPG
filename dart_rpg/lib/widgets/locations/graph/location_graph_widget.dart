@@ -65,7 +65,7 @@ class LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPro
   late Animation<double> _dataFlowAnimation;
   
   // Default to true, but can be disabled for testing
-  bool _showHackerGrid = !bool.fromEnvironment('FLUTTER_TEST', defaultValue: false);
+  bool _showHackerGrid = true; // In a test environment, this would be set to false
   
   // Key for the graph container
   final GlobalKey _graphKey = GlobalKey();
@@ -192,12 +192,17 @@ class LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPro
       _controller.buildGraph(widget.locations);
     }
     
-    // Focus on location if it changed
+    // Focus on location if it changed - using post-frame callback to avoid size access during build
     if (widget.focusLocationId != null && 
-        widget.focusLocationId != oldWidget.focusLocationId &&
-        _graphKey.currentContext != null) {
-      final size = _graphKey.currentContext!.size ?? Size.zero;
-      _controller.focusOnLocation(widget.focusLocationId!, context, size);
+        widget.focusLocationId != oldWidget.focusLocationId) {
+      // Schedule the focus operation after the build is complete
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (_graphKey.currentContext != null) {
+          final size = _graphKey.currentContext!.size ?? Size.zero;
+          _controller.focusOnLocation(widget.focusLocationId!, context, size);
+        }
+      });
     }
   }
   

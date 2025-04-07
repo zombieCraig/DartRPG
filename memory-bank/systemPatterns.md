@@ -482,6 +482,82 @@ The Location Graph System follows a modular architecture that separates concerns
 └─────────────────────────────────────────────────────────┘
 ```
 
+### Location Graph Implementation Details
+
+The Location Graph system is implemented using a modular approach with several key components:
+
+#### File Structure
+```
+dart_rpg/lib/widgets/locations/
+├── location_service.dart         # Service for location operations
+├── location_dialog.dart          # Dialog for creating/editing locations
+├── location_list_view.dart       # List view of locations
+└── graph/                        # Graph-specific components
+    ├── index.dart                # Exports all graph components
+    ├── location_graph_widget.dart        # Main graph widget
+    ├── location_graph_controller.dart    # Controls graph state and logic
+    ├── location_interaction_handler.dart # Handles user interactions
+    ├── location_node_renderer.dart       # Renders location nodes
+    └── location_edge_renderer.dart       # Renders edges between nodes
+```
+
+#### Key Components
+
+1. **LocationGraphWidget**: The main widget that displays the graph
+   - Manages the overall layout and rendering of the graph
+   - Coordinates between controller, renderers, and interaction handler
+   - Handles animations for rig node pulsing and background effects
+
+2. **LocationGraphController**: Controls the graph state and logic
+   - Manages the graph data structure and node positions
+   - Handles operations like building the graph, arranging nodes, and fitting to screen
+   - Maintains the transformation state for zooming and panning
+
+3. **LocationInteractionHandler**: Handles user interactions with the graph
+   - Processes zoom, pan, and click events
+   - Manages node dragging and position updates
+   - Handles the "fit to screen" functionality
+
+4. **LocationNodeRenderer**: Renders individual location nodes
+   - Creates visual representations of locations based on their properties
+   - Handles highlighting, focusing, and special effects for nodes
+   - Manages the visual appearance of different node types
+
+5. **LocationEdgeRenderer**: Renders edges between nodes
+   - Creates visual connections between related locations
+   - Handles edge styling based on location segments
+   - Manages edge visibility and appearance
+
+#### Coordinate System
+
+The Location Graph system uses two different coordinate systems:
+
+1. **Original Coordinate System**:
+   - (0,0) is the center of the graph
+   - Nodes are positioned at coordinates like (-200, 0) and (200, 0)
+   - Used in the `LocationGraphController` for storing node positions
+   - Node positions are saved in the database using this coordinate system
+
+2. **Adjusted Coordinate System**:
+   - (0,0) is the top-left corner of the graph
+   - Used by the `Positioned` widget for rendering nodes
+   - Nodes are adjusted by adding `halfSize` (1000.0) to both X and Y coordinates
+   - For example, a node at (-200, 0) in the original system is positioned at (800, 1000) in the adjusted system
+
+This dual coordinate system approach allows for intuitive positioning (centered around origin) while working with Flutter's top-left based rendering system. When transforming the graph (e.g., for "fit to screen" functionality), it's essential to convert between these coordinate systems correctly.
+
+#### Fit to Screen Functionality
+
+The "fit to screen" button works by:
+1. Arranging all nodes in a circle based on their segment
+2. Calculating the bounds of all nodes in the original coordinate system
+3. Converting the graph center from the original to the adjusted coordinate system
+4. Applying padding to ensure nodes aren't at the edge
+5. Creating a transformation matrix that scales and centers the graph
+6. Applying the transformation to make all nodes visible
+
+This approach ensures that all nodes are visible and properly arranged when the user clicks the "fit to screen" button or when the location tab is first loaded.
+
 1. **Component Responsibilities**:
    - `LocationScreen`: Container for the location management UI
    - `LocationDialog`: A utility class that handles location creation, editing, and deletion

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
+import 'dart:async';
 import '../../../models/location.dart';
 import '../../../models/game.dart';
 import 'location_graph_controller.dart';
@@ -69,6 +70,12 @@ class LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPro
   // Key for the graph container
   final GlobalKey _graphKey = GlobalKey();
   
+  // Add a flag to track if it's the first time the widget is being built
+  bool _isFirstBuild = true;
+  
+  // Timer for forcing UI updates during dragging
+  Timer? _dragUpdateTimer;
+  
   @override
   void initState() {
     super.initState();
@@ -83,7 +90,12 @@ class LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPro
     
     _nodeRenderer = const LocationNodeRenderer();
     _edgeRenderer = const LocationEdgeRenderer();
-    _interactionHandler = LocationInteractionHandler(controller: _controller);
+    _interactionHandler = LocationInteractionHandler(
+      controller: _controller,
+      onDragStart: _startDragUpdateTimer,
+      onDragUpdate: _triggerDragUpdate,
+      onDragEnd: _stopDragUpdateTimer,
+    );
     
     // Build the graph
     _controller.buildGraph(widget.locations);
@@ -123,6 +135,12 @@ class LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPro
       if (widget.focusLocationId != null && _graphKey.currentContext != null) {
         final size = _graphKey.currentContext!.size ?? Size.zero;
         _controller.focusOnLocation(widget.focusLocationId!, context, size);
+      }
+      // If no specific location to focus on, and it's the first build, fit to screen
+      else if (_isFirstBuild && _graphKey.currentContext != null && widget.locations.isNotEmpty) {
+        final size = _graphKey.currentContext!.size ?? Size.zero;
+        _controller.fitToScreen(context, size, widget.locations);
+        _isFirstBuild = false;
       }
     });
   }
@@ -189,7 +207,36 @@ class LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPro
     _gridPulseController.dispose();
     _dataFlowController.dispose();
     _controller.dispose();
+    _stopDragUpdateTimer();
     super.dispose();
+  }
+  
+  /// Starts a timer to force UI updates during dragging
+  void _startDragUpdateTimer() {
+    // Cancel any existing timer
+    _stopDragUpdateTimer();
+    
+    // Start a new timer that triggers a rebuild every 16ms (approximately 60fps)
+    _dragUpdateTimer = Timer.periodic(const Duration(milliseconds: 16), (_) {
+      if (mounted) {
+        setState(() {
+          // Just trigger a rebuild to update the UI
+        });
+      }
+    });
+  }
+  
+  /// Triggers a UI update during dragging
+  void _triggerDragUpdate() {
+    // This method is called on every drag update
+    // We don't need to do anything here since the timer is already forcing updates
+    // But we could add additional logic if needed
+  }
+  
+  /// Stops the drag update timer
+  void _stopDragUpdateTimer() {
+    _dragUpdateTimer?.cancel();
+    _dragUpdateTimer = null;
   }
   
   @override

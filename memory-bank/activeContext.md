@@ -21,6 +21,32 @@ This work enhances the overall architecture of the application, making it more m
 
 ## Recent Changes
 
+### Location Graph "Fit to Screen" Functionality Fix (April 2025)
+- Fixed the "fit to screen" button in the Location Graph System to ensure all nodes are visible:
+  - Modified the `fitToScreen` method in `LocationGraphController` to always arrange nodes in a circle when called
+  - Updated the node arrangement process to save positions to the database immediately
+  - Added detailed debugging to track node positions and transformation matrix calculations
+  - Fixed the transformation matrix creation to properly center and scale the graph
+  - Improved the coordinate system handling to ensure consistent positioning
+  - Enhanced the circle arrangement algorithm to better distribute nodes by segment
+  - Added more robust error handling for edge cases
+  - Ensured proper padding around the graph bounds for better visibility
+  - Fixed the file structure confusion by identifying and working with the correct files
+  - Updated the memory bank documentation to reflect the correct file structure and implementation details
+
+### Location Graph Auto-Centering Implementation (April 2025)
+- Implemented automatic centering of the location graph when the user first navigates to the Location tab:
+  - Added a `_isFirstBuild` flag to the `LocationGraphWidgetState` class to track first-time loading
+  - Modified the `initState` method to automatically call `fitToScreen` on first load
+  - Fixed a critical coordinate system issue in the `fitToScreen` method:
+    - Discovered that the graph uses two different coordinate systems:
+      - Original coordinate system: (0,0) is the center of the graph, nodes positioned at coordinates like (-200, 0) and (200, 0)
+      - Adjusted coordinate system: (0,0) is the top-left corner, used by the `Positioned` widget with nodes adjusted by adding `halfSize` (1000.0)
+    - Updated the transformation matrix calculation to account for this coordinate system difference
+    - Added conversion from original to adjusted coordinates before calculating translation values
+    - Enhanced debugging to track coordinate conversion and transformation matrix creation
+  - Improved user experience by eliminating the need to manually click the "fit to screen" button
+
 ### Location Graph System Modularization (April 2025)
 - Further modularized the Location Graph System into specialized components following the component extraction pattern:
   - LocationGraphController: Manages the state and logic for the graph

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'dart:async';
 import '../../../models/location.dart';
 import 'location_graph_controller.dart';
 
@@ -11,10 +12,21 @@ class LocationInteractionHandler {
   /// Flag to track if a drag operation is in progress
   bool _isDragging = false;
   
+  /// Callback when drag starts
+  final Function()? onDragStart;
+  
+  /// Callback when drag updates
+  final Function()? onDragUpdate;
+  
+  /// Callback when drag ends
+  final Function()? onDragEnd;
   
   /// Creates a new LocationInteractionHandler
   LocationInteractionHandler({
     required this.controller,
+    this.onDragStart,
+    this.onDragUpdate,
+    this.onDragEnd,
   });
   
   /// Handles zoom in action
@@ -52,6 +64,11 @@ class LocationInteractionHandler {
     
     // Tell the controller to disable autosaving during drag
     controller.setDragInProgress(true);
+    
+    // Call the drag start callback
+    if (onDragStart != null) {
+      onDragStart!();
+    }
   }
   
   /// Handles node drag update
@@ -68,6 +85,11 @@ class LocationInteractionHandler {
     
     // Update position without saving
     controller.updateNodePositionWithoutSaving(locationId, delta.dx, delta.dy);
+    
+    // Call the drag update callback
+    if (onDragUpdate != null) {
+      onDragUpdate!();
+    }
   }
   
   /// Handles node drag end
@@ -80,6 +102,11 @@ class LocationInteractionHandler {
     // Tell the controller to re-enable autosaving and save the current state
     controller.setDragInProgress(false);
     controller.saveCurrentPositions();
+    
+    // Call the drag end callback
+    if (onDragEnd != null) {
+      onDragEnd!();
+    }
   }
   
   /// Handles node tap

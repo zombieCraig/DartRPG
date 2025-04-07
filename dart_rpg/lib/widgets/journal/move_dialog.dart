@@ -317,9 +317,8 @@ class MoveDialog {
         aiName: game.sentientAiName,
         aiPersona: game.sentientAiPersona,
         aiImagePath: game.sentientAiImagePath,
-        onOracleSelected: (oracleKey) async {
-          // Roll on the selected oracle
-          final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+        onOracleSelected: (oracleKey, dataswornProvider) async {
+          // Roll on the selected oracle - dataswornProvider is now passed from the dialog
           final oracleResult = await SentientAiDialog.rollOnAiOracle(
             oracleKey: oracleKey,
             dataswornProvider: dataswornProvider,
@@ -521,9 +520,8 @@ class MoveDialog {
         aiName: game.sentientAiName,
         aiPersona: game.sentientAiPersona,
         aiImagePath: game.sentientAiImagePath,
-        onOracleSelected: (oracleKey) async {
-          // Roll on the selected oracle
-          final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+        onOracleSelected: (oracleKey, dataswornProvider) async {
+          // Roll on the selected oracle - dataswornProvider is now passed from the dialog
           final oracleResult = await SentientAiDialog.rollOnAiOracle(
             oracleKey: oracleKey,
             dataswornProvider: dataswornProvider,

@@ -297,6 +297,30 @@ class _SentientAiDialogState extends State<SentientAiDialog> {
               Colors.red,
               Icons.dangerous,
             ),
+            
+            const SizedBox(height: 16),
+            const Divider(),
+            
+            // Close button
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.close),
+                  label: const Text("Close"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onPressed: () {
+                    // Simply close the dialog without any action
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+            ),
           ],
         ),
       ),

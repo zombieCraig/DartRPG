@@ -261,7 +261,7 @@ class MoveDialog {
   }
 
   /// Rolls an action move with a specific stat and modifier.
-  static void _rollActionMove(
+  static Future<void> _rollActionMove(
     BuildContext context, 
     Move move, 
     String stat, 
@@ -270,7 +270,7 @@ class MoveDialog {
     Function(MoveRoll moveRoll) onMoveRollAdded,
     Function(String text) onInsertText,
     bool isEditing,
-  ) {
+  ) async {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final character = gameProvider.currentGame?.mainCharacter;
     
@@ -281,7 +281,7 @@ class MoveDialog {
           backgroundColor: Colors.red,
         ),
       );
-      return;
+      return Future<void>.value();
     }
     
     // Get the character's momentum
@@ -311,7 +311,19 @@ class MoveDialog {
     
     // If Sentient AI was triggered, show the dialog
     if (sentientAiTriggered && game != null && game.sentientAiEnabled) {
-      // Show the Sentient AI dialog
+      // Check if we need to randomly select a persona
+      final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+      
+      // If both name and persona are null, randomly select a persona
+      if (game.sentientAiName == null && game.sentientAiPersona == null) {
+        final randomPersona = gameProvider.getRandomAiPersona(dataswornProvider);
+        if (randomPersona != null) {
+          // Save the randomly selected persona
+          await gameProvider.updateSentientAiPersona(randomPersona);
+        }
+      }
+      
+      // Show the Sentient AI dialog with the updated persona
       SentientAiDialog.show(
         context: context,
         aiName: game.sentientAiName,
@@ -484,14 +496,14 @@ class MoveDialog {
   }
 
   /// Rolls a progress move with a specific progress value.
-  static void _rollProgressMove(
+  static Future<void> _rollProgressMove(
     BuildContext context, 
     Move move, 
     int progressValue, 
     Function(MoveRoll moveRoll) onMoveRollAdded,
     Function(String text) onInsertText,
     bool isEditing,
-  ) {
+  ) async {
     // Get the current game
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final game = gameProvider.currentGame;
@@ -514,7 +526,19 @@ class MoveDialog {
     
     // If Sentient AI was triggered, show the dialog
     if (sentientAiTriggered && game != null && game.sentientAiEnabled) {
-      // Show the Sentient AI dialog
+      // Check if we need to randomly select a persona
+      final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+      
+      // If both name and persona are null, randomly select a persona
+      if (game.sentientAiName == null && game.sentientAiPersona == null) {
+        final randomPersona = gameProvider.getRandomAiPersona(dataswornProvider);
+        if (randomPersona != null) {
+          // Save the randomly selected persona
+          await gameProvider.updateSentientAiPersona(randomPersona);
+        }
+      }
+      
+      // Show the Sentient AI dialog with the updated persona
       SentientAiDialog.show(
         context: context,
         aiName: game.sentientAiName,

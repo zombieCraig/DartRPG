@@ -317,41 +317,91 @@ class _LocationFormState extends State<LocationForm> {
           
           // Random buttons
           const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Random Segment Location button
-              Tooltip(
-                message: _nodeTypes.isEmpty 
-                    ? 'No node types available' 
-                    : 'Random Segment Location: Roll for a node type appropriate for this segment',
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.casino, size: 16),
-                  label: const Text('Random Segment Location'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueGrey,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: _nodeTypes.isEmpty ? null : () => _rollSegmentNodeType(context),
-                ),
-              ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Check if we're on a small screen (e.g., mobile)
+              final isSmallScreen = MediaQuery.of(context).size.width <= 600;
               
-              // Random Any Node Type button
-              Tooltip(
-                message: _nodeTypes.isEmpty 
-                    ? 'No node types available' 
-                    : 'Random Any Node Type: Roll for any node type regardless of segment',
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.shuffle, size: 16),
-                  label: const Text('Random Any Node Type'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: _nodeTypes.isEmpty ? null : () => _rollAnyNodeType(),
-                ),
-              ),
-            ],
+              if (isSmallScreen) {
+                // Stack buttons vertically on small screens
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Random Segment Location button
+                    Tooltip(
+                      message: _nodeTypes.isEmpty 
+                          ? 'No node types available' 
+                          : 'Random Segment Location: Roll for a node type appropriate for this segment',
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.casino, size: 16),
+                        label: const Text('Random Segment Location'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueGrey,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: _nodeTypes.isEmpty ? null : () => _rollSegmentNodeType(context),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 8), // Add spacing between buttons
+                    
+                    // Random Any Node Type button
+                    Tooltip(
+                      message: _nodeTypes.isEmpty 
+                          ? 'No node types available' 
+                          : 'Random Any Node Type: Roll for any node type regardless of segment',
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.shuffle, size: 16),
+                        label: const Text('Random Any Node Type'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: _nodeTypes.isEmpty ? null : () => _rollAnyNodeType(),
+                      ),
+                    ),
+                  ],
+                );
+              } else {
+                // Side by side buttons on larger screens
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Random Segment Location button
+                    Tooltip(
+                      message: _nodeTypes.isEmpty 
+                          ? 'No node types available' 
+                          : 'Random Segment Location: Roll for a node type appropriate for this segment',
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.casino, size: 16),
+                        label: const Text('Random Segment Location'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueGrey,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: _nodeTypes.isEmpty ? null : () => _rollSegmentNodeType(context),
+                      ),
+                    ),
+                    
+                    // Random Any Node Type button
+                    Tooltip(
+                      message: _nodeTypes.isEmpty 
+                          ? 'No node types available' 
+                          : 'Random Any Node Type: Roll for any node type regardless of segment',
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.shuffle, size: 16),
+                        label: const Text('Random Any Node Type'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurple,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: _nodeTypes.isEmpty ? null : () => _rollAnyNodeType(),
+                      ),
+                    ),
+                  ],
+                );
+              }
+            },
           ),
           
           // Save button

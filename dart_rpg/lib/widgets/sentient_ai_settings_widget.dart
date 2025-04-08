@@ -1,10 +1,10 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../models/game.dart';
 import '../providers/game_provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../utils/logging_service.dart';
+import '../utils/sentient_ai_utils.dart';
 
 /// A reusable widget for Sentient AI settings that can be used in both
 /// the game settings screen and the new game screen.
@@ -301,21 +301,17 @@ class _SentientAiSettingsWidgetState extends State<SentientAiSettingsWidget> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    if (sentientAiImagePath != null &&
-                        File(sentientAiImagePath).existsSync())
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Center(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.file(
-                              File(sentientAiImagePath),
-                              height: 150,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Center(
+                        child: SentientAiUtils.buildAiImage(
+                          context,
+                          sentientAiImagePath,
+                          sentientAiPersona,
+                          useResponsiveHeight: false, // Use fixed height in settings
                         ),
                       ),
+                    ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [

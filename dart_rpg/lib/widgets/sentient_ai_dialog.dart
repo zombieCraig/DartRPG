@@ -1,9 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../services/oracle_service.dart';
 import '../utils/dice_roller.dart';
+import '../utils/sentient_ai_utils.dart';
 
 /// A dialog that appears when the Sentient AI is triggered.
 class SentientAiDialog extends StatefulWidget {
@@ -134,20 +134,16 @@ class _SentientAiDialogState extends State<SentientAiDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // AI Image
-            if (widget.aiImagePath != null && File(widget.aiImagePath!).existsSync())
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(
-                      File(widget.aiImagePath!),
-                      height: 150,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Center(
+                child: SentientAiUtils.buildAiImage(
+                  context,
+                  widget.aiImagePath,
+                  widget.aiPersona,
                 ),
               ),
+            ),
             
             // Persona name and description
             if (personaName != null)

@@ -52,7 +52,7 @@ class SettingsProvider extends ChangeNotifier {
     _isDarkMode = prefs.getBool('isDarkMode') ?? false;
     _fontSize = prefs.getDouble('fontSize') ?? 16.0;
     _fontFamily = prefs.getString('fontFamily') ?? 'Roboto';
-    _logLevel = prefs.getInt('logLevel') ?? 0; // Default to DEBUG level for troubleshooting
+    _logLevel = prefs.getInt('logLevel') ?? 1; // Default to INFO level
     _enableTutorials = prefs.getBool('enableTutorials') ?? true;
     
     // Load animation settings

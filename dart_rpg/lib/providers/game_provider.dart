@@ -209,8 +209,25 @@ class GameProvider extends ChangeNotifier {
     _currentGame = game;
     _currentGame!.updateLastPlayed();
     
+    // Try to load the last selected session for this game
     if (_currentGame!.sessions.isNotEmpty) {
-      _currentSession = _currentGame!.sessions.first;
+      final prefs = await SharedPreferences.getInstance();
+      final lastSessionId = prefs.getString('lastSessionId_${_currentGame!.id}');
+      
+      if (lastSessionId != null) {
+        // Try to find the last selected session
+        try {
+          _currentSession = _currentGame!.sessions.firstWhere(
+            (session) => session.id == lastSessionId,
+          );
+        } catch (_) {
+          // If the last session can't be found, use the first session
+          _currentSession = _currentGame!.sessions.first;
+        }
+      } else {
+        // If no last session is saved, use the first session
+        _currentSession = _currentGame!.sessions.first;
+      }
     } else {
       _currentSession = null;
     }
@@ -225,9 +242,29 @@ class GameProvider extends ChangeNotifier {
     
     if (_currentGame?.id == gameId) {
       _currentGame = _games.isNotEmpty ? _games.first : null;
-      _currentSession = _currentGame?.sessions.isNotEmpty ?? false
-          ? _currentGame!.sessions.first
-          : null;
+      
+      // Try to load the last selected session for the new current game
+      if (_currentGame != null && _currentGame!.sessions.isNotEmpty) {
+        final prefs = await SharedPreferences.getInstance();
+        final lastSessionId = prefs.getString('lastSessionId_${_currentGame!.id}');
+        
+        if (lastSessionId != null) {
+          // Try to find the last selected session
+          try {
+            _currentSession = _currentGame!.sessions.firstWhere(
+              (session) => session.id == lastSessionId,
+            );
+          } catch (_) {
+            // If the last session can't be found, use the first session
+            _currentSession = _currentGame!.sessions.first;
+          }
+        } else {
+          // If no last session is saved, use the first session
+          _currentSession = _currentGame!.sessions.first;
+        }
+      } else {
+        _currentSession = null;
+      }
     }
     
     await _saveGames();

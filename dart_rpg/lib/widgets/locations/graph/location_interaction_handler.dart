@@ -115,6 +115,13 @@ class LocationInteractionHandler {
     }
   }
   
+  /// Handles node double tap for editing
+  void handleNodeDoubleTap(String locationId) {
+    if (controller.onLocationEdit != null) {
+      controller.onLocationEdit!(locationId);
+    }
+  }
+  
   /// Handles scale changed
   void handleScaleChanged() {
     if (controller.onScaleChanged != null) {

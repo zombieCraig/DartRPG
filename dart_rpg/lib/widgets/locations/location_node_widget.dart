@@ -81,7 +81,7 @@ class LocationNodeWidget extends StatelessWidget {
             : Colors.black;
     
     return Tooltip(
-      message: location.name,
+      message: '${location.name}\nTap to select\nDouble-tap to edit',
       waitDuration: const Duration(milliseconds: 500),
       child: GestureDetector(
         onTap: onTap,

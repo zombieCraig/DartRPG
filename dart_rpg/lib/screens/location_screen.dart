@@ -234,6 +234,13 @@ class LocationScreenState extends State<LocationScreen> {
       key: ValueKey(allLocations.map((l) => l.id).join(',')),
       locations: allLocations,
       onLocationTap: (locationId) {
+        // When tapped, we just select the location but don't edit it
+        setState(() {
+          _focusLocationId = locationId;
+        });
+      },
+      onLocationEdit: (locationId) {
+        // When long-pressed, we open the edit dialog
         final location = locationService.getLocationById(locationId);
         if (location != null) {
           LocationDialog.showEditDialog(

@@ -36,58 +36,84 @@ class LocationDialog {
     await showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text(connectToLocationId != null ? 'Create Connected Location' : 'Create Location'),
-          content: SingleChildScrollView(
+        return Dialog(
+          child: Container(
+            width: 400,
+            height: 500,
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                LocationForm(
-                  validSegments: validSegments,
-                  onSave: (name, description, segment, imageUrl, nodeType) async {
-                    // Create the location
-                    final location = await locationService.createLocation(
-                      name: name,
-                      description: description,
-                      segment: segment,
-                      nodeType: nodeType,
-                      connectToLocationId: connectToLocationId,
-                    );
-                    
-                    if (location != null && imageUrl != null) {
-                      // Update the location with the image URL
-                      await locationService.updateLocation(
-                        locationId: location.id,
-                        name: location.name,
-                        description: location.description,
-                        imageUrl: imageUrl,
-                        nodeType: location.nodeType,
-                      );
-                    }
-                    
-                    createdLocation = location;
-                    Navigator.pop(context);
-                  },
+                // Title
+                Text(
+                  connectToLocationId != null ? 'Create Connected Location' : 'Create Location',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 16),
+                
+                // Content in a scrollable container
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        LocationForm(
+                          validSegments: validSegments,
+                          onSave: (name, description, segment, imageUrl, nodeType) async {
+                            // Create the location
+                            final location = await locationService.createLocation(
+                              name: name,
+                              description: description,
+                              segment: segment,
+                              nodeType: nodeType,
+                              connectToLocationId: connectToLocationId,
+                            );
+                            
+                            if (location != null && imageUrl != null) {
+                              // Update the location with the image URL
+                              await locationService.updateLocation(
+                                locationId: location.id,
+                                name: location.name,
+                                description: location.description,
+                                imageUrl: imageUrl,
+                                nodeType: location.nodeType,
+                              );
+                            }
+                            
+                            createdLocation = location;
+                            Navigator.pop(context);
+                          },
+                        ),
+                        
+                        if (connectToLocationId != null) ...[
+                          const SizedBox(height: 16),
+                          const Text(
+                            'This location will be connected to the selected location.',
+                            style: TextStyle(fontStyle: FontStyle.italic),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
                 
-                if (connectToLocationId != null) ...[
-                  const SizedBox(height: 16),
-                  const Text(
-                    'This location will be connected to the selected location.',
-                    style: TextStyle(fontStyle: FontStyle.italic),
-                  ),
-                ],
+                // Action buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Cancel'),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Cancel'),
-            ),
-          ],
         );
       },
     );
@@ -117,88 +143,114 @@ class LocationDialog {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('Edit Location'),
-              content: SingleChildScrollView(
+            return Dialog(
+              child: Container(
+                width: 400,
+                height: 600,
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Location form
-                    LocationForm(
-                      initialLocation: location,
-                      validSegments: LocationSegment.values,
-                      onSave: (name, description, segment, imageUrl, nodeType) async {
-                        // Update the location
-                        final success = await locationService.updateLocation(
-                          locationId: location.id,
-                          name: name,
-                          description: description,
-                          imageUrl: imageUrl,
-                          segment: segment,
-                          nodeType: nodeType,
-                        );
-                        
-                        if (success) {
-                          wasUpdated = true;
-                          Navigator.pop(context);
-                        } else {
-                          // Show error message
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Failed to update location'),
-                              backgroundColor: Colors.red,
+                    // Title
+                    Text(
+                      'Edit Location',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Content in a scrollable container
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Location form
+                            LocationForm(
+                              initialLocation: location,
+                              validSegments: LocationSegment.values,
+                              onSave: (name, description, segment, imageUrl, nodeType) async {
+                                // Update the location
+                                final success = await locationService.updateLocation(
+                                  locationId: location.id,
+                                  name: name,
+                                  description: description,
+                                  imageUrl: imageUrl,
+                                  segment: segment,
+                                  nodeType: nodeType,
+                                );
+                                
+                                if (success) {
+                                  wasUpdated = true;
+                                  Navigator.pop(context);
+                                } else {
+                                  // Show error message
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Failed to update location'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              },
                             ),
-                          );
-                        }
-                      },
+                            
+                            const SizedBox(height: 16),
+                            const Divider(),
+                            
+                            // Connections panel
+                            ConnectionPanel(
+                              location: location,
+                              connectedLocations: connectedLocations,
+                              locationService: locationService,
+                              isEditing: true,
+                              onLocationTap: (connectedLocation) {
+                                // Close this dialog and show the connected location
+                                Navigator.pop(context);
+                                showEditDialog(context, locationService, connectedLocation);
+                              },
+                              onAddConnection: () {
+                                _showAddConnectionDialog(context, locationService, location);
+                              },
+                              onCreateConnectedLocation: () {
+                                // Close this dialog and show create dialog
+                                Navigator.pop(context);
+                                showCreateDialog(
+                                  context, 
+                                  locationService,
+                                  connectToLocationId: location.id,
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                     
-                    const SizedBox(height: 16),
-                    const Divider(),
-                    
-                    // Connections panel
-                    ConnectionPanel(
-                      location: location,
-                      connectedLocations: connectedLocations,
-                      locationService: locationService,
-                      isEditing: true,
-                      onLocationTap: (connectedLocation) {
-                        // Close this dialog and show the connected location
-                        Navigator.pop(context);
-                        showEditDialog(context, locationService, connectedLocation);
-                      },
-                      onAddConnection: () {
-                        _showAddConnectionDialog(context, locationService, location);
-                      },
-                      onCreateConnectedLocation: () {
-                        // Close this dialog and show create dialog
-                        Navigator.pop(context);
-                        showCreateDialog(
-                          context, 
-                          locationService,
-                          connectToLocationId: location.id,
-                        );
-                      },
+                    // Action buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            // Show delete confirmation
+                            showDeleteConfirmation(context, locationService, location);
+                          },
+                          child: const Text('Delete'),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Cancel'),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    // Show delete confirmation
-                    showDeleteConfirmation(context, locationService, location);
-                  },
-                  child: const Text('Delete'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Cancel'),
-                ),
-              ],
             );
           },
         );
@@ -219,38 +271,62 @@ class LocationDialog {
     await showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Delete Location'),
-          content: Text('Are you sure you want to delete ${location.name}?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                final success = await locationService.deleteLocation(location.id);
+        return Dialog(
+          child: Container(
+            width: 300,
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title
+                Text(
+                  'Delete Location',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 16),
                 
-                if (success) {
-                  wasDeleted = true;
-                  Navigator.pop(context); // Close confirmation dialog
-                  Navigator.pop(context); // Close location dialog
-                } else {
-                  // Show error message
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Failed to delete location'),
-                      backgroundColor: Colors.red,
+                // Content
+                Text('Are you sure you want to delete ${location.name}?'),
+                const SizedBox(height: 24),
+                
+                // Action buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Cancel'),
                     ),
-                  );
-                  Navigator.pop(context); // Close confirmation dialog
-                }
-              },
-              child: const Text('Delete'),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () async {
+                        final success = await locationService.deleteLocation(location.id);
+                        
+                        if (success) {
+                          wasDeleted = true;
+                          Navigator.pop(context); // Close confirmation dialog
+                          Navigator.pop(context); // Close location dialog
+                        } else {
+                          // Show error message
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Failed to delete location'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          Navigator.pop(context); // Close confirmation dialog
+                        }
+                      },
+                      child: const Text('Delete'),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
@@ -281,72 +357,98 @@ class LocationDialog {
     await showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Add Connection'),
-          content: SingleChildScrollView(
+        return Dialog(
+          child: Container(
+            width: 400,
+            height: 500,
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Select a location to connect to:'),
+                // Title
+                Text(
+                  'Add Connection',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
                 const SizedBox(height: 16),
-                ...validConnections.map((targetLocation) {
-                  return ListTile(
-                    leading: Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: targetLocation.segment.color,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.black),
-                      ),
+                
+                // Content in a scrollable container
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Select a location to connect to:'),
+                        const SizedBox(height: 16),
+                        ...validConnections.map((targetLocation) {
+                          return ListTile(
+                            leading: Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: targetLocation.segment.color,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.black),
+                              ),
+                            ),
+                            title: Text(targetLocation.name),
+                            subtitle: Text(targetLocation.segment.displayName),
+                            onTap: () async {
+                              final success = await locationService.connectLocations(
+                                location.id, 
+                                targetLocation.id
+                              );
+                              
+                              if (success) {
+                                wasConnected = true;
+                                Navigator.pop(context);
+                              } else {
+                                // Show error message
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Failed to connect locations'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                          );
+                        }),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.add),
+                          label: const Text('Create New Location'),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            showCreateDialog(
+                              context, 
+                              locationService,
+                              connectToLocationId: location.id,
+                            );
+                          },
+                        ),
+                      ],
                     ),
-                    title: Text(targetLocation.name),
-                    subtitle: Text(targetLocation.segment.displayName),
-                    onTap: () async {
-                      final success = await locationService.connectLocations(
-                        location.id, 
-                        targetLocation.id
-                      );
-                      
-                      if (success) {
-                        wasConnected = true;
+                  ),
+                ),
+                
+                // Action buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () {
                         Navigator.pop(context);
-                      } else {
-                        // Show error message
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Failed to connect locations'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    },
-                  );
-                }),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.add),
-                  label: const Text('Create New Location'),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    showCreateDialog(
-                      context, 
-                      locationService,
-                      connectToLocationId: location.id,
-                    );
-                  },
+                      },
+                      child: const Text('Cancel'),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Cancel'),
-            ),
-          ],
         );
       },
     );

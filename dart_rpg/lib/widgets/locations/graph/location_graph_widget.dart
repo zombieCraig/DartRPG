@@ -17,6 +17,9 @@ class LocationGraphWidget extends StatefulWidget {
   /// Callback when a location is tapped
   final Function(String locationId) onLocationTap;
   
+  /// Callback when a location is long-pressed for editing
+  final Function(String locationId) onLocationEdit;
+  
   /// Callback when a location is moved
   final Function(String locationId, double x, double y) onLocationMoved;
   
@@ -37,6 +40,7 @@ class LocationGraphWidget extends StatefulWidget {
     super.key,
     required this.locations,
     required this.onLocationTap,
+    required this.onLocationEdit,
     required this.onLocationMoved,
     required this.onScaleChanged,
     this.searchQuery,
@@ -83,6 +87,7 @@ class LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPro
     // Initialize controllers and renderers
     _controller = LocationGraphController(
       onLocationTap: widget.onLocationTap,
+      onLocationEdit: widget.onLocationEdit,
       onLocationMoved: widget.onLocationMoved,
       onScaleChanged: widget.onScaleChanged,
       game: widget.game,
@@ -454,6 +459,7 @@ class LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPro
           builder: (context, child) {
             return GestureDetector(
               onTap: () => _interactionHandler.handleNodeTap(location.id),
+              onDoubleTap: () => _interactionHandler.handleNodeDoubleTap(location.id),
               onPanStart: (_) => _interactionHandler.handleNodeDragStart(location.id),
               onPanUpdate: !_controller.autoArrangeEnabled
                 ? (details) => _interactionHandler.handleNodeDragUpdate(location.id, details)
@@ -476,6 +482,7 @@ class LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPro
       } else {
         nodeWidget = GestureDetector(
           onTap: () => _interactionHandler.handleNodeTap(location.id),
+          onDoubleTap: () => _interactionHandler.handleNodeDoubleTap(location.id),
           onPanStart: (_) => _interactionHandler.handleNodeDragStart(location.id),
           onPanUpdate: !_controller.autoArrangeEnabled
             ? (details) => _interactionHandler.handleNodeDragUpdate(location.id, details)

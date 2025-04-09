@@ -368,34 +368,42 @@ class _LocationFormState extends State<LocationForm> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // Random Segment Location button
-                    Tooltip(
-                      message: _nodeTypes.isEmpty 
-                          ? 'No node types available' 
-                          : 'Random Segment Location: Roll for a node type appropriate for this segment',
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.casino, size: 16),
-                        label: const Text('Random Segment Location'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blueGrey,
-                          foregroundColor: Colors.white,
+                    Flexible(
+                      flex: 1,
+                      child: Tooltip(
+                        message: _nodeTypes.isEmpty 
+                            ? 'No node types available' 
+                            : 'Random Segment Location: Roll for a node type appropriate for this segment',
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.casino, size: 16),
+                          label: const Text('Segment Type'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueGrey,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: _nodeTypes.isEmpty ? null : () => _rollSegmentNodeType(context),
                         ),
-                        onPressed: _nodeTypes.isEmpty ? null : () => _rollSegmentNodeType(context),
                       ),
                     ),
                     
+                    const SizedBox(width: 8), // Add spacing between buttons
+                    
                     // Random Any Node Type button
-                    Tooltip(
-                      message: _nodeTypes.isEmpty 
-                          ? 'No node types available' 
-                          : 'Random Any Node Type: Roll for any node type regardless of segment',
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.shuffle, size: 16),
-                        label: const Text('Random Any Node Type'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurple,
-                          foregroundColor: Colors.white,
+                    Flexible(
+                      flex: 1,
+                      child: Tooltip(
+                        message: _nodeTypes.isEmpty 
+                            ? 'No node types available' 
+                            : 'Random Any Node Type: Roll for any node type regardless of segment',
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.shuffle, size: 16),
+                          label: const Text('Any Type'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepPurple,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: _nodeTypes.isEmpty ? null : () => _rollAnyNodeType(),
                         ),
-                        onPressed: _nodeTypes.isEmpty ? null : () => _rollAnyNodeType(),
                       ),
                     ),
                   ],

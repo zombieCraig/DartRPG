@@ -40,6 +40,9 @@ class LocationGraphController {
   /// Callback when a location is tapped
   final Function(String locationId)? onLocationTap;
   
+  /// Callback when a location is long-pressed for editing
+  final Function(String locationId)? onLocationEdit;
+  
   /// Callback when a location is moved
   final Function(String locationId, double x, double y)? onLocationMoved;
   
@@ -49,6 +52,7 @@ class LocationGraphController {
   /// Creates a new LocationGraphController
   LocationGraphController({
     this.onLocationTap,
+    this.onLocationEdit,
     this.onLocationMoved,
     this.onScaleChanged,
     this.game,

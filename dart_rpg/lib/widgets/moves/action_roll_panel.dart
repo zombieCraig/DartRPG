@@ -22,10 +22,13 @@ class ActionRollPanel extends StatefulWidget {
 class _ActionRollPanelState extends State<ActionRollPanel> {
   String? _selectedStat;
   final TextEditingController _modifierController = TextEditingController();
+  final FocusNode _rollButtonFocusNode = FocusNode();
+  final GlobalKey _rollButtonKey = GlobalKey();
   
   @override
   void dispose() {
     _modifierController.dispose();
+    _rollButtonFocusNode.dispose();
     super.dispose();
   }
   
@@ -123,6 +126,25 @@ class _ActionRollPanelState extends State<ActionRollPanel> {
                 onSelected: (selected) {
                   setState(() {
                     _selectedStat = selected ? name : null;
+                    
+                    // If a stat is selected, schedule a post-frame callback to focus and scroll to the roll button
+                    if (selected) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        // Focus the roll button
+                        _rollButtonFocusNode.requestFocus();
+                        
+                        // Scroll to make the roll button visible
+                        final context = _rollButtonKey.currentContext;
+                        if (context != null) {
+                          Scrollable.ensureVisible(
+                            context,
+                            alignment: 0.5, // Center the button in the viewport
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
+                        }
+                      });
+                    }
                   });
                 },
               );
@@ -148,6 +170,8 @@ class _ActionRollPanelState extends State<ActionRollPanel> {
             // Roll button
             Center(
               child: ElevatedButton.icon(
+                key: _rollButtonKey,
+                focusNode: _rollButtonFocusNode,
                 icon: const Icon(Icons.sports_martial_arts),
                 label: const Text('Roll Dice'),
                 onPressed: () {

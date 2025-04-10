@@ -18,6 +18,14 @@ class ProgressRollPanel extends StatefulWidget {
 
 class _ProgressRollPanelState extends State<ProgressRollPanel> {
   int _progressValue = 5; // Default progress value
+  final FocusNode _rollButtonFocusNode = FocusNode();
+  final GlobalKey _rollButtonKey = GlobalKey();
+  
+  @override
+  void dispose() {
+    _rollButtonFocusNode.dispose();
+    super.dispose();
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -40,6 +48,23 @@ class _ProgressRollPanelState extends State<ProgressRollPanel> {
           onChanged: (value) {
             setState(() {
               _progressValue = value.round();
+              
+              // Schedule a post-frame callback to focus and scroll to the roll button
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                // Focus the roll button
+                _rollButtonFocusNode.requestFocus();
+                
+                // Scroll to make the roll button visible
+                final context = _rollButtonKey.currentContext;
+                if (context != null) {
+                  Scrollable.ensureVisible(
+                    context,
+                    alignment: 0.5, // Center the button in the viewport
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                }
+              });
             });
           },
         ),
@@ -57,6 +82,8 @@ class _ProgressRollPanelState extends State<ProgressRollPanel> {
         // Roll button
         Center(
           child: ElevatedButton.icon(
+            key: _rollButtonKey,
+            focusNode: _rollButtonFocusNode,
             icon: const Icon(Icons.trending_up),
             label: const Text('Perform Move'),
             onPressed: () {

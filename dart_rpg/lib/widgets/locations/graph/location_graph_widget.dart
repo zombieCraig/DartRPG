@@ -168,27 +168,27 @@ class LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPro
       if (!const SetEquality<String>().equals(oldIds, newIds)) {
         needsRebuild = true;
       } else {
+        // More thorough check for connection changes
+        // Create maps of location IDs to their connection sets for both old and new widgets
+        final oldConnectionMap = <String, Set<String>>{};
+        for (final loc in oldWidget.locations) {
+          oldConnectionMap[loc.id] = loc.connectedLocationIds.toSet();
+        }
+        
+        final newConnectionMap = <String, Set<String>>{};
+        for (final loc in widget.locations) {
+          newConnectionMap[loc.id] = loc.connectedLocationIds.toSet();
+        }
+        
         // Check if any location's connections have changed
-        for (int i = 0; i < widget.locations.length; i++) {
-          final oldLoc = oldWidget.locations.firstWhere(
-            (loc) => loc.id == widget.locations[i].id, 
-            orElse: () => widget.locations[i]
-          );
-          final newLoc = widget.locations[i];
+        for (final locId in newIds) {
+          final oldConnections = oldConnectionMap[locId] ?? <String>{};
+          final newConnections = newConnectionMap[locId] ?? <String>{};
           
-          if (oldLoc.connectedLocationIds.length != newLoc.connectedLocationIds.length) {
+          if (!const SetEquality<String>().equals(oldConnections, newConnections)) {
             needsRebuild = true;
             break;
           }
-          
-          for (final connId in oldLoc.connectedLocationIds) {
-            if (!newLoc.connectedLocationIds.contains(connId)) {
-              needsRebuild = true;
-              break;
-            }
-          }
-          
-          if (needsRebuild) break;
         }
       }
     }

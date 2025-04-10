@@ -129,14 +129,20 @@ class LocationDialog {
   ) async {
     bool wasUpdated = false;
     
-    // Get connected locations
-    final connectedLocations = <Location>[];
-    for (final connectedId in location.connectedLocationIds) {
-      final connectedLocation = locationService.getLocationById(connectedId);
-      if (connectedLocation != null) {
-        connectedLocations.add(connectedLocation);
+    // Function to get updated connected locations
+    List<Location> getConnectedLocations() {
+      final connectedLocs = <Location>[];
+      for (final connectedId in location.connectedLocationIds) {
+        final connectedLocation = locationService.getLocationById(connectedId);
+        if (connectedLocation != null) {
+          connectedLocs.add(connectedLocation);
+        }
       }
+      return connectedLocs;
     }
+    
+    // Initial connected locations
+    var connectedLocations = getConnectedLocations();
     
     await showDialog(
       context: context,
@@ -210,8 +216,22 @@ class LocationDialog {
                                 Navigator.pop(context);
                                 showEditDialog(context, locationService, connectedLocation);
                               },
-                              onAddConnection: () {
-                                _showAddConnectionDialog(context, locationService, location);
+                              onAddConnection: () async {
+                                final wasConnected = await _showAddConnectionDialog(context, locationService, location);
+                                if (wasConnected) {
+                                  // Refresh the connected locations list
+                                  setState(() {
+                                    connectedLocations = getConnectedLocations();
+                                  });
+                                  wasUpdated = true;
+                                }
+                              },
+                              onDisconnect: (connectedLocationId) {
+                                // Refresh the connected locations list
+                                setState(() {
+                                  connectedLocations = getConnectedLocations();
+                                });
+                                wasUpdated = true;
                               },
                               onCreateConnectedLocation: () {
                                 // Close this dialog and show create dialog

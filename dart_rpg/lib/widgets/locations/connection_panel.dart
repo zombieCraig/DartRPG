@@ -22,6 +22,9 @@ class ConnectionPanel extends StatelessWidget {
   /// Callback when the create connected location button is tapped
   final Function() onCreateConnectedLocation;
   
+  /// Callback when a connection is disconnected
+  final Function(String)? onDisconnect;
+  
   /// Whether the panel is in editing mode
   final bool isEditing;
   
@@ -34,6 +37,7 @@ class ConnectionPanel extends StatelessWidget {
     required this.onLocationTap,
     required this.onAddConnection,
     required this.onCreateConnectedLocation,
+    this.onDisconnect,
     this.isEditing = false,
   });
   
@@ -102,10 +106,15 @@ class ConnectionPanel extends StatelessWidget {
                           ) ?? false;
                           
                           if (shouldDisconnect) {
-                            await locationService.disconnectLocations(
+                            final success = await locationService.disconnectLocations(
                               location.id, 
                               connectedLocation.id
                             );
+                            
+                            // Notify parent if disconnect was successful
+                            if (success && onDisconnect != null) {
+                              onDisconnect!(connectedLocation.id);
+                            }
                           }
                         },
                       )

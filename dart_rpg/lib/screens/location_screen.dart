@@ -230,8 +230,19 @@ class LocationScreenState extends State<LocationScreen> {
     List<Location> allLocations,
     List<Location> filteredLocations
   ) {
+    // Create a string representation of all connections
+    String connectionsKey = '';
+    for (final location in allLocations) {
+      if (location.connectedLocationIds.isNotEmpty) {
+        // Sort the IDs to ensure consistent ordering
+        final sortedConnections = List<String>.from(location.connectedLocationIds)..sort();
+        connectionsKey += '${location.id}:[${sortedConnections.join(',')}];';
+      }
+    }
+    
+    // Use both location IDs and connections in the key
     return LocationGraphWidget(
-      key: ValueKey(allLocations.map((l) => l.id).join(',')),
+      key: ValueKey('${allLocations.map((l) => l.id).join(',')}_$connectionsKey'),
       locations: allLocations,
       onLocationTap: (locationId) {
         // When tapped, we just select the location but don't edit it
@@ -248,10 +259,9 @@ class LocationScreenState extends State<LocationScreen> {
             locationService, 
             location
           ).then((wasUpdated) {
-            if (wasUpdated) {
-              // Force a rebuild
-              setState(() {});
-            }
+            // Always force a rebuild when the dialog is closed
+            // This ensures the graph is updated even if wasUpdated is false
+            setState(() {});
           });
         }
       },

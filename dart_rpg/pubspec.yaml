@@ -45,16 +45,16 @@ dependencies:
   # Network and data
   http: ^1.2.1
   uuid: ^4.3.3
-  localstorage: ^5.0.0
+  localstorage: ^6.0.0
   collection: ^1.18.0
   
   # UI components
   flutter_markdown: ^0.7.6+2
-  flutter_quill: ^9.2.1
+  flutter_quill: ^11.2.0
   url_launcher: ^6.2.5
   
   # File handling
-  file_picker: ^9.2.1
+  file_picker: ^10.0.0
   image_picker: ^1.0.7
   graphview: ^1.2.0
 

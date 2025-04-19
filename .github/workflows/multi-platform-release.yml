@@ -104,6 +104,7 @@ jobs:
               cd dart_rpg/${{ matrix.build_path }}
               # Use a more robust PowerShell command with proper quoting to handle multiple files
               powershell "New-Item -ItemType Directory -Path temp_dir; Copy-Item -Path * -Destination temp_dir -Recurse; Compress-Archive -Path temp_dir -DestinationPath '../../../../${ARTIFACT_NAME}'; Remove-Item -Path temp_dir -Recurse -Force"
+
               cd ../../../../
             else
               echo "Error: Directory dart_rpg/${{ matrix.build_path }} does not exist"

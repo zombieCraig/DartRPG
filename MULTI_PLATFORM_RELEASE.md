@@ -78,7 +78,12 @@ The multi-platform release workflow has been updated to address several issues:
    - Added directory verification to provide better error messages if the path is incorrect
    - Added directory listing to help diagnose path issues
 
-3. **macOS Build Verification**:
+3. **Windows Packaging Fix**:
+   - Fixed the PowerShell `Compress-Archive` command that was failing with the error: "A positional parameter cannot be found that accepts argument 'data'"
+   - Implemented a more robust approach using a temporary directory to properly handle multiple files
+   - Added proper quoting around the PowerShell command to ensure it's executed as a single command
+
+4. **macOS Build Verification**:
    - Added file existence verification after creating the macOS zip file
    - Improved error reporting for macOS packaging
 

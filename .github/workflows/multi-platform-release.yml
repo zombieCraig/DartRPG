@@ -102,7 +102,8 @@ jobs:
             # Verify the directory exists before accessing it
             if [ -d "dart_rpg/${{ matrix.build_path }}" ]; then
               cd dart_rpg/${{ matrix.build_path }}
-              powershell Compress-Archive -Path * -DestinationPath "../../../../${ARTIFACT_NAME}"
+              # Use a more robust PowerShell command with proper quoting to handle multiple files
+              powershell "$tempDir = 'temp_' + [guid]::NewGuid().ToString(); New-Item -ItemType Directory -Path $tempDir; Copy-Item -Path * -Destination $tempDir -Recurse; Compress-Archive -Path $tempDir -DestinationPath '../../../../${ARTIFACT_NAME}'; Remove-Item -Path $tempDir -Recurse -Force"
               cd ../../../../
             else
               echo "Error: Directory dart_rpg/${{ matrix.build_path }} does not exist"

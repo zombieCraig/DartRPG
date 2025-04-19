@@ -13,6 +13,7 @@ class DataswornProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   String? _currentSource;
+  bool _customOraclesLoaded = false;
 
   List<Move> get moves => _moves;
   List<OracleCategory> get oracles => _oracles;
@@ -20,6 +21,7 @@ class DataswornProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   String? get currentSource => _currentSource;
+  bool get customOraclesLoaded => _customOraclesLoaded;
 
   // Load data from a Datasworn JSON file
   Future<void> loadDatasworn(String assetPath) async {
@@ -74,6 +76,58 @@ class DataswornProvider extends ChangeNotifier {
       _isLoading = false;
       _error = 'Failed to load Datasworn data: ${e.toString()}';
       notifyListeners();
+    }
+  }
+
+  // Load custom oracles from the custom_oracles.json file
+  Future<void> loadCustomOracles() async {
+    final loggingService = LoggingService();
+    loggingService.debug('Loading custom oracles', tag: 'DataswornProvider');
+    
+    if (_customOraclesLoaded) {
+      loggingService.debug('Custom oracles already loaded, skipping', tag: 'DataswornProvider');
+      return;
+    }
+    
+    try {
+      final customData = await DataswornParser.loadDataswornJson('assets/data/custom_oracles.json');
+      loggingService.debug('Successfully loaded custom oracles JSON data', tag: 'DataswornProvider');
+      
+      final customOracles = DataswornParser.parseCustomOracles(customData);
+      loggingService.debug('Parsed ${customOracles.length} custom oracle categories', tag: 'DataswornProvider');
+      
+      // Log custom oracle categories and their tables
+      for (final category in customOracles) {
+        loggingService.debug('Custom oracle category: ${category.name} with ${category.tables.length} tables and ${category.subcategories.length} subcategories', tag: 'DataswornProvider');
+        
+        // Log subcategories if any
+        for (final subcategory in category.subcategories) {
+          loggingService.debug('  Custom subcategory: ${subcategory.name} with ${subcategory.tables.length} tables', tag: 'DataswornProvider');
+          
+          // Log tables in subcategory
+          for (final table in subcategory.tables) {
+            loggingService.debug('    Custom table: ${table.name}', tag: 'DataswornProvider');
+          }
+        }
+        
+        // Log tables in category
+        for (final table in category.tables) {
+          loggingService.debug('  Custom table: ${table.name}', tag: 'DataswornProvider');
+        }
+      }
+      
+      // Merge custom oracles with existing oracles
+      _oracles.addAll(customOracles);
+      loggingService.debug('Merged ${customOracles.length} custom oracle categories with existing oracles', tag: 'DataswornProvider');
+      
+      _customOraclesLoaded = true;
+      notifyListeners();
+      
+      loggingService.debug('Custom oracles loaded successfully', tag: 'DataswornProvider');
+    } catch (e) {
+      loggingService.error('Failed to load custom oracles: ${e.toString()}', tag: 'DataswornProvider');
+      // Don't set _error here, as we don't want to show an error to the user if custom oracles fail to load
+      // The app should still function with just the standard oracles
     }
   }
 

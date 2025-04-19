@@ -16,6 +16,7 @@ class MoveDetails extends StatelessWidget {
   final Function(Move, int) onProgressRoll;
   final Function(Move) onNoRoll;
   final Function(OracleRoll)? onOracleRollAdded;
+  final Function(Move, String)? onQuestRoll;
   
   const MoveDetails({
     super.key,
@@ -25,6 +26,7 @@ class MoveDetails extends StatelessWidget {
     required this.onProgressRoll,
     required this.onNoRoll,
     this.onOracleRollAdded,
+    this.onQuestRoll,
   });
   
   @override
@@ -141,6 +143,7 @@ class MoveDetails extends StatelessWidget {
             ProgressRollPanel(
               move: move,
               onRoll: onProgressRoll,
+              onQuestRoll: onQuestRoll,
             ),
           ] else if (move.rollType == 'no_roll') ...[
             NoRollPanel(

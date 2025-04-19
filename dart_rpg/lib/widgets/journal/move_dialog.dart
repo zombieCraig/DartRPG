@@ -181,6 +181,17 @@ class MoveDialog {
                                       isEditing,
                                     );
                                   },
+                                  onQuestRoll: (move, questId) {
+                                    Navigator.pop(context);
+                                    _rollQuestProgressMove(
+                                      context, 
+                                      move, 
+                                      questId, 
+                                      onMoveRollAdded, 
+                                      onInsertText, 
+                                      isEditing,
+                                    );
+                                  },
                                   onNoRoll: (move) {
                                     Navigator.pop(context);
                                     _performNoRollMove(
@@ -652,6 +663,135 @@ class MoveDialog {
         );
       },
     );
+  }
+
+  /// Rolls a progress move using a quest's progress value.
+  static Future<void> _rollQuestProgressMove(
+    BuildContext context, 
+    Move move, 
+    String questId, 
+    Function(MoveRoll moveRoll) onMoveRollAdded,
+    Function(String text) onInsertText,
+    bool isEditing,
+  ) async {
+    // Get the current game provider
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    
+    try {
+      // Use the existing makeQuestProgressRoll method
+      final result = await gameProvider.makeQuestProgressRoll(questId);
+      
+      // Get the quest to include in the journal entry
+      final quest = gameProvider.currentGame?.quests.firstWhere(
+        (q) => q.id == questId,
+        orElse: () => throw Exception('Quest not found'),
+      );
+      
+      if (quest == null) {
+        throw Exception('Quest not found');
+      }
+      
+      // Create a MoveRoll object
+      final moveRoll = MoveRoll(
+        moveName: move.name,
+        moveDescription: move.description,
+        rollType: 'progress_roll',
+        progressValue: quest.progress,
+        challengeDice: result['challengeDice'] as List<int>,
+        outcome: result['outcome'] as String,
+        actionDie: 0, // Default value for progress rolls
+        moveData: {
+          'moveId': move.id,
+          'questId': questId,
+          'questTitle': quest.title,
+          'questProgress': quest.progress,
+        },
+      );
+      
+      // Add the move roll to the journal entry
+      onMoveRollAdded(moveRoll);
+      
+      // Show the roll result
+      showDialog(
+        context: context,
+        builder: (context) {
+          return RollResultView(
+            move: move,
+            moveRoll: moveRoll,
+            rollResult: {
+              'outcome': result['outcome'],
+              'challengeDice': result['challengeDice'],
+              'progressValue': quest.progress,
+              'questTitle': quest.title,
+            },
+            onClose: () {
+              Navigator.pop(context);
+            },
+            onRollAgain: () {
+              Navigator.pop(context);
+              _rollQuestProgressMove(
+                context, 
+                move, 
+                questId, 
+                onMoveRollAdded, 
+                onInsertText, 
+                isEditing,
+              );
+            },
+            onAddToJournal: (moveRoll) {
+              // Insert the move roll text at the cursor position
+              if (isEditing) {
+                final formattedText = moveRoll.getFormattedText();
+                final questInfo = '\n**Quest:** ${quest.title} (Progress: ${quest.progress}/10)\n';
+                onInsertText(formattedText + questInfo);
+              }
+              
+              // Show confirmation
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Quest progress roll added to journal entry'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            onOracleRollAdded: (oracleRoll) {
+              // Add the oracle roll to the journal entry
+              onMoveRollAdded(MoveRoll(
+                moveName: move.name,
+                moveDescription: move.description,
+                rollType: 'oracle_roll',
+                outcome: 'performed',
+                actionDie: 0,
+                challengeDice: [],
+                moveData: {'moveId': move.id, 'oracleResult': oracleRoll.result},
+              ));
+              
+              // Insert the oracle roll text at the cursor position
+              if (isEditing) {
+                final formattedText = oracleRoll.getFormattedText();
+                onInsertText(formattedText);
+              }
+              
+              // Show confirmation
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Oracle roll added to journal entry'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+          );
+        },
+      );
+    } catch (e) {
+      // Handle errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   /// Performs a move that doesn't require a roll.

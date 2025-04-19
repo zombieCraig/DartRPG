@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/widgets.dart';
 import 'package:dart_rpg/models/character.dart';
 import 'package:dart_rpg/models/game.dart';
 import 'package:dart_rpg/providers/game_provider.dart';

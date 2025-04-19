@@ -8,6 +8,9 @@ import '../models/journal_entry.dart';
 import '../models/character.dart';
 import '../models/location.dart';
 import '../utils/logging_service.dart';
+import '../utils/leet_speak_converter.dart';
+import '../providers/datasworn_provider.dart';
+import '../services/oracle_service.dart';
 import '../widgets/journal/journal_entry_editor.dart';
 import '../widgets/journal/linked_items_summary.dart';
 import '../widgets/journal/journal_entry_viewer.dart';
@@ -679,6 +682,122 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   void _showQuickAddCharacterDialog(BuildContext context) {
     final TextEditingController nameController = TextEditingController();
     final TextEditingController handleController = TextEditingController();
+    final FocusNode handleFocusNode = FocusNode();
+    final LoggingService loggingService = LoggingService();
+    
+    // Handle focus change for the handle field
+    handleFocusNode.addListener(() {
+      if (handleFocusNode.hasFocus && 
+          handleController.text.isEmpty && 
+          nameController.text.isNotEmpty) {
+        // Generate handle from name
+        final character = Character(name: nameController.text);
+        handleController.text = character.getHandle();
+        loggingService.debug(
+          'Auto-generated handle: ${handleController.text}',
+          tag: 'JournalEntryScreen',
+        );
+      }
+    });
+    
+    // Generate a random handle from the fe_runner_handles oracle
+    Future<void> _generateRandomHandle() async {
+      final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+      
+      // Try to find the fe_runner_handles oracle table
+      final oracleTable = OracleService.findOracleTableByKeyAnywhere('fe_runner_handles', dataswornProvider);
+      
+      if (oracleTable == null) {
+        loggingService.warning(
+          'Could not find fe_runner_handles oracle table',
+          tag: 'JournalEntryScreen',
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not find runner handles oracle table'),
+          ),
+        );
+        return;
+      }
+      
+      // Roll on the oracle table
+      final rollResult = OracleService.rollOnOracleTable(oracleTable);
+      
+      if (rollResult['success'] == true) {
+        final oracleRoll = rollResult['oracleRoll'];
+        final initialResult = oracleRoll.result;
+        
+        // Process any oracle references in the result
+        loggingService.debug(
+          'Processing oracle references in handle result: $initialResult',
+          tag: 'JournalEntryScreen',
+        );
+        
+        // Process the references
+        final processResult = await OracleService.processOracleReferences(initialResult, dataswornProvider);
+        
+        String finalResult;
+        if (processResult['success'] == true) {
+          finalResult = processResult['processedText'] as String;
+          loggingService.debug(
+            'Processed result: $finalResult',
+            tag: 'JournalEntryScreen',
+          );
+        } else {
+          // If processing fails, use the initial result
+          finalResult = initialResult;
+          loggingService.warning(
+            'Failed to process oracle references: ${processResult['error']}',
+            tag: 'JournalEntryScreen',
+          );
+        }
+        
+        // Append the result to the current handle
+        final currentHandle = handleController.text;
+        if (currentHandle.isNotEmpty) {
+          handleController.text = '$currentHandle$finalResult';
+        } else {
+          handleController.text = finalResult;
+        }
+        
+        loggingService.debug(
+          'Generated random handle: ${handleController.text}',
+          tag: 'JournalEntryScreen',
+        );
+      } else {
+        loggingService.warning(
+          'Failed to roll on fe_runner_handles oracle table: ${rollResult['error']}',
+          tag: 'JournalEntryScreen',
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate random handle: ${rollResult['error']}'),
+          ),
+        );
+      }
+    }
+    
+    // Convert the current handle to leet speak
+    void _convertToLeetSpeak() {
+      final currentHandle = handleController.text;
+      if (currentHandle.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a handle first'),
+          ),
+        );
+        return;
+      }
+      
+      // Convert to leet speak
+      final leetHandle = LeetSpeakConverter.convert(currentHandle);
+      handleController.text = leetHandle;
+      
+      loggingService.debug(
+        'Converted handle to leet speak: $leetHandle',
+        tag: 'JournalEntryScreen',
+      );
+    }
     
     showDialog(
       context: context,
@@ -698,13 +817,30 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                   autofocus: true,
                 ),
                 const SizedBox(height: 16),
-                TextField(
-                  controller: handleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Short Name or Handle',
-                    helperText: 'No spaces, @, #, or brackets. Will default to first name if blank.',
-                    border: OutlineInputBorder(),
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: handleController,
+                        focusNode: handleFocusNode,
+                        decoration: const InputDecoration(
+                          labelText: 'Short Name or Handle',
+                          helperText: 'No spaces, @, #, or brackets. Will default to first name if blank.',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.casino),
+                      tooltip: 'Random Handle',
+                      onPressed: () async => await _generateRandomHandle(),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.terminal),
+                      tooltip: 'Make l33t',
+                      onPressed: _convertToLeetSpeak,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -718,6 +854,11 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
             ),
             TextButton(
               onPressed: () async {
+                // If name is empty but handle is not, use handle as name
+                if (nameController.text.isEmpty && handleController.text.isNotEmpty) {
+                  nameController.text = handleController.text;
+                }
+                
                 if (nameController.text.isNotEmpty) {
                   final gameProvider = Provider.of<GameProvider>(context, listen: false);
                   final character = await gameProvider.createCharacter(
@@ -732,6 +873,14 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                   if (context.mounted) {
                     Navigator.pop(context);
                   }
+                } else {
+                  // Show error if both name and handle are empty
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please enter a name or handle'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
                 }
               },
               child: const Text('Add'),

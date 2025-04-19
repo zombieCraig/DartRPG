@@ -123,11 +123,6 @@ class AutocompleteSystem {
     String text,
     int cursorPosition,
   ) {
-    // Find the start of the current word
-    final textBeforeCursor = text.substring(0, cursorPosition);
-    final lastSpaceOrNewline = textBeforeCursor.lastIndexOf(RegExp(r'[\s\n]'));
-    final wordStart = lastSpaceOrNewline + 1;
-    
     // Create the mention text
     String mentionText;
     String entityId;
@@ -139,6 +134,38 @@ class AutocompleteSystem {
     } else {
       mentionText = '#${entity.name}';
       entityId = entity.id;
+    }
+    
+    // Handle empty text or cursor at position 0
+    if (text.isEmpty || cursorPosition == 0) {
+      return {
+        'text': mentionText + (text.isEmpty ? '' : text),
+        'cursorPosition': mentionText.length,
+        'entityId': entityId,
+        'isCharacter': entity is Character,
+      };
+    }
+    
+    // Find the start of the current word
+    final textBeforeCursor = text.substring(0, cursorPosition);
+    final lastSpaceOrNewline = textBeforeCursor.lastIndexOf(RegExp(r'[\s\n]'));
+    final wordStart = lastSpaceOrNewline + 1;
+    
+    // Ensure wordStart is valid and within the text
+    if (wordStart < 0 || wordStart > text.length || wordStart > cursorPosition) {
+      // Just insert at cursor position if we can't find a valid word start
+      final newText = text.substring(0, cursorPosition) + mentionText + text.substring(cursorPosition);
+      final newCursorPosition = cursorPosition + mentionText.length;
+      
+      // Clear the suggestion
+      _clearInlineSuggestion();
+      
+      return {
+        'text': newText,
+        'cursorPosition': newCursorPosition,
+        'entityId': entityId,
+        'isCharacter': entity is Character,
+      };
     }
     
     // Replace the current word with the mention

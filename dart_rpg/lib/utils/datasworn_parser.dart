@@ -90,6 +90,75 @@ class DataswornParser {
     return categories;
   }
   
+  // Parse custom oracles from the custom_oracles.json file
+  static List<OracleCategory> parseCustomOracles(Map<String, dynamic> customData) {
+    final loggingService = LoggingService();
+    final List<OracleCategory> categories = [];
+    
+    loggingService.debug('Parsing custom oracles', tag: 'DataswornParser');
+    loggingService.debug('Top-level keys in custom data: ${customData.keys.join(', ')}', tag: 'DataswornParser');
+    
+    // Process custom_oracles section
+    if (customData['custom_oracles'] != null) {
+      customData['custom_oracles'].forEach((categoryId, categoryJson) {
+        loggingService.debug('Processing custom oracle category: $categoryId', tag: 'DataswornParser');
+        
+        if (categoryJson['type'] == 'oracle_collection') {
+          // Check if this category has contents
+          if (categoryJson['contents'] != null && categoryJson['contents'].isNotEmpty) {
+            loggingService.debug('Found contents in custom category: $categoryId with ${categoryJson['contents'].length} items', tag: 'DataswornParser');
+            
+            // Create tables for this category
+            List<OracleTable> tables = [];
+            List<OracleCategory> subcategories = [];
+            
+            categoryJson['contents'].forEach((tableId, tableJson) {
+              loggingService.debug('Processing custom table: $tableId, type: ${tableJson['type']}', tag: 'DataswornParser');
+              
+              if (tableJson['type'] == 'oracle_rollable') {
+                final table = OracleTable.fromDatasworn(tableJson, tableId);
+                tables.add(table);
+                loggingService.debug('Added custom table: ${table.name}', tag: 'DataswornParser');
+              } else if (tableJson['type'] == 'oracle_collection') {
+                // Handle subcategories if needed
+                final subcategory = OracleCategory.fromDatasworn(tableJson, tableId);
+                if (subcategory.tables.isNotEmpty || subcategory.subcategories.isNotEmpty) {
+                  subcategories.add(subcategory);
+                  loggingService.debug('Added custom subcategory: ${subcategory.name}', tag: 'DataswornParser');
+                }
+              }
+            });
+            
+            // Create the category
+            final category = OracleCategory(
+              id: categoryId,
+              name: categoryJson['name'] ?? 'Unknown Category',
+              description: categoryJson['summary'],
+              tables: tables,
+              subcategories: subcategories,
+            );
+            
+            if (category.tables.isNotEmpty || category.subcategories.isNotEmpty) {
+              categories.add(category);
+              loggingService.debug('Added custom category: ${category.name} with ${category.tables.length} tables and ${category.subcategories.length} subcategories', tag: 'DataswornParser');
+            }
+          } else if (categoryJson['collections'] != null && categoryJson['collections'].isNotEmpty) {
+            loggingService.debug('Found collections in custom category: $categoryId', tag: 'DataswornParser');
+            
+            // Create a category for this collection
+            final category = _parseCollectionCategory(categoryJson, categoryId);
+            if (category.subcategories.isNotEmpty) {
+              categories.add(category);
+              loggingService.debug('Added custom collection category: ${category.name} with ${category.subcategories.length} subcategories', tag: 'DataswornParser');
+            }
+          }
+        }
+      });
+    }
+    
+    return categories;
+  }
+  
   // Parse a category with collections
   static OracleCategory _parseCollectionCategory(Map<String, dynamic> categoryJson, String categoryId) {
     final loggingService = LoggingService();

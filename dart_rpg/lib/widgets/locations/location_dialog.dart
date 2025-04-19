@@ -15,6 +15,9 @@ class LocationDialog {
     // Determine valid segments based on the connection
     List<LocationSegment> validSegments = LocationSegment.values.toList();
     
+    // Get all available locations for the connection dropdown
+    List<Location> availableConnections = [];
+    
     if (connectToLocationId != null) {
       final sourceLocation = locationService.getLocationById(connectToLocationId);
       if (sourceLocation != null) {
@@ -29,6 +32,9 @@ class LocationDialog {
           validSegments = LocationSegment.values.toList();
         }
       }
+    } else {
+      // Only get available connections if we're not already creating a connected location
+      availableConnections = locationService.gameProvider.currentGame?.locations ?? [];
     }
     
     Location? createdLocation;
@@ -61,14 +67,18 @@ class LocationDialog {
                       children: [
                         LocationForm(
                           validSegments: validSegments,
-                          onSave: (name, description, segment, imageUrl, nodeType) async {
+                          availableConnections: connectToLocationId == null ? availableConnections : null,
+                          onSave: (name, description, segment, imageUrl, nodeType, connectionId) async {
+                            // Determine which location to connect to
+                            final effectiveConnectionId = connectToLocationId ?? connectionId;
+                            
                             // Create the location
                             final location = await locationService.createLocation(
                               name: name,
                               description: description,
                               segment: segment,
                               nodeType: nodeType,
-                              connectToLocationId: connectToLocationId,
+                              connectToLocationId: effectiveConnectionId,
                             );
                             
                             if (location != null && imageUrl != null) {
@@ -176,7 +186,7 @@ class LocationDialog {
                             LocationForm(
                               initialLocation: location,
                               validSegments: LocationSegment.values,
-                              onSave: (name, description, segment, imageUrl, nodeType) async {
+                              onSave: (name, description, segment, imageUrl, nodeType, _) async {
                                 // Update the location
                                 final success = await locationService.updateLocation(
                                   locationId: location.id,

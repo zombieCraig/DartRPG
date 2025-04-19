@@ -204,7 +204,12 @@ class _LoadingScreenState extends State<LoadingScreen> {
     if (widget.dataswornSource != null) {
       try {
         final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+        
+        // Load the standard Datasworn data
         await dataswornProvider.loadDatasworn(widget.dataswornSource!);
+        
+        // Load custom oracles
+        await dataswornProvider.loadCustomOracles();
         
         if (mounted) {
           // Calculate elapsed time

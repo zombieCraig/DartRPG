@@ -11,15 +11,26 @@ The current development focus is on restructuring the application's components t
 5. Restructuring the Location Graph System into specialized components (completed)
 6. Implementing the Countdown Clock feature for tracking game events (completed)
 7. Addressing code quality issues and deprecated functions (completed)
-8. Planning for future restructuring of the Character Management System
-9. Enhancing test coverage for restructured components
-10. Improving performance for complex journal entries and large datasets
-11. Refining UI for better user experience
-12. Documenting the restructured architecture
+8. Fixing GitHub Actions workflow for multi-platform builds (completed)
+9. Planning for future restructuring of the Character Management System
+10. Enhancing test coverage for restructured components
+11. Improving performance for complex journal entries and large datasets
+12. Refining UI for better user experience
+13. Documenting the restructured architecture
 
 This work enhances the overall architecture of the application, making it more maintainable and reducing the risk of data loss when making changes to complex features.
 
 ## Recent Changes
+
+### GitHub Actions Workflow Fixes (April 2025)
+- Fixed issues with the multi-platform release GitHub Actions workflow:
+  - Replaced the deprecated `actions/upload-release-asset@v1` action with the modern `softprops/action-gh-release@v1` to resolve the warning about the deprecated `set-output` command
+  - Updated the Windows build path to include the `x64` directory: `build/windows/x64/runner/Release`
+  - Added directory verification to provide better error messages if the path is incorrect
+  - Added directory listing to help diagnose path issues
+  - Added file existence verification after creating the macOS zip file
+  - Improved error reporting for macOS packaging
+  - Updated the MULTI_PLATFORM_RELEASE.md documentation to reflect these changes
 
 ### Location Graph "Fit to Screen" Functionality Fix (April 2025)
 - Fixed the "fit to screen" button in the Location Graph System to ensure all nodes are visible:

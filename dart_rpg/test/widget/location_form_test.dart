@@ -24,6 +24,8 @@ class MockDataswornProvider extends ChangeNotifier implements DataswornProvider 
 }
 
 void main() {
+  // Initialize Flutter binding
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('LocationForm Widget Tests', () {
     late MockDataswornProvider mockDataswornProvider;
     
@@ -44,7 +46,7 @@ void main() {
               value: mockDataswornProvider,
               child: LocationForm(
                 validSegments: LocationSegment.values,
-                onSave: (name, description, segment, imageUrl, nodeType) {},
+                onSave: (name, description, segment, imageUrl, nodeType, connectionId) {},
               ),
             ),
           ),
@@ -54,9 +56,9 @@ void main() {
       // Verify that a disabled text field is shown
       expect(find.text('No node types available'), findsOneWidget);
       
-      // Verify that the random buttons exist
-      expect(find.text('Random Segment Location'), findsOneWidget);
-      expect(find.text('Random Any Node Type'), findsOneWidget);
+      // Verify that the random buttons exist - using icon finders since text may vary by screen size
+      expect(find.byIcon(Icons.casino), findsOneWidget);
+      expect(find.byIcon(Icons.shuffle), findsOneWidget);
     });
     
     testWidgets('LocationForm shows dropdown when node types are available', 
@@ -75,7 +77,7 @@ void main() {
               value: mockDataswornProvider,
               child: LocationForm(
                 validSegments: LocationSegment.values,
-                onSave: (name, description, segment, imageUrl, nodeType) {},
+                onSave: (name, description, segment, imageUrl, nodeType, connectionId) {},
               ),
             ),
           ),
@@ -85,9 +87,9 @@ void main() {
       // Verify that a dropdown is shown
       expect(find.byType(DropdownButtonFormField<NodeTypeInfo>), findsOneWidget);
       
-      // Verify that the random buttons exist
-      expect(find.text('Random Segment Location'), findsOneWidget);
-      expect(find.text('Random Any Node Type'), findsOneWidget);
+      // Verify that the random buttons exist - using icon finders since text may vary by screen size
+      expect(find.byIcon(Icons.casino), findsOneWidget);
+      expect(find.byIcon(Icons.shuffle), findsOneWidget);
     });
   });
 }

@@ -65,6 +65,23 @@ The workflow automatically updates the version in `pubspec.yaml` to match your r
 - The build number is set to the GitHub run number for uniqueness
 - The resulting version in `pubspec.yaml` will be something like `1.2.3+123`
 
+## Recent Workflow Updates
+
+The multi-platform release workflow has been updated to address several issues:
+
+1. **Deprecated GitHub Actions Commands**: 
+   - Replaced the deprecated `actions/upload-release-asset@v1` action with the modern `softprops/action-gh-release@v1`
+   - This resolves the warning about the deprecated `set-output` command
+
+2. **Windows Build Path Fix**:
+   - Updated the Windows build path to include the `x64` directory: `build/windows/x64/runner/Release`
+   - Added directory verification to provide better error messages if the path is incorrect
+   - Added directory listing to help diagnose path issues
+
+3. **macOS Build Verification**:
+   - Added file existence verification after creating the macOS zip file
+   - Improved error reporting for macOS packaging
+
 ## Troubleshooting
 
 ### Build Failures
@@ -83,6 +100,14 @@ If builds fail due to missing dependencies:
 - For macOS: Check the "macOS setup" step in the workflow
 - For Windows: Ensure all required dependencies are installed
 
+### Path Issues
+
+If builds fail due to path issues:
+
+- For Windows: Check the "Package application" step logs for the directory listing
+- For macOS: Check the "Package application" step logs for file verification
+- Verify that the build paths in the workflow match the actual output paths of your Flutter build
+
 ### Version Issues
 
 If the version isn't updating correctly:
@@ -98,3 +123,5 @@ Potential future enhancements to the release process:
 - Creating proper installers for each platform
 - Automated changelog generation
 - Notarization for macOS builds
+- Improved error handling and reporting
+- Build caching to speed up the process

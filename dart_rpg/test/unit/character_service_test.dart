@@ -41,6 +41,8 @@ class MockGameProvider extends GameProvider {
 }
 
 void main() {
+  // Initialize Flutter binding
+  TestWidgetsFlutterBinding.ensureInitialized();
   group('CharacterService', () {
     late MockGameProvider mockGameProvider;
     late CharacterService characterService;

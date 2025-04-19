@@ -14,14 +14,18 @@ class LocationForm extends StatefulWidget {
   /// The list of valid segments that can be selected
   final List<LocationSegment> validSegments;
   
+  /// List of available locations to connect to (optional)
+  final List<Location>? availableConnections;
+  
   /// Callback when the form is saved
-  final Function(String name, String? description, LocationSegment segment, String? imageUrl, String? nodeType) onSave;
+  final Function(String name, String? description, LocationSegment segment, String? imageUrl, String? nodeType, String? connectionId) onSave;
   
   /// Creates a new LocationForm
   const LocationForm({
     super.key,
     this.initialLocation,
     required this.validSegments,
+    this.availableConnections,
     required this.onSave,
   });
 
@@ -36,6 +40,7 @@ class _LocationFormState extends State<LocationForm> {
   late TextEditingController _imageUrlController;
   late LocationSegment _selectedSegment;
   NodeTypeInfo? _selectedNodeType;
+  String? _selectedConnectionId;
   final LoggingService _loggingService = LoggingService();
   List<NodeTypeInfo> _nodeTypes = [];
   
@@ -315,6 +320,40 @@ class _LocationFormState extends State<LocationForm> {
                   },
                 ),
           
+          // Connection selector (only shown when creating a new location and connections are available)
+          if (widget.initialLocation == null && widget.availableConnections != null && widget.availableConnections!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _selectedConnectionId,
+              decoration: const InputDecoration(
+                labelText: 'Connect to (optional)',
+                hintText: 'Select a location to connect to',
+                border: OutlineInputBorder(),
+              ),
+              items: [
+                const DropdownMenuItem<String>(
+                  value: null,
+                  child: Text('None'),
+                ),
+                ...widget.availableConnections!.map((location) {
+                  return DropdownMenuItem<String>(
+                    value: location.id,
+                    // Use a simpler layout to avoid flex layout issues
+                    child: Text(
+                      '${location.name} (${location.segment.displayName})',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                }),
+              ],
+              onChanged: (value) {
+                setState(() {
+                  _selectedConnectionId = value;
+                });
+              },
+            ),
+          ],
+          
           // Random buttons
           const SizedBox(height: 8),
           LayoutBuilder(
@@ -426,6 +465,7 @@ class _LocationFormState extends State<LocationForm> {
                       _selectedSegment,
                       _imageUrlController.text.isEmpty ? null : _imageUrlController.text,
                       _selectedNodeType?.key,
+                      _selectedConnectionId,
                     );
                   }
                 },

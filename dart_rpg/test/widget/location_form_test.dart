@@ -46,7 +46,7 @@ void main() {
               value: mockDataswornProvider,
               child: LocationForm(
                 validSegments: LocationSegment.values,
-                onSave: (name, description, segment, imageUrl, nodeType) {},
+                onSave: (name, description, segment, imageUrl, nodeType, connectionId) {},
               ),
             ),
           ),
@@ -77,7 +77,7 @@ void main() {
               value: mockDataswornProvider,
               child: LocationForm(
                 validSegments: LocationSegment.values,
-                onSave: (name, description, segment, imageUrl, nodeType) {},
+                onSave: (name, description, segment, imageUrl, nodeType, connectionId) {},
               ),
             ),
           ),

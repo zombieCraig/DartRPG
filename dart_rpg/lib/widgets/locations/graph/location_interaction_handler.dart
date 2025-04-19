@@ -57,8 +57,6 @@ class LocationInteractionHandler {
   
   /// Handles node drag start
   void handleNodeDragStart(String locationId) {
-    if (controller.autoArrangeEnabled) return;
-    
     _isDragging = true;
     
     // Tell the controller to disable autosaving during drag
@@ -72,8 +70,6 @@ class LocationInteractionHandler {
   
   /// Handles node drag update
   void handleNodeDragUpdate(String locationId, DragUpdateDetails details) {
-    if (controller.autoArrangeEnabled) return;
-    
     // If this is the first update and we didn't catch the start event
     if (!_isDragging) {
       handleNodeDragStart(locationId);
@@ -82,8 +78,14 @@ class LocationInteractionHandler {
     // Calculate the delta in the graph's coordinate system
     final delta = details.delta;
     
-    // Update position without saving
-    controller.updateNodePositionWithoutSaving(locationId, delta.dx, delta.dy);
+    if (controller.autoArrangeEnabled) {
+      // Apply a force to the node in the direction of the drag
+      final force = Offset(delta.dx, delta.dy) * 5.0; // Scale for more noticeable effect
+      controller.applyRepulsiveForce(locationId, force);
+    } else {
+      // Update position without saving
+      controller.updateNodePositionWithoutSaving(locationId, delta.dx, delta.dy);
+    }
     
     // Call the drag update callback
     if (onDragUpdate != null) {
@@ -93,14 +95,19 @@ class LocationInteractionHandler {
   
   /// Handles node drag end
   void handleNodeDragEnd(String locationId, DragEndDetails details) {
-    if (!_isDragging || controller.autoArrangeEnabled) return;
+    if (!_isDragging) return;
     
     // Reset drag state
     _isDragging = false;
     
-    // Tell the controller to re-enable autosaving and save the current state
-    controller.setDragInProgress(false);
-    controller.saveCurrentPositions();
+    if (!controller.autoArrangeEnabled) {
+      // Tell the controller to re-enable autosaving and save the current state
+      controller.setDragInProgress(false);
+      controller.saveCurrentPositions();
+    } else {
+      // For auto-arrange mode, update positions from the force-directed layout
+      controller.updatePositionsFromForceDirectedLayout();
+    }
     
     // Call the drag end callback
     if (onDragEnd != null) {

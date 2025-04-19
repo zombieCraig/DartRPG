@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:collection/collection.dart';
 import 'dart:async';
+import 'dart:math' as math;
 import '../../../models/location.dart';
 import '../../../models/game.dart';
 import 'location_graph_controller.dart';
@@ -80,6 +81,9 @@ class LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPro
   // Timer for forcing UI updates during dragging
   Timer? _dragUpdateTimer;
   
+  // Timer for force-directed layout updates
+  Timer? _forceUpdateTimer;
+  
   @override
   void initState() {
     super.initState();
@@ -91,7 +95,11 @@ class LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPro
       onLocationMoved: widget.onLocationMoved,
       onScaleChanged: widget.onScaleChanged,
       game: widget.game,
+      tickerProvider: this,
     );
+    
+    // Start a timer to update the UI when force-directed layout is active
+    _startForceUpdateTimer();
     
     _nodeRenderer = const LocationNodeRenderer();
     _edgeRenderer = const LocationEdgeRenderer();
@@ -218,7 +226,31 @@ class LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPro
     _dataFlowController.dispose();
     _controller.dispose();
     _stopDragUpdateTimer();
+    _stopForceUpdateTimer();
     super.dispose();
+  }
+  
+  /// Starts a timer to update the UI when force-directed layout is active
+  void _startForceUpdateTimer() {
+    // Cancel any existing timer
+    _stopForceUpdateTimer();
+    
+    // Start a new timer that triggers a rebuild every 16ms (approximately 60fps)
+    _forceUpdateTimer = Timer.periodic(const Duration(milliseconds: 16), (_) {
+      if (mounted && _controller.autoArrangeEnabled && _controller.isSimulationRunning) {
+        _controller.updatePositionsFromForceDirectedLayout();
+        
+        setState(() {
+          // Just trigger a rebuild to update the UI
+        });
+      }
+    });
+  }
+  
+  /// Stops the force update timer
+  void _stopForceUpdateTimer() {
+    _forceUpdateTimer?.cancel();
+    _forceUpdateTimer = null;
   }
   
   /// Starts a timer to force UI updates during dragging
@@ -458,15 +490,41 @@ class LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPro
           animation: _pulseAnimation,
           builder: (context, child) {
             return GestureDetector(
-              onTap: () => _interactionHandler.handleNodeTap(location.id),
+              onTap: () {
+                // Apply a strong repulsive force from the rig node when tapped
+                if (_controller.autoArrangeEnabled) {
+                  // Create a force that radiates outward in all directions
+                  final random = math.Random();
+                  for (final otherLocation in widget.locations) {
+                    if (otherLocation.id == location.id) continue;
+                    
+                    // Calculate direction from rig to other node
+                    final otherPos = _controller.nodePositionsByLocationId[otherLocation.id] ?? Offset.zero;
+                    final rigPos = _controller.nodePositionsByLocationId[location.id] ?? Offset.zero;
+                    final direction = otherPos - rigPos;
+                    
+                    // Normalize and scale
+                    final distance = direction.distance;
+                    if (distance > 0.1) {
+                      final normalizedDirection = direction / distance;
+                      // Add some randomness to the force
+                      final jitter = Offset(
+                        (random.nextDouble() - 0.5) * 0.5,
+                        (random.nextDouble() - 0.5) * 0.5
+                      );
+                      final force = (normalizedDirection + jitter) * 20000.0;
+                      
+                      // Apply force to the other node
+                      _controller.applyRepulsiveForce(otherLocation.id, force);
+                    }
+                  }
+                }
+                _interactionHandler.handleNodeTap(location.id);
+              },
               onDoubleTap: () => _interactionHandler.handleNodeDoubleTap(location.id),
               onPanStart: (_) => _interactionHandler.handleNodeDragStart(location.id),
-              onPanUpdate: !_controller.autoArrangeEnabled
-                ? (details) => _interactionHandler.handleNodeDragUpdate(location.id, details)
-                : null,
-              onPanEnd: !_controller.autoArrangeEnabled
-                ? (details) => _interactionHandler.handleNodeDragEnd(location.id, details)
-                : null,
+              onPanUpdate: (details) => _interactionHandler.handleNodeDragUpdate(location.id, details),
+              onPanEnd: (details) => _interactionHandler.handleNodeDragEnd(location.id, details),
               child: _nodeRenderer.buildNode(
                 location: location,
                 isHighlighted: isHighlighted,
@@ -484,12 +542,8 @@ class LocationGraphWidgetState extends State<LocationGraphWidget> with TickerPro
           onTap: () => _interactionHandler.handleNodeTap(location.id),
           onDoubleTap: () => _interactionHandler.handleNodeDoubleTap(location.id),
           onPanStart: (_) => _interactionHandler.handleNodeDragStart(location.id),
-          onPanUpdate: !_controller.autoArrangeEnabled
-            ? (details) => _interactionHandler.handleNodeDragUpdate(location.id, details)
-            : null,
-          onPanEnd: !_controller.autoArrangeEnabled
-            ? (details) => _interactionHandler.handleNodeDragEnd(location.id, details)
-            : null,
+          onPanUpdate: (details) => _interactionHandler.handleNodeDragUpdate(location.id, details),
+          onPanEnd: (details) => _interactionHandler.handleNodeDragEnd(location.id, details),
           child: _nodeRenderer.buildNode(
             location: location,
             isHighlighted: isHighlighted,

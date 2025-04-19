@@ -3,6 +3,7 @@ import 'package:graphview/GraphView.dart';
 import '../../../models/location.dart';
 import '../../../models/game.dart';
 import 'dart:math' as math;
+import 'force_directed_layout_controller.dart';
 
 /// A controller for managing the location graph state and logic
 class LocationGraphController {
@@ -27,7 +28,6 @@ class LocationGraphController {
   /// The current scale of the graph
   double scale = 1.0;
   
-  
   /// Map to store positions that need to be saved after drag
   final Map<String, Offset> _pendingSavePositions = {};
   
@@ -49,6 +49,15 @@ class LocationGraphController {
   /// Callback when the scale is changed
   final Function(double scale)? onScaleChanged;
   
+  /// The force-directed layout controller
+  ForceDirectedLayoutController? _forceDirectedLayoutController;
+  
+  /// The ticker provider for animations
+  final TickerProvider _tickerProvider;
+  
+  /// Flag to disable saving during animation
+  bool _savingDisabled = false;
+  
   /// Creates a new LocationGraphController
   LocationGraphController({
     this.onLocationTap,
@@ -56,7 +65,8 @@ class LocationGraphController {
     this.onLocationMoved,
     this.onScaleChanged,
     this.game,
-  }) {
+    required TickerProvider tickerProvider,
+  }) : _tickerProvider = tickerProvider {
     // Initialize with FruchtermanReingoldAlgorithm
     algorithm = FruchtermanReingoldAlgorithm(iterations: 100);
   }
@@ -75,8 +85,8 @@ class LocationGraphController {
       nodeMap[location.id] = node;
       graph.addNode(node);
       
-      // Initialize node positions from saved locations or generate random positions
-      if (!autoArrangeEnabled && location.x != null && location.y != null) {
+      // Always try to use saved positions first, regardless of auto-arrange setting
+      if (location.x != null && location.y != null) {
         final position = Offset(location.x!, location.y!);
         nodePositions[node] = position;
         nodePositionsByLocationId[location.id] = position;
@@ -134,10 +144,35 @@ class LocationGraphController {
       iterations: autoArrangeEnabled ? 1000 : 100
     );
     
-    // If auto-arrange is enabled, position nodes in a more structured way
+    // Initialize force-directed layout controller if auto-arrange is enabled
     if (autoArrangeEnabled) {
+      _initializeForceDirectedLayout(locations);
+    } else {
+      // If auto-arrange is disabled, position nodes in a more structured way
       _arrangeNodesInCircle(locations);
     }
+  }
+  
+  /// Initializes the force-directed layout controller
+  void _initializeForceDirectedLayout(List<Location> locations) {
+    // Create the controller if it doesn't exist
+    _forceDirectedLayoutController ??= ForceDirectedLayoutController(
+      vsync: _tickerProvider,
+      repulsionStrength: 20000.0, // Doubled repulsion for more separation
+      attractionStrength: 0.2, // Reduced attraction for less clustering
+      damping: 0.9, // Increased damping for smoother movement
+      maxVelocity: 100.0, // Increased max velocity for more dynamic movement
+      minEnergyThreshold: 1.0, // Increased threshold to allow settling
+      minNodeDistance: 250.0, // Increased minimum distance between nodes
+      maxSimulationTime: 10.0, // Maximum simulation time in seconds
+      onSimulationStateChanged: _handleSimulationStateChanged,
+    );
+    
+    // Initialize with current locations and positions
+    _forceDirectedLayoutController!.initialize(locations, nodePositionsByLocationId);
+    
+    // Start the simulation
+    _forceDirectedLayoutController!.startSimulation();
   }
   
   /// Generates a random position for a node
@@ -146,13 +181,18 @@ class LocationGraphController {
     // The background is 2000x2000 with (0,0) at the center, so valid range is ±1000
     final random = math.Random();
     
-    // Use a smaller range for initial positions to keep nodes closer together
-    // This makes it easier to see all nodes without having to zoom out too much
-    final radius = 500.0; // Radius of the area where nodes can be placed
+    // Use a larger range for initial positions to spread nodes out more
+    // This helps prevent overlapping nodes
+    final radius = 800.0; // Increased radius for better initial spacing
     
-    // Generate a random angle and distance from the center
+    // Use a minimum distance from center to avoid clustering in the middle
+    final minDistance = 200.0;
+    
+    // Generate a random angle
     final angle = random.nextDouble() * 2 * math.pi;
-    final distance = random.nextDouble() * radius;
+    
+    // Generate a random distance from the center, but ensure it's at least minDistance
+    final distance = minDistance + random.nextDouble() * (radius - minDistance);
     
     // Convert polar coordinates to Cartesian coordinates
     final x = distance * math.cos(angle);
@@ -166,8 +206,7 @@ class LocationGraphController {
     autoArrangeEnabled = !autoArrangeEnabled;
     
     if (autoArrangeEnabled) {
-      // When enabling auto-arrange, arrange nodes in a circle by segment
-      // This creates a more visually appealing and organized layout
+      // When enabling auto-arrange, use force-directed layout
       
       // Get locations from the game if available
       List<Location> locations = [];
@@ -189,14 +228,24 @@ class LocationGraphController {
         }
       }
       
-      // Arrange nodes in a circle
-      _arrangeNodesInCircle(locations);
+      // Save current positions before starting force-directed layout
+      // This ensures that if the simulation is stopped, we have the current positions saved
+      for (final entry in nodePositionsByLocationId.entries) {
+        _pendingSavePositions[entry.key] = entry.value;
+      }
+      
+      // Initialize and start force-directed layout
+      _initializeForceDirectedLayout(locations);
       
       // Use more iterations for better layout
       algorithm = FruchtermanReingoldAlgorithm(iterations: 1000);
     } else {
-      // When disabling auto-arrange, keep the current positions
-      // but use fewer iterations to avoid major changes
+      // When disabling auto-arrange, stop the force-directed layout
+      if (_forceDirectedLayoutController != null) {
+        _forceDirectedLayoutController!.stopSimulation();
+      }
+      
+      // Use fewer iterations to avoid major changes
       algorithm = FruchtermanReingoldAlgorithm(iterations: 100);
     }
   }
@@ -222,8 +271,9 @@ class LocationGraphController {
       return;
     }
     
-    // Always arrange nodes in a circle to ensure they're all visible
-    _arrangeNodesInCircle(locations);
+    // Only arrange nodes that don't have saved positions
+    // This preserves the positions of nodes that have been manually positioned
+    _arrangeNodesInCircle(locations, preserveSavedPositions: true);
     
     // Calculate the bounds of all nodes
     double minX = double.infinity;
@@ -346,28 +396,49 @@ class LocationGraphController {
   
   /// Updates the position of a node
   void updateNodePosition(String locationId, double x, double y) {
-    final node = nodeMap[locationId];
-    if (node == null) return;
-    
-    final position = _getNodePosition(node);
-    if (position == null) return;
-    
-    // Update the position
-    final newX = position.dx + x / scale;
-    final newY = position.dy + y / scale;
-    
-    // Enforce boundaries to keep nodes within the fixed-size background
-    // The background is 2000x2000 with (0,0) at the center, so valid range is ±1000
-    final boundedX = math.max(-950.0, math.min(950.0, newX));
-    final boundedY = math.max(-950.0, math.min(950.0, newY));
-    
-    // Store the new position
-    nodePositions[node] = Offset(boundedX, boundedY);
-    nodePositionsByLocationId[locationId] = Offset(boundedX, boundedY);
-    
-    // Notify the callback
-    if (onLocationMoved != null) {
-      onLocationMoved!(locationId, boundedX, boundedY);
+    // If auto-arrange is enabled and force-directed layout is active,
+    // apply a force instead of directly updating the position
+    if (autoArrangeEnabled && _forceDirectedLayoutController != null && _forceDirectedLayoutController!.isSimulating) {
+      // Calculate force based on the drag delta
+      final force = Offset(x, y) * 50.0; // Increased scale for more dramatic effect
+      
+      // Apply force to the node
+      _forceDirectedLayoutController!.applyRepulsiveForce(locationId, force);
+      
+      // Update positions from force-directed layout
+      final positions = _forceDirectedLayoutController!.getNodePositions();
+      for (final entry in positions.entries) {
+        final node = nodeMap[entry.key];
+        if (node != null) {
+          nodePositions[node] = entry.value;
+          nodePositionsByLocationId[entry.key] = entry.value;
+        }
+      }
+    } else {
+      // Traditional direct position update
+      final node = nodeMap[locationId];
+      if (node == null) return;
+      
+      final position = _getNodePosition(node);
+      if (position == null) return;
+      
+      // Update the position
+      final newX = position.dx + x / scale;
+      final newY = position.dy + y / scale;
+      
+      // Enforce boundaries to keep nodes within the fixed-size background
+      // The background is 2000x2000 with (0,0) at the center, so valid range is ±1000
+      final boundedX = math.max(-950.0, math.min(950.0, newX));
+      final boundedY = math.max(-950.0, math.min(950.0, newY));
+      
+      // Store the new position
+      nodePositions[node] = Offset(boundedX, boundedY);
+      nodePositionsByLocationId[locationId] = Offset(boundedX, boundedY);
+      
+      // Notify the callback
+      if (onLocationMoved != null) {
+        onLocationMoved!(locationId, boundedX, boundedY);
+      }
     }
   }
   
@@ -449,12 +520,23 @@ class LocationGraphController {
   }
   
   /// Arranges nodes in a circle
-  void _arrangeNodesInCircle(List<Location> locations) {
+  void _arrangeNodesInCircle(List<Location> locations, {bool preserveSavedPositions = false}) {
     if (locations.isEmpty) return;
+    
+    // If preserveSavedPositions is true, filter out locations that already have saved positions
+    List<Location> locationsToArrange;
+    if (preserveSavedPositions) {
+      locationsToArrange = locations.where((location) => location.x == null || location.y == null).toList();
+      if (locationsToArrange.isEmpty) {
+        return; // No need to arrange any nodes
+      }
+    } else {
+      locationsToArrange = List.from(locations);
+    }
     
     // Group locations by segment
     final Map<LocationSegment, List<Location>> locationsBySegment = {};
-    for (final location in locations) {
+    for (final location in locationsToArrange) {
       if (!locationsBySegment.containsKey(location.segment)) {
         locationsBySegment[location.segment] = [];
       }
@@ -464,15 +546,23 @@ class LocationGraphController {
     // Calculate the radius based on the number of locations
     // Ensure the radius is not too large for the fixed-size background (2000x2000)
     // The maximum safe radius is around 800 to keep nodes within the background
-    final calculatedRadius = math.min(800.0, math.max(200.0, locations.length * 20.0));
+    final calculatedRadius = math.min(800.0, math.max(300.0, locations.length * 30.0));
     
     // Position each segment's locations in a circle
     double segmentStartAngle = 0.0;
     final segmentCount = locationsBySegment.length;
     
+    // Add some spacing between segments
+    const double segmentSpacing = 0.2; // radians
+    
     locationsBySegment.forEach((segment, segmentLocations) {
-      final segmentAngle = 2 * math.pi / segmentCount;
-      final locationAngle = segmentAngle / math.max(1, segmentLocations.length);
+      // Calculate the angle for this segment, leaving some space between segments
+      final segmentAngle = (2 * math.pi - segmentSpacing * segmentCount) / segmentCount;
+      
+      // Calculate the angle for each location, ensuring minimum spacing
+      final minLocationSpacing = 0.3; // minimum radians between locations
+      final calculatedLocationAngle = segmentAngle / math.max(1, segmentLocations.length);
+      final locationAngle = math.max(calculatedLocationAngle, minLocationSpacing);
       
       for (int i = 0; i < segmentLocations.length; i++) {
         final location = segmentLocations[i];
@@ -480,9 +570,23 @@ class LocationGraphController {
         if (node == null) continue;
         
         // Calculate position on the circle
-        final angle = segmentStartAngle + i * locationAngle;
-        final x = calculatedRadius * math.cos(angle);
-        final y = calculatedRadius * math.sin(angle);
+        // Use a spiral layout if there are too many nodes to fit in the segment
+        double angle;
+        double radius;
+        
+        if (locationAngle * segmentLocations.length > segmentAngle) {
+          // Use a spiral layout for this segment
+          angle = segmentStartAngle + (i * segmentAngle / segmentLocations.length);
+          // Increase radius slightly for each node to create a spiral effect
+          radius = calculatedRadius * (0.7 + 0.3 * i / segmentLocations.length);
+        } else {
+          // Use a regular circle layout
+          angle = segmentStartAngle + i * locationAngle;
+          radius = calculatedRadius;
+        }
+        
+        final x = radius * math.cos(angle);
+        final y = radius * math.sin(angle);
         
         // Ensure the position is within the bounds of the fixed-size background
         final boundedX = math.max(-950.0, math.min(950.0, x));
@@ -542,7 +646,27 @@ class LocationGraphController {
   void saveCurrentPositions() {
     if (_pendingSavePositions.isEmpty) return;
     
-    // Notify callbacks for all pending positions
+    // First, directly update the Location objects in the game
+    if (game != null) {
+      for (final entry in _pendingSavePositions.entries) {
+        final locationId = entry.key;
+        final position = entry.value;
+        
+        try {
+          // Find the location in the game
+          final location = game!.locations.firstWhere(
+            (loc) => loc.id == locationId,
+          );
+          
+          // Update the location's position directly
+          location.x = position.dx;
+          location.y = position.dy;
+        } catch (e) {
+        }
+      }
+    }
+    
+    // Then notify callbacks for all pending positions
     for (final entry in _pendingSavePositions.entries) {
       final locationId = entry.key;
       final position = entry.value;
@@ -556,9 +680,113 @@ class LocationGraphController {
     _pendingSavePositions.clear();
   }
   
+  /// Applies a repulsive force from a specific node
+  void applyRepulsiveForce(String locationId, Offset force) {
+    if (_forceDirectedLayoutController != null && _forceDirectedLayoutController!.isSimulating) {
+      _forceDirectedLayoutController!.applyRepulsiveForce(locationId, force);
+    }
+  }
+  
+  /// Checks if the force-directed layout simulation is running
+  bool get isSimulationRunning => 
+      _forceDirectedLayoutController != null && _forceDirectedLayoutController!.isSimulating;
+  
+  /// Disables saving during animation
+  void disableSaving() {
+    _savingDisabled = true;
+  }
+  
+  /// Enables saving and triggers a save of current positions
+  void enableSaving() {
+    _savingDisabled = false;
+    
+    // Create a copy of positions before saving to avoid race conditions
+    Map<String, Offset> positionsToSave = Map.from(_pendingSavePositions);
+    
+    // Ensure all current positions are in the positions to save map
+    if (_forceDirectedLayoutController != null) {
+      final positions = _forceDirectedLayoutController!.getNodePositions();
+      for (final entry in positions.entries) {
+        positionsToSave[entry.key] = entry.value;
+      }
+    }
+    
+    // Save all current positions
+    if (positionsToSave.isNotEmpty) {
+      
+      // Update _pendingSavePositions with our copy
+      _pendingSavePositions.clear();
+      _pendingSavePositions.addAll(positionsToSave);
+      
+      // Save positions
+      saveCurrentPositions();
+      
+      // Force a game save to ensure positions are persisted to the database
+      if (game != null && onLocationMoved != null && game!.locations.isNotEmpty) {
+        // Find any location to use for triggering a save
+        final location = game!.locations.first;
+        // This will trigger the GameProvider to save the game to SharedPreferences
+        onLocationMoved!(location.id, location.x ?? 0, location.y ?? 0);
+      }
+    }
+  }
+  
+  /// Updates node positions from the force-directed layout
+  void updatePositionsFromForceDirectedLayout() {
+    if (_forceDirectedLayoutController == null || !_forceDirectedLayoutController!.isSimulating) return;
+    
+    // Get current positions from force-directed layout
+    final positions = _forceDirectedLayoutController!.getNodePositions();
+    
+    // Update positions in the graph controller
+    for (final entry in positions.entries) {
+      final node = nodeMap[entry.key];
+      if (node != null) {
+        nodePositions[node] = entry.value;
+        nodePositionsByLocationId[entry.key] = entry.value;
+        
+        // Store in pending save positions
+        _pendingSavePositions[entry.key] = entry.value;
+        
+        // Also update the Location objects directly if game is available
+        if (game != null && !_savingDisabled) {
+          try {
+            final location = game!.locations.firstWhere(
+              (loc) => loc.id == entry.key,
+            );
+            
+            // Update the location's position directly
+            location.x = entry.value.dx;
+            location.y = entry.value.dy;
+          } catch (e) {
+            // Ignore if location not found
+          }
+        }
+      }
+    }
+    
+    // Only save positions to the game if saving is not disabled
+    if (!_savingDisabled && onLocationMoved != null) {
+      // We'll save all positions at once when animation stops
+      // This is handled by enableSaving()
+    }
+  }
+  
+  /// Handles simulation state changes from the force-directed layout controller
+  void _handleSimulationStateChanged(bool isSimulating) {
+    if (isSimulating) {
+      // Disable saving when simulation starts
+      disableSaving();
+    } else {
+      // Enable saving when simulation stops
+      enableSaving();
+    }
+  }
+  
   /// Disposes of resources
   void dispose() {
     transformationController.dispose();
+    _forceDirectedLayoutController?.dispose();
   }
 }
 

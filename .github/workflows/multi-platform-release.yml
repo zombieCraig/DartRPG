@@ -97,7 +97,7 @@ jobs:
             zip -r "../../../../${ARTIFACT_NAME}" .
             cd ../../../../
             # Verify the file exists
-            ls -la "${ARTIFACT_NAME}" || echo "File not found: ${ARTIFACT_NAME}"
+            ls -la "${ARTIFACT_NAME}" || { echo "File not found: ${ARTIFACT_NAME}"; exit 1; }
           elif [ "${{ matrix.platform }}" == "Windows" ]; then
             # Verify the directory exists before accessing it
             if [ -d "dart_rpg/${{ matrix.build_path }}" ]; then

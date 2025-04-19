@@ -187,6 +187,12 @@ The DartRPG application is in active development with core functionality impleme
   - ✅ Created LocationInteractionHandler for user interactions
   - ✅ Refactored LocationGraphWidget to use these specialized components
   - ✅ Created comprehensive documentation in a README file
+- ✅ GitHub Actions Workflow Fixes
+  - ✅ Fixed deprecated `set-output` command warning
+  - ✅ Updated Windows build path to include x64 directory
+  - ✅ Added better error handling and diagnostics
+  - ✅ Fixed macOS packaging issues
+  - ✅ Updated documentation
 - ⬜ Testing for Quest system features
 - ⬜ Performance optimization for complex journal entries
 - ⬜ UI refinements for the rich text editor and quest cards
@@ -288,6 +294,17 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Journal Navigation**: Added "Jump to last entry" button on journal screen when entries are scrollable
 
 ## Recent Milestones
+
+### Milestone: GitHub Actions Workflow Fixes (April 2025)
+- ✅ Fixed issues with the multi-platform release GitHub Actions workflow:
+  - ✅ Replaced the deprecated `actions/upload-release-asset@v1` action with the modern `softprops/action-gh-release@v1`
+  - ✅ Resolved the warning about the deprecated `set-output` command
+  - ✅ Updated the Windows build path to include the `x64` directory: `build/windows/x64/runner/Release`
+  - ✅ Added directory verification to provide better error messages if the path is incorrect
+  - ✅ Added directory listing to help diagnose path issues
+  - ✅ Added file existence verification after creating the macOS zip file
+  - ✅ Improved error reporting for macOS packaging
+  - ✅ Updated the MULTI_PLATFORM_RELEASE.md documentation to reflect these changes
 
 ### Milestone: Location Graph System Modularization (April 2025)
 - ✅ Further modularized the Location Graph System into specialized components following the component extraction pattern:

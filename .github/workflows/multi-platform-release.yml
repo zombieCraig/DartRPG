@@ -27,7 +27,7 @@ jobs:
           - platform: Windows
             os: windows-latest
             build_target: windows
-            build_path: build/windows/runner/Release
+            build_path: build/windows/x64/runner/Release  # Updated path with x64
             asset_extension: .zip
             asset_content_type: application/zip
             
@@ -96,20 +96,28 @@ jobs:
             cd ${{ matrix.build_path }}
             zip -r "../../../../${ARTIFACT_NAME}" .
             cd ../../../../
+            # Verify the file exists
+            ls -la "${ARTIFACT_NAME}" || echo "File not found: ${ARTIFACT_NAME}"
           elif [ "${{ matrix.platform }}" == "Windows" ]; then
-            cd dart_rpg/${{ matrix.build_path }}
-            powershell Compress-Archive -Path * -DestinationPath "../../../../${ARTIFACT_NAME}"
-            cd ../../../../
+            # Verify the directory exists before accessing it
+            if [ -d "dart_rpg/${{ matrix.build_path }}" ]; then
+              cd dart_rpg/${{ matrix.build_path }}
+              powershell Compress-Archive -Path * -DestinationPath "../../../../${ARTIFACT_NAME}"
+              cd ../../../../
+            else
+              echo "Error: Directory dart_rpg/${{ matrix.build_path }} does not exist"
+              echo "Listing available directories:"
+              find dart_rpg/build/windows -type d | sort
+              exit 1
+            fi
           fi
           
           echo "ARTIFACT_PATH=${ARTIFACT_NAME}" >> $GITHUB_ENV
           
+      # Use GitHub API directly to upload assets instead of deprecated action
       - name: Upload release asset
-        uses: actions/upload-release-asset@v1
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ./${{ env.ARTIFACT_PATH }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./${{ env.ARTIFACT_PATH }}
-          asset_name: ${{ env.ARTIFACT_PATH }}
-          asset_content_type: ${{ matrix.asset_content_type }}

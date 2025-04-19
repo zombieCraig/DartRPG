@@ -112,6 +112,24 @@ color: Colors.blue.withAlpha(((animationValue * 0.5) * 255).toInt())
 4. Implement UI components to expose the feature
 5. Add appropriate error handling and logging
 
+### GitHub Actions Workflow Best Practices
+1. Use modern GitHub Actions syntax and avoid deprecated commands
+   - Use environment files (`$GITHUB_ENV`, `$GITHUB_OUTPUT`) instead of `set-output`
+   - Use newer action versions that support current GitHub Actions features
+2. Add robust error handling and diagnostics
+   - Verify paths and files exist before accessing them
+   - Add directory listings to help diagnose path issues
+   - Include file verification steps after critical operations
+3. Use consistent path handling across platforms
+   - Be aware of platform-specific path differences (Windows vs. Unix)
+   - Use correct build paths for each platform (e.g., `x64` directory for Windows)
+4. Document workflow changes and usage
+   - Update documentation when workflow files are modified
+   - Include troubleshooting information for common issues
+5. Test workflows thoroughly
+   - Create test releases to verify workflow functionality
+   - Check logs for warnings about deprecated features
+
 ### Logging Best Practices
 1. Always use the custom LoggingService instead of dart:developer or print statements
 2. Use appropriate log levels based on message importance (debug, info, warning, error)

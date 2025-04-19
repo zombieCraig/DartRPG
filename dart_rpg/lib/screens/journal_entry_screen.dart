@@ -700,6 +700,68 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
       }
     });
     
+    // Generate a random name from the first_names and surnames oracles
+    Future<void> _generateRandomName() async {
+      final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+      
+      // Get first name from oracle
+      final firstNameTable = OracleService.findOracleTableByKeyAnywhere('first_names', dataswornProvider);
+      if (firstNameTable == null) {
+        loggingService.warning(
+          'Could not find first_names oracle table',
+          tag: 'JournalEntryScreen',
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not find first_names oracle table'),
+          ),
+        );
+        return;
+      }
+      
+      // Get surname from oracle
+      final surnameTable = OracleService.findOracleTableByKeyAnywhere('surnames', dataswornProvider);
+      if (surnameTable == null) {
+        loggingService.warning(
+          'Could not find surnames oracle table',
+          tag: 'JournalEntryScreen',
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not find surnames oracle table'),
+          ),
+        );
+        return;
+      }
+      
+      // Roll on both tables
+      final firstNameResult = OracleService.rollOnOracleTable(firstNameTable);
+      final surnameResult = OracleService.rollOnOracleTable(surnameTable);
+      
+      if (firstNameResult['success'] == true && surnameResult['success'] == true) {
+        final firstName = firstNameResult['oracleRoll'].result;
+        final surname = surnameResult['oracleRoll'].result;
+        
+        // Combine the results
+        nameController.text = '$firstName $surname';
+        
+        loggingService.debug(
+          'Generated random name: ${nameController.text}',
+          tag: 'JournalEntryScreen',
+        );
+      } else {
+        loggingService.warning(
+          'Failed to generate random name',
+          tag: 'JournalEntryScreen',
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to generate random name'),
+          ),
+        );
+      }
+    }
+    
     // Generate a random handle from the fe_runner_handles oracle
     Future<void> _generateRandomHandle() async {
       final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
@@ -808,13 +870,24 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Character Name',
-                    border: OutlineInputBorder(),
-                  ),
-                  autofocus: true,
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Character Name',
+                          border: OutlineInputBorder(),
+                        ),
+                        autofocus: true,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.casino),
+                      tooltip: 'Random Name',
+                      onPressed: () async => await _generateRandomName(),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 Row(

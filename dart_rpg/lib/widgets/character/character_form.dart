@@ -155,6 +155,68 @@ class _CharacterFormState extends State<CharacterForm> {
     }
   }
   
+  /// Generates a random name from the first_names and surnames oracles.
+  Future<void> _generateRandomName() async {
+    final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+    
+    // Get first name from oracle
+    final firstNameTable = OracleService.findOracleTableByKeyAnywhere('first_names', dataswornProvider);
+    if (firstNameTable == null) {
+      _loggingService.warning(
+        'Could not find first_names oracle table',
+        tag: 'CharacterForm',
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not find first_names oracle table'),
+        ),
+      );
+      return;
+    }
+    
+    // Get surname from oracle
+    final surnameTable = OracleService.findOracleTableByKeyAnywhere('surnames', dataswornProvider);
+    if (surnameTable == null) {
+      _loggingService.warning(
+        'Could not find surnames oracle table',
+        tag: 'CharacterForm',
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not find surnames oracle table'),
+        ),
+      );
+      return;
+    }
+    
+    // Roll on both tables
+    final firstNameResult = OracleService.rollOnOracleTable(firstNameTable);
+    final surnameResult = OracleService.rollOnOracleTable(surnameTable);
+    
+    if (firstNameResult['success'] == true && surnameResult['success'] == true) {
+      final firstName = firstNameResult['oracleRoll'].result;
+      final surname = surnameResult['oracleRoll'].result;
+      
+      // Combine the results
+      widget.nameController.text = '$firstName $surname';
+      
+      _loggingService.debug(
+        'Generated random name: ${widget.nameController.text}',
+        tag: 'CharacterForm',
+      );
+    } else {
+      _loggingService.warning(
+        'Failed to generate random name',
+        tag: 'CharacterForm',
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to generate random name'),
+        ),
+      );
+    }
+  }
+  
   /// Converts the current handle to leet speak.
   void _convertToLeetSpeak() {
     final currentHandle = widget.handleController.text;
@@ -270,12 +332,23 @@ class _CharacterFormState extends State<CharacterForm> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        TextField(
-          controller: widget.nameController,
-          decoration: const InputDecoration(
-            labelText: 'Name',
-            hintText: 'Enter character name',
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: widget.nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  hintText: 'Enter character name',
+                ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.casino),
+              tooltip: 'Random Name',
+              onPressed: () async => await _generateRandomName(),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         Row(

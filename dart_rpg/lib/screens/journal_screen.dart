@@ -260,6 +260,10 @@ class _JournalScreenState extends State<JournalScreen> {
             MaterialPageRoute(
               builder: (context) => JournalEntryScreen(
                 entryId: entry.id,
+                // Use the metadata if available, otherwise default to 'journal'
+                sourceScreen: entry.metadata?['sourceScreen'] ?? 'journal',
+                // Hide the back button if this entry was created from a quest
+                hideAppBarBackButton: entry.metadata?['sourceScreen'] == 'quests',
               ),
             ),
           );
@@ -425,7 +429,9 @@ class _JournalScreenState extends State<JournalScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const JournalEntryScreen(),
+        builder: (context) => const JournalEntryScreen(
+          sourceScreen: 'journal',
+        ),
       ),
     );
   }

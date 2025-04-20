@@ -795,11 +795,14 @@ class GameProvider extends ChangeNotifier {
         orElse: () => throw Exception('Character not found'),
       );
       
-      _currentSession!.createNewEntry(
+      final entry = _currentSession!.createNewEntry(
         'Quest "${quest.title}" completed by ${character.name}.\n'
         'Final progress: ${quest.progress}/10\n'
         'Notes: ${quest.notes}'
       );
+      
+      // Add metadata to indicate this entry was created from a quest
+      entry.metadata = {'sourceScreen': 'quests'};
     }
     
     await _saveGames();
@@ -826,11 +829,14 @@ class GameProvider extends ChangeNotifier {
         orElse: () => throw Exception('Character not found'),
       );
       
-      _currentSession!.createNewEntry(
+      final entry = _currentSession!.createNewEntry(
         'Quest "${quest.title}" forsaken by ${character.name}.\n'
         'Final progress: ${quest.progress}/10\n'
         'Notes: ${quest.notes}'
       );
+      
+      // Add metadata to indicate this entry was created from a quest
+      entry.metadata = {'sourceScreen': 'quests'};
     }
     
     await _saveGames();
@@ -1089,12 +1095,15 @@ class GameProvider extends ChangeNotifier {
         orElse: () => throw Exception('Character not found'),
       );
       
-      _currentSession!.createNewEntry(
+      final entry = _currentSession!.createNewEntry(
         'Progress roll for quest "${quest.title}" by ${character.name}.\n'
         'Progress: ${quest.progress}/10 (${quest.progressTicks} ticks)\n'
         'Challenge Dice: ${result['challengeDice'][0]}, ${result['challengeDice'][1]}\n'
         'Outcome: ${result['outcome']}'
       );
+      
+      // Add metadata to indicate this entry was created from a quest
+      entry.metadata = {'sourceScreen': 'quests'};
     }
     
     await _saveGames();

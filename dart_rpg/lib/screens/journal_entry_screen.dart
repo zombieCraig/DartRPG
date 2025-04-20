@@ -34,8 +34,15 @@ class MovesIntent extends Intent {
 
 class JournalEntryScreen extends StatefulWidget {
   final String? entryId;
+  final String? sourceScreen;
+  final bool hideAppBarBackButton;
 
-  const JournalEntryScreen({super.key, this.entryId});
+  const JournalEntryScreen({
+    super.key, 
+    this.entryId, 
+    this.sourceScreen,
+    this.hideAppBarBackButton = false,
+  });
 
   @override
   State<JournalEntryScreen> createState() => _JournalEntryScreenState();
@@ -1269,6 +1276,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
           : null,
         appBar: AppBar(
           title: Text(widget.entryId == null ? 'New Journal Entry' : 'Edit Journal Entry'),
+          automaticallyImplyLeading: !widget.hideAppBarBackButton,
           actions: [
             // Character edit icon - only show if there's a main character
             if (currentGame.mainCharacter != null)
@@ -1343,9 +1351,10 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                       onOracleRequested: () {
                         _showRollOracleDialog(context);
                       },
-                      onQuestRequested: () {
+                      // Only show the quest button if we didn't come from the quests screen
+                      onQuestRequested: widget.sourceScreen != 'quests' ? () {
                         _navigateToQuests(context);
-                      },
+                      } : null,
                     )
                   : JournalEntryViewer(
                       content: _content,

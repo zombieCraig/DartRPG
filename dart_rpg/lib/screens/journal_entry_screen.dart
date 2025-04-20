@@ -701,7 +701,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     });
     
     // Generate a random name from the first_names and surnames oracles
-    Future<void> _generateRandomName() async {
+    Future<void> generateRandomName() async {
       final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
       
       // Get first name from oracle
@@ -763,7 +763,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     }
     
     // Generate a random handle from the fe_runner_handles oracle
-    Future<void> _generateRandomHandle() async {
+    Future<void> generateRandomHandle() async {
       final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
       
       // Try to find the fe_runner_handles oracle table
@@ -840,7 +840,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     }
     
     // Convert the current handle to leet speak
-    void _convertToLeetSpeak() {
+    void convertToLeetSpeak() {
       final currentHandle = handleController.text;
       if (currentHandle.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -885,7 +885,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                     IconButton(
                       icon: const Icon(Icons.casino),
                       tooltip: 'Random Name',
-                      onPressed: () async => await _generateRandomName(),
+                      onPressed: () async => await generateRandomName(),
                     ),
                   ],
                 ),
@@ -906,12 +906,12 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                     IconButton(
                       icon: const Icon(Icons.casino),
                       tooltip: 'Random Handle',
-                      onPressed: () async => await _generateRandomHandle(),
+                      onPressed: () async => await generateRandomHandle(),
                     ),
                     IconButton(
                       icon: const Icon(Icons.terminal),
                       tooltip: 'Make l33t',
-                      onPressed: _convertToLeetSpeak,
+                      onPressed: convertToLeetSpeak,
                     ),
                   ],
                 ),

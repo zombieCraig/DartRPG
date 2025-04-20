@@ -82,6 +82,11 @@ The multi-platform release workflow has been updated to address several issues:
    - Added file existence verification after creating the macOS zip file
    - Improved error reporting for macOS packaging
 
+4. **Cross-Platform Shell Compatibility**:
+   - Added explicit shell specification for version extraction step
+   - Ensures bash is used on all platforms including Windows
+   - Fixes PowerShell compatibility issues with bash syntax
+
 ## Troubleshooting
 
 ### Build Failures

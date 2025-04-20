@@ -270,6 +270,7 @@ The DartRPG application is in active development with core functionality impleme
 
 ### Recently Fixed Issues
 - ✅ **Journal Entry Navigation**: Fixed issue with duplicate back buttons in the journal editor when accessed from the quests screen by adding metadata to journal entries and conditionally hiding the AppBar back button
+- ✅ **GitHub Actions Windows Build**: Fixed PowerShell compatibility issue by adding explicit bash shell specification for the version extraction step
 - ✅ **Location Graph Complexity**: Modularized the location graph system into specialized components for better maintainability
 - ✅ **Screen Transitions**: Enhanced the Hacker Fade transition with improved visual effects and added a new Circuit Reveal transition
 - ✅ **Deprecated Functions**: Fixed deprecated `withOpacity()` method usage throughout the codebase, replacing with `withAlpha()` for better precision and future compatibility

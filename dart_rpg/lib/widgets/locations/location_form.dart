@@ -5,6 +5,7 @@ import '../../models/node_type_info.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../services/oracle_service.dart';
 import '../../utils/logging_service.dart';
+import '../../utils/oracle_reference_processor.dart';
 
 /// A form for creating or editing a location
 class LocationForm extends StatefulWidget {
@@ -206,6 +207,134 @@ class _LocationFormState extends State<LocationForm> {
     }
   }
 
+  /// Generates a random location name using the location_name oracle
+  Future<void> _generateRandomLocationName(BuildContext context) async {
+    final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+    final loggingService = LoggingService();
+    
+    // Show loading indicator
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    scaffoldMessenger.showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+            SizedBox(width: 16),
+            Text('Generating random location name...'),
+          ],
+        ),
+        duration: Duration(seconds: 10), // Long duration as we'll dismiss it manually
+      ),
+    );
+    
+    try {
+      // Find the location_name oracle table
+      final oracleTable = OracleService.findOracleTableByKeyAnywhere('location_name', dataswornProvider);
+      
+      if (oracleTable == null) {
+        loggingService.error(
+          'Could not find location_name oracle table',
+          tag: 'LocationForm',
+        );
+        
+        scaffoldMessenger.hideCurrentSnackBar();
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('Could not find location name oracle'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
+      // Roll on the oracle table
+      final rollResult = OracleService.rollOnOracleTable(oracleTable);
+      
+      if (!rollResult['success']) {
+        loggingService.error(
+          'Failed to roll on location_name oracle: ${rollResult['error']}',
+          tag: 'LocationForm',
+        );
+        
+        scaffoldMessenger.hideCurrentSnackBar();
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate name: ${rollResult['error']}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
+      // Get the result
+      final oracleRoll = rollResult['oracleRoll'];
+      final result = oracleRoll.result;
+      
+      loggingService.debug(
+        'Rolled on location_name oracle: $result',
+        tag: 'LocationForm',
+      );
+      
+      // Process any oracle references in the result
+      final processResult = await OracleService.processOracleReferences(
+        result,
+        dataswornProvider,
+      );
+      
+      String finalName;
+      if (processResult['success']) {
+        finalName = processResult['processedText'];
+        loggingService.debug(
+          'Processed location name: $finalName',
+          tag: 'LocationForm',
+        );
+      } else {
+        // If processing fails, use the original result
+        finalName = result;
+        loggingService.warning(
+          'Failed to process oracle references in location name: ${processResult['error']}',
+          tag: 'LocationForm',
+        );
+      }
+      
+      // Update the name field
+      setState(() {
+        _nameController.text = finalName;
+      });
+      
+      scaffoldMessenger.hideCurrentSnackBar();
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Generated name: $finalName'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e, stackTrace) {
+      loggingService.error(
+        'Error generating random location name',
+        tag: 'LocationForm',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      
+      scaffoldMessenger.hideCurrentSnackBar();
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Error generating name: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -214,21 +343,47 @@ class _LocationFormState extends State<LocationForm> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Name field
-          TextFormField(
-            controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Name',
-              hintText: 'Enter location name',
-              border: OutlineInputBorder(),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter a name';
-              }
-              return null;
-            },
-            autofocus: widget.initialLocation == null, // Autofocus on name field for new locations
+          // Name field with random button
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Name',
+                    hintText: 'Enter location name',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a name';
+                    }
+                    return null;
+                  },
+                  autofocus: widget.initialLocation == null, // Autofocus on name field for new locations
+                ),
+              ),
+              const SizedBox(width: 8),
+              Tooltip(
+                message: 'Generate random location name',
+                child: InkWell(
+                  onTap: () => _generateRandomLocationName(context),
+                  borderRadius: BorderRadius.circular(4),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor.withAlpha(50),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Icon(
+                      Icons.casino,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           

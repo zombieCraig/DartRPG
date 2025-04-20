@@ -115,13 +115,38 @@ If the version isn't updating correctly:
 - Ensure your tag starts with `v` (e.g., `v1.2.3`)
 - Check the "Update pubspec version" step in the workflow logs
 
+## Changelog Integration
+
+The release process now includes automated changelog generation:
+
+1. The changelog is maintained in `dart_rpg/assets/data/changelog.json`
+2. A Python script (`scripts/update_changelog.py`) extracts changes from memory-bank files
+3. The GitHub Actions workflow automatically includes the changelog in the release description
+
+### Using the Changelog Script
+
+You can use the changelog script manually to:
+
+- Update the changelog with changes from memory-bank files:
+  ```bash
+  python3 scripts/update_changelog.py <version>
+  ```
+
+- Extract changelog content for a specific version:
+  ```bash
+  python3 scripts/update_changelog.py <version> --extract-only
+  ```
+
+### In-App Changelog
+
+The app includes a changelog screen accessible from the About section in Settings. This screen displays all version history with changes in a user-friendly format.
+
 ## Future Enhancements
 
 Potential future enhancements to the release process:
 
 - Code signing for macOS and Windows builds
 - Creating proper installers for each platform
-- Automated changelog generation
 - Notarization for macOS builds
 - Improved error handling and reporting
 - Build caching to speed up the process

@@ -8,6 +8,7 @@ import '../transitions/transition_type.dart';
 import '../transitions/navigation_service.dart';
 import 'animation_test_screen.dart';
 import 'log_viewer_screen.dart';
+import 'changelog_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -350,7 +351,19 @@ class SettingsScreen extends StatelessWidget {
               const SizedBox(height: 8),
               const ListTile(
                 title: Text('Fe-Runners Solo RPG'),
-                subtitle: Text('Version 0.0.1'),
+                subtitle: Text('Version 0.0.2'),
+              ),
+              ListTile(
+                title: const Text('Changelog'),
+                subtitle: const Text('View version history and updates'),
+                leading: const Icon(Icons.history),
+                onTap: () {
+                  final navigationService = NavigationService();
+                  navigationService.navigateTo(
+                    context,
+                    const ChangelogScreen(),
+                  );
+                },
               ),
               ListTile(
                 title: const Text('Source Code'),

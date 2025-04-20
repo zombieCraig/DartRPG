@@ -22,6 +22,18 @@ This work enhances the overall architecture of the application, making it more m
 
 ## Recent Changes
 
+### Journal Entry Navigation Fix (April 2025)
+- Fixed issue with duplicate back buttons in the journal editor when accessed from the quests screen:
+  - Added a `metadata` property to the `JournalEntry` class to store additional information about the entry
+  - Added a `hideAppBarBackButton` parameter to the `JournalEntryScreen` class to control whether to show the back button in the AppBar
+  - Modified the `completeQuest`, `forsakeQuest`, and `makeQuestProgressRoll` methods in the `GameProvider` class to set the metadata for journal entries created from quests
+  - Updated the journal screen to check for the metadata property when navigating to the journal entry screen, and to hide the AppBar back button if the entry was created from a quest
+  - Key files modified:
+    - `dart_rpg/lib/models/journal_entry.dart`: Added metadata property to JournalEntry class
+    - `dart_rpg/lib/screens/journal_entry_screen.dart`: Added hideAppBarBackButton parameter
+    - `dart_rpg/lib/providers/game_provider.dart`: Updated quest methods to set metadata
+    - `dart_rpg/lib/screens/journal_screen.dart`: Updated navigation to use metadata
+
 ### GitHub Actions Workflow Fixes (April 2025)
 - Fixed issues with the multi-platform release GitHub Actions workflow:
   - Replaced the deprecated `actions/upload-release-asset@v1` action with the modern `softprops/action-gh-release@v1` to resolve the warning about the deprecated `set-output` command

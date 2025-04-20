@@ -117,9 +117,22 @@ jobs:
           echo "ARTIFACT_PATH=${ARTIFACT_NAME}" >> $GITHUB_ENV
           
       # Use GitHub API directly to upload assets instead of deprecated action
+      - name: Generate changelog
+        run: |
+          # Extract version from tag (e.g., v1.2.3 -> 1.2.3)
+          VERSION=${GITHUB_REF#refs/tags/v}
+          
+          # Run the changelog generation script to extract the changelog for the release
+          CHANGELOG_CONTENT=$(python3 scripts/update_changelog.py $VERSION --extract-only)
+          
+          echo "CHANGELOG_CONTENT<<EOF" >> $GITHUB_ENV
+          echo "$CHANGELOG_CONTENT" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
       - name: Upload release asset
         uses: softprops/action-gh-release@v1
         with:
           files: ./${{ env.ARTIFACT_PATH }}
+          body: ${{ env.CHANGELOG_CONTENT }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

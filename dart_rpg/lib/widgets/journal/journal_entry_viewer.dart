@@ -34,7 +34,9 @@ class JournalEntryViewer extends StatelessWidget {
     final currentGame = gameProvider.currentGame;
     
     if (currentGame == null) {
-      return MarkdownBody(data: content);
+      return SingleChildScrollView(
+        child: MarkdownBody(data: content),
+      );
     }
     
     // Parse the content and create a widget that handles both markdown and clickable references
@@ -115,10 +117,12 @@ class JournalEntryViewer extends StatelessWidget {
     
     // If no special references, just use MarkdownBody
     if (allMatches.isEmpty) {
-      return MarkdownBody(
-        data: content,
-        styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)),
-        softLineBreak: true,
+      return SingleChildScrollView(
+        child: MarkdownBody(
+          data: content,
+          styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)),
+          softLineBreak: true,
+        ),
       );
     }
     
@@ -161,11 +165,13 @@ class JournalEntryViewer extends StatelessWidget {
       ));
     }
     
-    // Return the rich text widget
-    return RichText(
-      text: TextSpan(
-        style: DefaultTextStyle.of(context).style,
-        children: spans,
+    // Return the rich text widget wrapped in a SingleChildScrollView for scrolling
+    return SingleChildScrollView(
+      child: RichText(
+        text: TextSpan(
+          style: DefaultTextStyle.of(context).style,
+          children: spans,
+        ),
       ),
     );
   }

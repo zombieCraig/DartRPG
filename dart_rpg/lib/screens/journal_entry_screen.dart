@@ -34,8 +34,15 @@ class MovesIntent extends Intent {
 
 class JournalEntryScreen extends StatefulWidget {
   final String? entryId;
+  final String? sourceScreen;
+  final bool hideAppBarBackButton;
 
-  const JournalEntryScreen({super.key, this.entryId});
+  const JournalEntryScreen({
+    super.key, 
+    this.entryId, 
+    this.sourceScreen,
+    this.hideAppBarBackButton = false,
+  });
 
   @override
   State<JournalEntryScreen> createState() => _JournalEntryScreenState();
@@ -701,7 +708,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     });
     
     // Generate a random name from the first_names and surnames oracles
-    Future<void> _generateRandomName() async {
+    Future<void> generateRandomName() async {
       final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
       
       // Get first name from oracle
@@ -763,7 +770,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     }
     
     // Generate a random handle from the fe_runner_handles oracle
-    Future<void> _generateRandomHandle() async {
+    Future<void> generateRandomHandle() async {
       final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
       
       // Try to find the fe_runner_handles oracle table
@@ -840,7 +847,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     }
     
     // Convert the current handle to leet speak
-    void _convertToLeetSpeak() {
+    void convertToLeetSpeak() {
       final currentHandle = handleController.text;
       if (currentHandle.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -885,7 +892,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                     IconButton(
                       icon: const Icon(Icons.casino),
                       tooltip: 'Random Name',
-                      onPressed: () async => await _generateRandomName(),
+                      onPressed: () async => await generateRandomName(),
                     ),
                   ],
                 ),
@@ -906,12 +913,12 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                     IconButton(
                       icon: const Icon(Icons.casino),
                       tooltip: 'Random Handle',
-                      onPressed: () async => await _generateRandomHandle(),
+                      onPressed: () async => await generateRandomHandle(),
                     ),
                     IconButton(
                       icon: const Icon(Icons.terminal),
                       tooltip: 'Make l33t',
-                      onPressed: _convertToLeetSpeak,
+                      onPressed: convertToLeetSpeak,
                     ),
                   ],
                 ),
@@ -1269,6 +1276,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
           : null,
         appBar: AppBar(
           title: Text(widget.entryId == null ? 'New Journal Entry' : 'Edit Journal Entry'),
+          automaticallyImplyLeading: !widget.hideAppBarBackButton,
           actions: [
             // Character edit icon - only show if there's a main character
             if (currentGame.mainCharacter != null)
@@ -1343,9 +1351,10 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                       onOracleRequested: () {
                         _showRollOracleDialog(context);
                       },
-                      onQuestRequested: () {
+                      // Only show the quest button if we didn't come from the quests screen
+                      onQuestRequested: widget.sourceScreen != 'quests' ? () {
                         _navigateToQuests(context);
-                      },
+                      } : null,
                     )
                   : JournalEntryViewer(
                       content: _content,

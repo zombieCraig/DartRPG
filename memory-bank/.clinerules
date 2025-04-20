@@ -170,6 +170,16 @@ color: Colors.blue.withAlpha(((animationValue * 0.5) * 255).toInt())
 
 ## Journal Entry System
 
+### Journal Entry Navigation
+- When a journal entry is created from a quest (via completeQuest, forsakeQuest, or makeQuestProgressRoll), it stores metadata indicating it came from the quests screen
+- The JournalEntryScreen uses this metadata to conditionally hide the AppBar back button when the entry was created from a quest
+- This prevents duplicate back buttons when viewing journal entries created from quests
+- Key files involved:
+  - `dart_rpg/lib/models/journal_entry.dart`: Contains the JournalEntry class with metadata property
+  - `dart_rpg/lib/screens/journal_entry_screen.dart`: Contains the JournalEntryScreen with hideAppBarBackButton parameter
+  - `dart_rpg/lib/providers/game_provider.dart`: Contains the quest methods that set metadata
+  - `dart_rpg/lib/screens/journal_screen.dart`: Contains the navigation to journal entries that checks metadata
+
 ### Journal Entry Editor Architecture
 - Modular architecture with specialized components
 - JournalEntryEditor as the core component for editing

@@ -161,6 +161,7 @@ class JournalEntry {
   List<MoveRoll> moveRolls; // Changed from single moveRoll to list
   List<OracleRoll> oracleRolls; // Changed from single oracleRoll to list
   List<String> embeddedImages; // URLs of embedded images
+  Map<String, dynamic>? metadata; // Additional metadata for the entry
 
   JournalEntry({
     String? id,
@@ -173,6 +174,7 @@ class JournalEntry {
     List<MoveRoll>? moveRolls,
     List<OracleRoll>? oracleRolls,
     List<String>? embeddedImages,
+    this.metadata,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now(),
@@ -194,6 +196,7 @@ class JournalEntry {
       'moveRolls': moveRolls.map((roll) => roll.toJson()).toList(),
       'oracleRolls': oracleRolls.map((roll) => roll.toJson()).toList(),
       'embeddedImages': embeddedImages,
+      'metadata': metadata,
     };
   }
 
@@ -237,6 +240,7 @@ class JournalEntry {
       moveRolls: moveRollsList,
       oracleRolls: oracleRollsList,
       embeddedImages: (json['embeddedImages'] as List?)?.cast<String>() ?? [],
+      metadata: json['metadata'],
     );
   }
 

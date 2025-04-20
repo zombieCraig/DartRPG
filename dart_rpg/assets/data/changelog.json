@@ -1,0 +1,20 @@
+{
+  "versions": [
+    {
+      "version": "0.0.2",
+      "date": "2025-04-20",
+      "changes": [
+        "Fixed GitHub Actions workflow for multi-platform builds",
+        "Implemented Countdown Clock feature for tracking game events",
+        "Enhanced screen transitions with improved visual effects",
+        "Fixed deprecated withOpacity() method usage throughout codebase",
+        "Implemented dropdown and dice button for moves with embedded oracles",
+        "Redesigned asset card system to properly display abilities",
+        "Implemented tutorial system with contextual help popups",
+        "Enhanced character short name functionality with auto-generation",
+        "Implemented loading screen for resource-intensive operations",
+        "Restructured the Location Graph System into specialized components"
+      ]
+    }
+  ]
+}

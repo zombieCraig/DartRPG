@@ -29,12 +29,14 @@ Once you create a release, the following happens automatically:
 
 1. The GitHub Actions workflow is triggered
 2. The version in `pubspec.yaml` is updated to match your release tag
-3. The application is built for Linux, macOS, and Windows
-4. The builds are packaged as:
+3. The changelog.json file is updated with the new version and changes from memory-bank files
+4. The application is built for Linux, macOS, and Windows
+5. The builds are packaged as:
    - Linux: `.tar.gz` archive
    - macOS: `.zip` archive
    - Windows: `.zip` archive
-5. The packages are uploaded as assets to your GitHub release
+6. The packages are uploaded as assets to your GitHub release
+7. The release description is updated with the changelog content
 
 ## Checking Build Status
 
@@ -59,11 +61,13 @@ Where `x.y.z` is the version number from your release tag.
 
 ## Version Management
 
-The workflow automatically updates the version in `pubspec.yaml` to match your release tag:
+The workflow automatically updates the version in `pubspec.yaml` and the changelog:
 
 - The version string is extracted from the tag (e.g., `v1.2.3` becomes `1.2.3`)
 - The build number is set to the GitHub run number for uniqueness
 - The resulting version in `pubspec.yaml` will be something like `1.2.3+123`
+- The changelog.json file is updated with the new version and changes from memory-bank files
+- The app's About section and changelog screen will automatically display the correct version
 
 ## Recent Workflow Updates
 

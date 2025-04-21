@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../services/changelog_service.dart';
 import '../utils/logging_service.dart';
 
@@ -15,12 +16,29 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
   final LoggingService _logger = LoggingService();
   bool _isLoading = true;
   List<ChangelogVersion> _versions = [];
-  String _currentVersion = '0.0.2'; // Current app version
+  String _currentVersion = '';
 
   @override
   void initState() {
     super.initState();
+    _loadAppInfo();
     _loadChangelog();
+  }
+  
+  Future<void> _loadAppInfo() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      setState(() {
+        // Extract version without build number (e.g., "1.2.3+45" -> "1.2.3")
+        _currentVersion = packageInfo.version.split('+')[0];
+      });
+      _logger.info('Loaded app version: $_currentVersion', tag: 'ChangelogScreen');
+    } catch (e) {
+      _logger.error('Failed to load app info: $e', tag: 'ChangelogScreen');
+      setState(() {
+        _currentVersion = '0.0.2'; // Fallback to a default version if loading fails
+      });
+    }
   }
 
   Future<void> _loadChangelog() async {

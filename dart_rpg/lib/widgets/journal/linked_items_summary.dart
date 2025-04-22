@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../providers/game_provider.dart';
-import '../../providers/image_manager_provider.dart';
 import '../../models/journal_entry.dart';
 import '../../widgets/common/app_image_widget.dart';
 

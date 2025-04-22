@@ -166,7 +166,7 @@ class _ChangelogScreenState extends State<ChangelogScreen> {
                       Expanded(child: Text(change)),
                     ],
                   ),
-                )).toList(),
+                )),
               ],
             ),
           ),

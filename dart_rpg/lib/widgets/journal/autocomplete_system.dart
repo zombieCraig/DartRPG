@@ -153,7 +153,7 @@ class AutocompleteSystem {
   /// Updates the list of suggestions based on the current search text.
   void _updateSuggestions(List<Character> characters, List<Location> locations) {
     // If the search text hasn't changed, use cached results
-    if (_lastSearchText == _currentSearchText && !_filteredSuggestions.isEmpty) {
+    if (_lastSearchText == _currentSearchText && _filteredSuggestions.isNotEmpty) {
       return;
     }
     

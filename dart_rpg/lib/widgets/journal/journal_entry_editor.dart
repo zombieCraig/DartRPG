@@ -515,7 +515,7 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
   }
   
   // Performance metrics
-  int _lastRebuildTime = 0;
+  final int _lastRebuildTime = 0;
   int _lastMentionCheckTime = 0;
   bool _shouldCheckMentions = false;
   

@@ -97,18 +97,32 @@ jobs:
           VERSION="${{ env.VERSION }}"
           ARTIFACT_NAME="${APP_NAME}-${{ matrix.platform }}-${VERSION}${{ matrix.asset_extension }}"
           
+          echo "Creating artifact: ${ARTIFACT_NAME}"
+          echo "Current directory: $(pwd)"
+          
           if [ "${{ matrix.platform }}" == "Linux" ]; then
             cd dart_rpg
             tar -czf "../${ARTIFACT_NAME}" -C ${{ matrix.build_path }} .
             cd ..
           elif [ "${{ matrix.platform }}" == "macOS" ]; then
-            cd dart_rpg
-            # For a proper DMG, you'd use create-dmg, but for simplicity:
-            cd ${{ matrix.build_path }}
-            zip -r "../../../../${ARTIFACT_NAME}" .
-            cd ../../../../
-            # Verify the file exists
+            # Save the absolute path to the repository root
+            REPO_ROOT="$(pwd)"
+            echo "Repository root: ${REPO_ROOT}"
+            
+            # Navigate to the build directory
+            cd dart_rpg/${{ matrix.build_path }}
+            echo "Build directory: $(pwd)"
+            
+            # Create the zip file with absolute path
+            zip -r "${REPO_ROOT}/${ARTIFACT_NAME}" .
+            
+            # Return to repository root
+            cd "${REPO_ROOT}"
+            
+            # Verify the file exists and show its details
+            echo "Checking for artifact at: ${REPO_ROOT}/${ARTIFACT_NAME}"
             ls -la "${ARTIFACT_NAME}" || { echo "File not found: ${ARTIFACT_NAME}"; exit 1; }
+            echo "File size: $(du -h ${ARTIFACT_NAME} | cut -f1)"
           elif [ "${{ matrix.platform }}" == "Windows" ]; then
             # Verify the directory exists before accessing it
             if [ -d "dart_rpg/${{ matrix.build_path }}" ]; then
@@ -127,6 +141,23 @@ jobs:
           
           echo "ARTIFACT_PATH=${ARTIFACT_NAME}" >> $GITHUB_ENV
           
+      # Verify artifact exists before uploading
+      - name: Verify artifact
+        shell: bash
+        run: |
+          echo "Verifying artifact: ${{ env.ARTIFACT_PATH }}"
+          if [ -f "${{ env.ARTIFACT_PATH }}" ]; then
+            echo "✅ Artifact exists: ${{ env.ARTIFACT_PATH }}"
+            echo "File size: $(du -h ${{ env.ARTIFACT_PATH }} | cut -f1)"
+            echo "File details: $(ls -la ${{ env.ARTIFACT_PATH }})"
+          else
+            echo "❌ Artifact not found: ${{ env.ARTIFACT_PATH }}"
+            echo "Current directory: $(pwd)"
+            echo "Directory contents:"
+            ls -la
+            exit 1
+          fi
+          
       # Use GitHub API directly to upload assets instead of deprecated action
       - name: Generate changelog
         shell: bash
@@ -144,7 +175,7 @@ jobs:
       - name: Upload release asset
         uses: softprops/action-gh-release@v1
         with:
-          files: ./${{ env.ARTIFACT_PATH }}
+          files: ${{ env.ARTIFACT_PATH }}
           body: ${{ env.CHANGELOG_CONTENT }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

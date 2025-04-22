@@ -453,30 +453,55 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
     }
   }
   
+  // Performance metrics
+  int _lastRebuildTime = 0;
+  int _lastMentionCheckTime = 0;
+  bool _shouldCheckMentions = false;
+  
   @override
   Widget build(BuildContext context) {
+    final stopwatch = Stopwatch()..start();
+    
     final gameProvider = Provider.of<GameProvider>(context);
     final currentGame = gameProvider.currentGame;
+    
+    // Create a memoized toolbar to prevent unnecessary rebuilds
+    final toolbar = !widget.readOnly ? 
+      EditorToolbar(
+        onBoldPressed: () => _insertFormatting('**', '**'),
+        onItalicPressed: () => _insertFormatting('*', '*'),
+        onHeadingPressed: () => _insertFormatting('# ', ''),
+        onBulletListPressed: () => _insertFormatting('- ', ''),
+        onNumberedListPressed: () => _insertFormatting('1. ', ''),
+        onCharacterPressed: _showCharacterSelectionDialog,
+        onLocationPressed: _showLocationSelectionDialog,
+        onImagePressed: _addImage,
+        onMovePressed: widget.onMoveRequested,
+        onOraclePressed: widget.onOracleRequested,
+        onQuestPressed: widget.onQuestRequested,
+      ) : null;
+    
+    // Only check for mentions if we need to
+    if (_shouldCheckMentions && currentGame != null && !widget.readOnly) {
+      final mentionStopwatch = Stopwatch()..start();
+      
+      _autocompleteSystem.checkForMentions(
+        text: _controller.text,
+        cursorPosition: _controller.selection.baseOffset,
+        characters: currentGame.characters,
+        locations: currentGame.locations,
+      );
+      
+      _lastMentionCheckTime = mentionStopwatch.elapsedMicroseconds;
+      _shouldCheckMentions = false;
+    }
     
     return Column(
       children: [
         // Formatting toolbar
-        if (!widget.readOnly)
-          EditorToolbar(
-            onBoldPressed: () => _insertFormatting('**', '**'),
-            onItalicPressed: () => _insertFormatting('*', '*'),
-            onHeadingPressed: () => _insertFormatting('# ', ''),
-            onBulletListPressed: () => _insertFormatting('- ', ''),
-            onNumberedListPressed: () => _insertFormatting('1. ', ''),
-            onCharacterPressed: _showCharacterSelectionDialog,
-            onLocationPressed: _showLocationSelectionDialog,
-            onImagePressed: _addImage,
-            onMovePressed: widget.onMoveRequested,
-            onOraclePressed: widget.onOracleRequested,
-            onQuestPressed: widget.onQuestRequested,
-          ),
+        if (toolbar != null) toolbar,
         
-        // Location Oracle Shortcuts
+        // Location Oracle Shortcuts - only rebuild when linkedLocationIds changes
         if (!widget.readOnly && _linkedItemsManager.linkedLocationIds.isNotEmpty)
           Consumer<DataswornProvider>(
             builder: (context, dataswornProvider, _) {
@@ -523,74 +548,126 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
                     hintText: 'Write your journal entry here...',
                   ),
                   onChanged: (value) {
-                    widget.onChanged(value, value);
-                    
-                    if (currentGame != null && !widget.readOnly) {
-                      // Check for mentions
-                      _autocompleteSystem.checkForMentions(
-                        text: value,
-                        cursorPosition: _controller.selection.baseOffset,
-                        characters: currentGame.characters,
-                        locations: currentGame.locations,
-                      );
-                      
-                      // Start autosave timer
+                    // Only start autosave for substantial content
+                    if (value.length > 20) {
                       _startAutoSaveTimer();
                     }
                     
-                    setState(() {});
+                    widget.onChanged(value, value);
+                    
+                    // Check for mentions when needed
+                    if (currentGame != null && !widget.readOnly) {
+                      final cursorPosition = _controller.selection.baseOffset;
+                      
+                      // Always check if we just typed @ or #
+                      if (cursorPosition > 0) {
+                        final charBeforeCursor = value[cursorPosition - 1];
+                        if (charBeforeCursor == '@' || charBeforeCursor == '#') {
+                          // Immediately check for mentions when @ or # is typed
+                          final mentionResult = _autocompleteSystem.checkForMentions(
+                            text: value,
+                            cursorPosition: cursorPosition,
+                            characters: currentGame.characters,
+                            locations: currentGame.locations,
+                          );
+                          
+                          setState(() {});
+                          return;
+                        }
+                      }
+                      
+                      // Continue checking if we're already in a mention context
+                      if (_autocompleteSystem.showCharacterSuggestions || 
+                          _autocompleteSystem.showLocationSuggestions) {
+                        _shouldCheckMentions = true;
+                        setState(() {});
+                      }
+                    }
                   },
                   onTap: () {
                     if (currentGame != null && !widget.readOnly) {
-                      // Check for mentions
-                      _autocompleteSystem.checkForMentions(
-                        text: _controller.text,
-                        cursorPosition: _controller.selection.baseOffset,
-                        characters: currentGame.characters,
-                        locations: currentGame.locations,
-                      );
-                      
-                      setState(() {});
+                      // Check for mentions on tap if we're in a mention context
+                      final cursorPosition = _controller.selection.baseOffset;
+                      if (cursorPosition > 0) {
+                        final textBeforeCursor = _controller.text.substring(0, cursorPosition);
+                        final lastSpaceOrNewline = textBeforeCursor.lastIndexOf(RegExp(r'[\s\n]'));
+                        final wordStart = lastSpaceOrNewline + 1;
+                        
+                        if (wordStart < textBeforeCursor.length) {
+                          final currentWord = textBeforeCursor.substring(wordStart);
+                          if (currentWord.startsWith('@') || currentWord.startsWith('#')) {
+                            _autocompleteSystem.checkForMentions(
+                              text: _controller.text,
+                              cursorPosition: cursorPosition,
+                              characters: currentGame.characters,
+                              locations: currentGame.locations,
+                            );
+                            setState(() {});
+                          }
+                        }
+                      }
                     }
                   },
                 ),
                 
-                // Inline suggestion overlay
-                if (_autocompleteSystem.inlineSuggestion != null && 
-                    _autocompleteSystem.suggestionStartPosition != null)
-                  Positioned(
-                    left: 8, // Same as contentPadding
-                    top: 8,   // Same as contentPadding
-                    child: IgnorePointer(
-                      child: RichText(
-                        text: TextSpan(
-                          children: [
-                            // Invisible text to match the user's input
-                            TextSpan(
-                              text: _controller.text.substring(
-                                0, 
-                                _autocompleteSystem.suggestionStartPosition! + 
-                                _autocompleteSystem.currentSearchText.length + 1
-                              ),
-                              style: TextStyle(
-                                color: Colors.transparent,
-                                fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
-                              ),
+                // Optimized inline suggestion overlay
+                if ((_autocompleteSystem.inlineSuggestion != null && 
+                    _autocompleteSystem.suggestionStartPosition != null) ||
+                    _autocompleteSystem.showCharacterSuggestions ||
+                    _autocompleteSystem.showLocationSuggestions)
+                  Builder(
+                    builder: (context) {
+                      // Handle the case where we just typed @ or # without any additional characters
+                      String textBeforeSuggestion = "";
+                      String suggestionText = "";
+                      
+                      if (_autocompleteSystem.suggestionStartPosition != null) {
+                        // Calculate the position of the suggestion more efficiently
+                        final startPos = _autocompleteSystem.suggestionStartPosition!;
+                        final searchTextLength = _autocompleteSystem.currentSearchText.length;
+                        
+                        if (startPos < _controller.text.length) {
+                          final endPos = startPos + searchTextLength + 1 <= _controller.text.length 
+                              ? startPos + searchTextLength + 1 
+                              : _controller.text.length;
+                          
+                          textBeforeSuggestion = _controller.text.substring(0, endPos);
+                          
+                          if (_autocompleteSystem.inlineSuggestion != null && searchTextLength < _autocompleteSystem.inlineSuggestion!.length) {
+                            suggestionText = _autocompleteSystem.inlineSuggestion!.substring(searchTextLength);
+                          }
+                        }
+                      }
+                      
+                      return Positioned(
+                        left: 8, // Same as contentPadding
+                        top: 8,   // Same as contentPadding
+                        child: IgnorePointer(
+                          child: RichText(
+                            text: TextSpan(
+                              children: [
+                                // Invisible text to match the user's input
+                                TextSpan(
+                                  text: textBeforeSuggestion,
+                                  style: TextStyle(
+                                    color: Colors.transparent,
+                                    fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
+                                  ),
+                                ),
+                                // Grey suggestion text
+                                TextSpan(
+                                  text: suggestionText,
+                                  style: TextStyle(
+                                    color: Colors.grey.withAlpha(179), // 0.7 opacity = 179 alpha
+                                    fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
+                                  ),
+                                ),
+                              ],
                             ),
-                            // Grey suggestion text
-                            TextSpan(
-                              text: _autocompleteSystem.inlineSuggestion!.substring(
-                                _autocompleteSystem.currentSearchText.length
-                              ),
-                              style: TextStyle(
-                                color: Colors.grey.withAlpha(179), // 0.7 opacity = 179 alpha
-                                fontSize: Theme.of(context).textTheme.bodyMedium?.fontSize,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    }
                   ),
               ],
             ),

@@ -22,6 +22,16 @@ This work enhances the overall architecture of the application, making it more m
 
 ## Recent Changes
 
+### Move Results Screen Formatting Fix (April 2025)
+- Fixed formatting issue with the move results screen in the journal editor:
+  - Added `softLineBreak: true` to all MarkdownBody widgets in the move results screens
+  - Ensured consistent formatting between the initial move dialog and the results screen
+  - Modified the following files:
+    - `dart_rpg/lib/widgets/moves/roll_result_view.dart`: Added softLineBreak property to MarkdownBody widgets
+    - `dart_rpg/lib/widgets/journal/journal_entry_viewer.dart`: Verified softLineBreak property in MarkdownBody widgets
+  - This fix ensures that text in move descriptions and outcomes is properly formatted with soft newline returns
+  - Improved readability and consistency of move results throughout the application
+
 ### Journal Entry Navigation Fix (April 2025)
 - Fixed issue with duplicate back buttons in the journal editor when accessed from the quests screen:
   - Added a `metadata` property to the `JournalEntry` class to store additional information about the entry

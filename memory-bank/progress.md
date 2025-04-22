@@ -269,6 +269,7 @@ The DartRPG application is in active development with core functionality impleme
 - **Tablet Support**: UI not fully optimized for tablet screens
 
 ### Recently Fixed Issues
+- ✅ **Move Results Formatting**: Fixed formatting issue with the move results screen in the journal editor by adding `softLineBreak: true` to all MarkdownBody widgets, ensuring consistent text formatting with soft newline returns
 - ✅ **Journal Entry Navigation**: Fixed issue with duplicate back buttons in the journal editor when accessed from the quests screen by adding metadata to journal entries and conditionally hiding the AppBar back button
 - ✅ **GitHub Actions Windows Build**: Fixed PowerShell compatibility issue by adding explicit bash shell specification for the version extraction step
 - ✅ **Location Graph Complexity**: Modularized the location graph system into specialized components for better maintainability
@@ -296,6 +297,15 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Journal Navigation**: Added "Jump to last entry" button on journal screen when entries are scrollable
 
 ## Recent Milestones
+
+### Milestone: Move Results Screen Formatting Fix (April 2025)
+- ✅ Fixed formatting issue with the move results screen in the journal editor:
+  - ✅ Added `softLineBreak: true` to all MarkdownBody widgets in the move results screens
+  - ✅ Modified `roll_result_view.dart` to ensure proper text formatting with soft newline returns
+  - ✅ Verified `softLineBreak: true` property in `journal_entry_viewer.dart` and `journal_entry_screen.dart`
+  - ✅ Ensured consistent formatting between the initial move dialog and the results screen
+  - ✅ Improved readability of move descriptions and outcomes throughout the application
+  - ✅ Updated memory bank documentation to reflect the changes
 
 ### Milestone: GitHub Actions Workflow Fixes (April 2025)
 - ✅ Fixed issues with the multi-platform release GitHub Actions workflow:

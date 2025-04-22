@@ -108,35 +108,96 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   }
   
   // Navigate to the Quests screen
-  void _navigateToQuests(BuildContext context) {
+  Future<void> _navigateToQuests(BuildContext context) async {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     if (gameProvider.currentGame != null) {
+      // If we're in editing mode, save the entry first
+      if (_isEditing && _content.isNotEmpty) {
+        try {
+          // Show a loading indicator
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Saving journal entry...'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+          
+          // Save the entry
+          await _saveEntry();
+          
+          // Clear any existing snackbars
+          ScaffoldMessenger.of(context).clearSnackBars();
+        } catch (e) {
+          // Show error if saving fails
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error saving journal entry: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          // Still navigate even if save fails
+        }
+      }
+      
       // Use pushReplacement to ensure we go directly to the Quests screen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => GameScreen(
-            gameId: gameProvider.currentGame!.id,
-            initialTabIndex: 3, // Quests tab index
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => GameScreen(
+              gameId: gameProvider.currentGame!.id,
+              initialTabIndex: 3, // Quests tab index
+            ),
           ),
-        ),
-      );
+        );
+      }
     }
   }
   
   // Navigate to the Moves screen
-  void _navigateToMoves(BuildContext context) {
+  Future<void> _navigateToMoves(BuildContext context) async {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     if (gameProvider.currentGame != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => GameScreen(
-            gameId: gameProvider.currentGame!.id,
-            initialTabIndex: 4, // Moves tab index
+      // If we're in editing mode, save the entry first
+      if (_isEditing && _content.isNotEmpty) {
+        try {
+          // Show a loading indicator
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Saving journal entry...'),
+              duration: Duration(seconds: 1),
+            ),
+          );
+          
+          // Save the entry
+          await _saveEntry();
+          
+          // Clear any existing snackbars
+          ScaffoldMessenger.of(context).clearSnackBars();
+        } catch (e) {
+          // Show error if saving fails
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error saving journal entry: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          // Still navigate even if save fails
+        }
+      }
+      
+      // Use pushReplacement to ensure we go directly to the Moves screen
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => GameScreen(
+              gameId: gameProvider.currentGame!.id,
+              initialTabIndex: 4, // Moves tab index
+            ),
           ),
-        ),
-      );
+        );
+      }
     }
   }
   
@@ -1279,14 +1340,14 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
       },
       actions: {
         QuestsIntent: CallbackAction<QuestsIntent>(
-          onInvoke: (QuestsIntent intent) {
-            _navigateToQuests(context);
+          onInvoke: (QuestsIntent intent) async {
+            await _navigateToQuests(context);
             return null;
           },
         ),
         MovesIntent: CallbackAction<MovesIntent>(
-          onInvoke: (MovesIntent intent) {
-            _navigateToMoves(context);
+          onInvoke: (MovesIntent intent) async {
+            await _navigateToMoves(context);
             return null;
           },
         ),

@@ -32,6 +32,10 @@ class MovesIntent extends Intent {
   const MovesIntent();
 }
 
+class NewEntryIntent extends Intent {
+  const NewEntryIntent();
+}
+
 class JournalEntryScreen extends StatefulWidget {
   final String? entryId;
   final String? sourceScreen;
@@ -1270,6 +1274,8 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
             const QuestsIntent(),
         LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyM): 
             const MovesIntent(),
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN): 
+            const NewEntryIntent(),
       },
       actions: {
         QuestsIntent: CallbackAction<QuestsIntent>(
@@ -1284,12 +1290,20 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
             return null;
           },
         ),
+        NewEntryIntent: CallbackAction<NewEntryIntent>(
+          onInvoke: (NewEntryIntent intent) {
+            if (_isEditing) {
+              _saveAndCreateNew();
+            }
+            return null;
+          },
+        ),
       },
       child: Scaffold(
         floatingActionButton: _isEditing
           ? FloatingActionButton(
               onPressed: _saveAndCreateNew,
-              tooltip: 'Save and Create New Entry',
+              tooltip: 'Save and Create New Entry (Ctrl+N)',
               child: const Icon(Icons.note_add),
             )
           : null,
@@ -1374,6 +1388,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                       onQuestRequested: widget.sourceScreen != 'quests' ? () {
                         _navigateToQuests(context);
                       } : null,
+                      onNewEntryRequested: _saveAndCreateNew,
                     )
                   : JournalEntryViewer(
                       content: _content,

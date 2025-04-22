@@ -41,6 +41,9 @@ class JournalEntryEditor extends StatefulWidget {
   /// Callback for when a quest is requested.
   final Function()? onQuestRequested;
   
+  /// Callback for when a new entry is requested.
+  final Function()? onNewEntryRequested;
+  
   /// The controller for the text field.
   final TextEditingController? controller;
   
@@ -66,6 +69,7 @@ class JournalEntryEditor extends StatefulWidget {
     this.onMoveRequested,
     this.onOracleRequested,
     this.onQuestRequested,
+    this.onNewEntryRequested,
     this.controller,
     this.focusNode,
     this.autosaveService,
@@ -173,6 +177,15 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
         (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) &&
         widget.onQuestRequested != null) {
       widget.onQuestRequested!();
+      return KeyEventResult.handled;
+    }
+    
+    // Check for Ctrl+N for New Entry
+    if (event is KeyDownEvent && 
+        event.logicalKey == LogicalKeyboardKey.keyN && 
+        (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) &&
+        widget.onNewEntryRequested != null) {
+      widget.onNewEntryRequested!();
       return KeyEventResult.handled;
     }
     

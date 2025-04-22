@@ -51,6 +51,7 @@ class _RollResultViewState extends State<RollResultView> {
                   p: Theme.of(context).textTheme.bodyMedium,
                 ),
                 selectable: true,
+                softLineBreak: true,
               ),
               const SizedBox(height: 16),
             ],
@@ -100,6 +101,7 @@ class _RollResultViewState extends State<RollResultView> {
                       p: Theme.of(context).textTheme.bodyMedium,
                     ),
                     selectable: true,
+                    softLineBreak: true,
                   ),
             ],
             

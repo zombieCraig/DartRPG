@@ -40,6 +40,37 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Comprehensive logging system and log viewer
 
 ### Recently Completed
+- ✅ Implemented a robust image handling system for uploading, saving, and displaying images:
+  - ✅ Created `AppImage` model to represent images with metadata
+  - ✅ Implemented `ImageStorageService` to handle saving and loading images to/from disk
+  - ✅ Added `ImageManagerProvider` to manage images throughout the app
+  - ✅ Created `AppImageWidget` for displaying images from both URLs and local storage
+  - ✅ Implemented `ImagePickerDialog` for selecting images from different sources
+  - ✅ Enhanced the `JournalEntry` model to support both URL-based and locally stored images
+  - ✅ Updated the `Character` model to include an `imageId` field for locally stored images
+  - ✅ Modified the `JournalEntryEditor` to use the new image picker dialog
+  - ✅ Enhanced the `JournalEntryViewer` to render both URL and local images inline
+  - ✅ Updated the `LinkedItemsSummary` widget to display both types of images
+  - ✅ Added special handling for image markdown syntax (![alt](url))
+  - ✅ Implemented support for a custom format for local images (id:imageId)
+- ✅ Implemented a Linked Items feature in the journal editor to view linked characters, locations, move rolls, and oracle rolls:
+  - ✅ Added a "Linked Items" button to the editor toolbar for toggling the linked items section
+  - ✅ Reused the existing LinkedItemsSummary component from the journal entry viewer
+  - ✅ Implemented dialog-based viewing of linked item details when clicked
+  - ✅ Modified the following files:
+    - ✅ `dart_rpg/lib/widgets/journal/editor_toolbar.dart`: Added Linked Items button
+    - ✅ `dart_rpg/lib/widgets/journal/journal_entry_editor.dart`: Added linked items section and dialog methods
+    - ✅ `dart_rpg/lib/screens/journal_entry_screen.dart`: Updated to pass the onLinkedItemsPressed callback
+  - ✅ This feature provides easy access to linked content while editing journal entries
+  - ✅ Improves user experience by allowing reference to linked items without leaving the editor
+- ✅ Simplified the search functionality in the Move Dialog and Moves Screen to only search move titles:
+  - ✅ Modified the search filter in both locations to only check `move.name` instead of also checking `move.description` and `move.trigger`
+  - ✅ Updated the hint text from "Enter move name or description" to "Enter move title" for clarity
+  - ✅ Modified the following files:
+    - ✅ `dart_rpg/lib/widgets/journal/move_dialog.dart`: Updated search filter and hint text
+    - ✅ `dart_rpg/lib/screens/moves_screen.dart`: Updated search filter and hint text
+  - ✅ This change makes the search more focused and only returns moves whose titles match the search query
+  - ✅ Improved user experience by providing more relevant search results
 - ✅ Further modularized the Location Graph System into specialized components following the component extraction pattern:
   - ✅ LocationGraphController: Manages the state and logic for the graph
   - ✅ LocationNodeRenderer: Handles the rendering of location nodes
@@ -269,6 +300,9 @@ The DartRPG application is in active development with core functionality impleme
 - **Tablet Support**: UI not fully optimized for tablet screens
 
 ### Recently Fixed Issues
+- ✅ **Image Handling System**: Implemented a robust system for uploading, saving, and displaying images from both URLs and local storage, with support for custom image markdown syntax
+- ✅ **Journal Editor Linked Items**: Added a Linked Items feature to the journal editor that allows viewing and interacting with linked characters, locations, move rolls, and oracle rolls while editing
+- ✅ **Move Results Formatting**: Fixed formatting issue with the move results screen in the journal editor by adding `softLineBreak: true` to all MarkdownBody widgets, ensuring consistent text formatting with soft newline returns
 - ✅ **Journal Entry Navigation**: Fixed issue with duplicate back buttons in the journal editor when accessed from the quests screen by adding metadata to journal entries and conditionally hiding the AppBar back button
 - ✅ **GitHub Actions Windows Build**: Fixed PowerShell compatibility issue by adding explicit bash shell specification for the version extraction step
 - ✅ **Location Graph Complexity**: Modularized the location graph system into specialized components for better maintainability
@@ -296,6 +330,44 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Journal Navigation**: Added "Jump to last entry" button on journal screen when entries are scrollable
 
 ## Recent Milestones
+
+### Milestone: Image Handling System Implementation (April 2025)
+- ✅ Implemented a robust image handling system for uploading, saving, and displaying images:
+  - ✅ Created `AppImage` model to represent images with metadata
+  - ✅ Implemented `ImageStorageService` to handle saving and loading images to/from disk
+  - ✅ Added `ImageManagerProvider` to manage images throughout the app
+  - ✅ Created `AppImageWidget` for displaying images from both URLs and local storage
+  - ✅ Implemented `ImagePickerDialog` for selecting images from different sources
+  - ✅ Enhanced the `JournalEntry` model to support both URL-based and locally stored images
+  - ✅ Updated the `Character` model to include an `imageId` field for locally stored images
+  - ✅ Modified the `JournalEntryEditor` to use the new image picker dialog
+  - ✅ Enhanced the `JournalEntryViewer` to render both URL and local images inline
+  - ✅ Updated the `LinkedItemsSummary` widget to display both types of images
+  - ✅ Added special handling for image markdown syntax (![alt](url))
+  - ✅ Implemented support for a custom format for local images (id:imageId)
+  - ✅ This implementation lays the groundwork for future enhancements like AI-generated images
+
+### Milestone: Journal Editor Linked Items Feature Implementation (April 2025)
+- ✅ Implemented a Linked Items feature in the journal editor to view linked characters, locations, move rolls, and oracle rolls:
+  - ✅ Added a "Linked Items" button to the editor toolbar for toggling the linked items section
+  - ✅ Reused the existing LinkedItemsSummary component from the journal entry viewer
+  - ✅ Implemented dialog-based viewing of linked item details when clicked
+  - ✅ Modified the following files:
+    - ✅ `dart_rpg/lib/widgets/journal/editor_toolbar.dart`: Added Linked Items button
+    - ✅ `dart_rpg/lib/widgets/journal/journal_entry_editor.dart`: Added linked items section and dialog methods
+    - ✅ `dart_rpg/lib/screens/journal_entry_screen.dart`: Updated to pass the onLinkedItemsPressed callback
+  - ✅ This feature provides easy access to linked content while editing journal entries
+  - ✅ Improves user experience by allowing reference to linked items without leaving the editor
+  - ✅ Ensures consistent behavior between the journal entry viewer and editor
+
+### Milestone: Move Results Screen Formatting Fix (April 2025)
+- ✅ Fixed formatting issue with the move results screen in the journal editor:
+  - ✅ Added `softLineBreak: true` to all MarkdownBody widgets in the move results screens
+  - ✅ Modified `roll_result_view.dart` to ensure proper text formatting with soft newline returns
+  - ✅ Verified `softLineBreak: true` property in `journal_entry_viewer.dart` and `journal_entry_screen.dart`
+  - ✅ Ensured consistent formatting between the initial move dialog and the results screen
+  - ✅ Improved readability of move descriptions and outcomes throughout the application
+  - ✅ Updated memory bank documentation to reflect the changes
 
 ### Milestone: GitHub Actions Workflow Fixes (April 2025)
 - ✅ Fixed issues with the multi-platform release GitHub Actions workflow:

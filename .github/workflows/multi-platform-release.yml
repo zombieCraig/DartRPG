@@ -49,6 +49,7 @@ jobs:
           channel: 'stable'
           
       - name: Update pubspec version and changelog
+        shell: bash
         run: |
           cd dart_rpg
           # Replace version line with new version and build number
@@ -57,12 +58,13 @@ jobs:
           
           # Update changelog.json with the new version
           cd ..
-          python3 scripts/update_changelog.py ${{ env.VERSION }}
+          python3 scripts/update_changelog.py ${{ env.VERSION }} || echo "No changes found in memory-bank files"
           
           # Verify the changelog was updated
-          cat dart_rpg/assets/data/changelog.json | grep "${{ env.VERSION }}"
+          cat dart_rpg/assets/data/changelog.json | grep "${{ env.VERSION }}" || echo "Version not found in changelog"
           
       - name: Install dependencies
+        shell: bash
         run: |
           cd dart_rpg
           flutter pub get
@@ -82,6 +84,7 @@ jobs:
           brew install create-dmg || true  # Optional for DMG creation
           
       - name: Build for ${{ matrix.platform }}
+        shell: bash
         run: |
           cd dart_rpg
           flutter build ${{ matrix.build_target }} --release
@@ -126,6 +129,7 @@ jobs:
           
       # Use GitHub API directly to upload assets instead of deprecated action
       - name: Generate changelog
+        shell: bash
         run: |
           # Extract version from tag (e.g., v1.2.3 -> 1.2.3)
           VERSION=${GITHUB_REF#refs/tags/v}

@@ -995,6 +995,151 @@ The tutorial system has been integrated with the Journal Screen to provide guida
 
 This pattern can be extended to other screens and features as needed, providing a comprehensive onboarding experience for new users.
 
+## Image Handling System Architecture
+
+The application implements a robust image handling system that allows users to upload, save, and display images from both URLs and local storage. This system follows a modular architecture that separates concerns and improves maintainability:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   Models                                │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              AppImage                           │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ id, path, url   │  │ metadata            │   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  └──────────────────────────────────────────────────┘   │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              Character                          │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ imageUrl        │  │ imageId             │   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  └──────────────────────────────────────────────────┘   │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              JournalEntry                       │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ embeddedImages  │  │ embeddedImageIds    │   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  └──────────────────────────────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                   Services                              │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              ImageStorageService                │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ saveImage       │  │ getImage            │   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ deleteImage     │  │ getAllImages        │   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  └──────────────────────────────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                   Providers                             │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              ImageManagerProvider               │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ addImageFromFile│  │ addImageFromUrl     │   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ getImageById    │  │ getAllImages        │   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  └──────────────────────────────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                   UI Components                         │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              AppImageWidget                     │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ imageUrl        │  │ imageId             │   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  └──────────────────────────────────────────────────┘   │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              ImagePickerDialog                  │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ URL input       │  │ File picker         │   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  │  ┌─────────────────┐                            │   │
+│  │  │ Saved images    │                            │   │
+│  │  └─────────────────┘                            │   │
+│  └──────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Key Components
+
+1. **AppImage Model**: Represents an image with metadata
+   - Contains properties for id, path, url, and metadata
+   - Supports both URL-based and locally stored images
+   - Includes methods for serialization and deserialization
+
+2. **ImageStorageService**: Handles saving and loading images to/from disk
+   - Provides methods for saving, loading, and deleting images
+   - Manages the file system storage for images
+   - Handles file naming and organization
+
+3. **ImageManagerProvider**: Manages images throughout the app
+   - Provides a high-level API for image operations
+   - Coordinates between UI and storage service
+   - Handles image caching and memory management
+   - Manages image metadata and relationships
+
+4. **AppImageWidget**: A reusable widget for displaying images
+   - Supports both URL-based and locally stored images
+   - Handles loading states and errors
+   - Provides consistent image display throughout the app
+
+5. **ImagePickerDialog**: A dialog for selecting images
+   - Allows selecting images from URL, file system, or saved images
+   - Provides a consistent UI for image selection
+   - Returns a standardized result format
+
+### Integration with Existing Models
+
+1. **Character Model**:
+   - Added `imageId` field for locally stored images
+   - Added `imageSource` getter to determine the image source (URL or local)
+   - Updated serialization and deserialization methods
+
+2. **JournalEntry Model**:
+   - Added `embeddedImageIds` list for locally stored images
+   - Updated serialization and deserialization methods
+   - Enhanced markdown processing to handle image references
+
+3. **LinkedItemsManager**:
+   - Added methods for tracking embedded image IDs
+   - Updated journal entry updating to include embedded image IDs
+
+### Markdown Integration
+
+The system supports a custom format for image references in markdown:
+- Standard format: `![alt](url)` for URL-based images
+- Custom format: `![alt](id:imageId)` for locally stored images
+
+This allows for seamless integration with the existing markdown processing system while supporting both types of images.
+
+### Benefits
+
+- **Flexibility**: Supports both URL-based and locally stored images
+- **Offline Support**: Images can be saved locally for offline use
+- **Consistency**: Provides a consistent UI for image selection and display
+- **Extensibility**: Designed to support future enhancements like AI-generated images
+- **Modularity**: Components can be developed and tested independently
+
+This architecture follows the same pattern as other systems in the application, providing a consistent approach to component organization and interaction.
+
 ## Loading Screen Architecture
 
 The application implements a specialized loading screen pattern for handling resource-intensive operations that may take significant time to complete. This pattern provides a visually engaging experience while background processes run.

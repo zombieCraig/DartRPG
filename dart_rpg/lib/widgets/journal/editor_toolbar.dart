@@ -35,6 +35,9 @@ class EditorToolbar extends StatelessWidget {
   /// Callback for when the quest button is pressed.
   final VoidCallback? onQuestPressed;
   
+  /// Callback for when the linked items button is pressed.
+  final VoidCallback? onLinkedItemsPressed;
+  
   /// Creates a new EditorToolbar.
   const EditorToolbar({
     super.key,
@@ -49,6 +52,7 @@ class EditorToolbar extends StatelessWidget {
     this.onMovePressed,
     this.onOraclePressed,
     this.onQuestPressed,
+    this.onLinkedItemsPressed,
   });
   
   @override
@@ -172,6 +176,16 @@ class EditorToolbar extends StatelessWidget {
                   child: IconButton(
                     icon: const Icon(Icons.task_alt),
                     onPressed: onQuestPressed,
+                  ),
+                ),
+                
+              // Linked Items button
+              if (onLinkedItemsPressed != null)
+                Tooltip(
+                  message: 'Linked Items',
+                  child: IconButton(
+                    icon: const Icon(Icons.link),
+                    onPressed: onLinkedItemsPressed,
                   ),
                 ),
             ],

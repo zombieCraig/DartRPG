@@ -22,6 +22,54 @@ This work enhances the overall architecture of the application, making it more m
 
 ## Recent Changes
 
+### Image Handling System Implementation (April 2025)
+- ✅ Implemented a robust image handling system for uploading, saving, and displaying images:
+  - Created `AppImage` model to represent images with metadata
+  - Implemented `ImageStorageService` to handle saving and loading images to/from disk
+  - Added `ImageManagerProvider` to manage images throughout the app
+  - Created `AppImageWidget` for displaying images from both URLs and local storage
+  - Implemented `ImagePickerDialog` for selecting images from different sources
+  - Enhanced the `JournalEntry` model to support both URL-based and locally stored images
+  - Updated the `Character` model to include an `imageId` field for locally stored images
+  - Modified the `JournalEntryEditor` to use the new image picker dialog
+  - Enhanced the `JournalEntryViewer` to render both URL and local images inline
+  - Updated the `LinkedItemsSummary` widget to display both types of images
+  - Added special handling for image markdown syntax (![alt](url))
+  - Implemented support for a custom format for local images (id:imageId)
+  - This implementation lays the groundwork for future enhancements like AI-generated images
+
+### Journal Editor Linked Items Feature Implementation (April 2025)
+- ✅ Implemented a Linked Items feature in the journal editor to view linked characters, locations, move rolls, and oracle rolls:
+  - Added a "Linked Items" button to the editor toolbar for toggling the linked items section
+  - Reused the existing LinkedItemsSummary component from the journal entry viewer
+  - Implemented dialog-based viewing of linked item details when clicked
+  - Modified the following files:
+    - `dart_rpg/lib/widgets/journal/editor_toolbar.dart`: Added Linked Items button
+    - `dart_rpg/lib/widgets/journal/journal_entry_editor.dart`: Added linked items section and dialog methods
+    - `dart_rpg/lib/screens/journal_entry_screen.dart`: Updated to pass the onLinkedItemsPressed callback
+  - This feature provides easy access to linked content while editing journal entries
+  - Improves user experience by allowing reference to linked items without leaving the editor
+
+### Move Search Simplification (April 2025)
+- ✅ Simplified the search functionality in the Move Dialog and Moves Screen to only search move titles:
+  - Modified the search filter in both locations to only check `move.name` instead of also checking `move.description` and `move.trigger`
+  - Updated the hint text from "Enter move name or description" to "Enter move title" for clarity
+  - Modified the following files:
+    - `dart_rpg/lib/widgets/journal/move_dialog.dart`: Updated search filter and hint text
+    - `dart_rpg/lib/screens/moves_screen.dart`: Updated search filter and hint text
+  - This change makes the search more focused and only returns moves whose titles match the search query
+  - Improved user experience by providing more relevant search results
+
+### Move Results Screen Formatting Fix (April 2025)
+- Fixed formatting issue with the move results screen in the journal editor:
+  - Added `softLineBreak: true` to all MarkdownBody widgets in the move results screens
+  - Ensured consistent formatting between the initial move dialog and the results screen
+  - Modified the following files:
+    - `dart_rpg/lib/widgets/moves/roll_result_view.dart`: Added softLineBreak property to MarkdownBody widgets
+    - `dart_rpg/lib/widgets/journal/journal_entry_viewer.dart`: Verified softLineBreak property in MarkdownBody widgets
+  - This fix ensures that text in move descriptions and outcomes is properly formatted with soft newline returns
+  - Improved readability and consistency of move results throughout the application
+
 ### Journal Entry Navigation Fix (April 2025)
 - Fixed issue with duplicate back buttons in the journal editor when accessed from the quests screen:
   - Added a `metadata` property to the `JournalEntry` class to store additional information about the entry

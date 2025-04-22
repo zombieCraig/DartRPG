@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../providers/game_provider.dart';
+import '../../providers/image_manager_provider.dart';
 import '../../models/journal_entry.dart';
+import '../../widgets/common/app_image_widget.dart';
 
 class LinkedItemsSummary extends StatefulWidget {
   final JournalEntry journalEntry;
@@ -52,11 +54,16 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
     // Get oracle rolls
     final oracleRolls = widget.journalEntry.oracleRolls;
     
+    // Get embedded images
+    final hasEmbeddedImages = widget.journalEntry.embeddedImages.isNotEmpty || 
+                             widget.journalEntry.embeddedImageIds.isNotEmpty;
+    
     // Check if there are any linked items
     final hasLinkedItems = linkedCharacters.isNotEmpty || 
                           linkedLocations.isNotEmpty || 
                           moveRolls.isNotEmpty || 
-                          oracleRolls.isNotEmpty;
+                          oracleRolls.isNotEmpty ||
+                          hasEmbeddedImages;
     
     if (!hasLinkedItems) {
       return const SizedBox.shrink();
@@ -89,7 +96,7 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                   ),
                   const Spacer(),
                   Text(
-                    '${linkedCharacters.length + linkedLocations.length + moveRolls.length + oracleRolls.length} items',
+                    '${linkedCharacters.length + linkedLocations.length + moveRolls.length + oracleRolls.length + widget.journalEntry.embeddedImages.length + widget.journalEntry.embeddedImageIds.length} items',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 14,
@@ -290,6 +297,63 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                       },
                       );
                     }),
+                  ],
+                  
+                  // Embedded Images
+                  if (widget.journalEntry.embeddedImages.isNotEmpty || 
+                      widget.journalEntry.embeddedImageIds.isNotEmpty) ...[
+                    const Divider(),
+                    const Text(
+                      'Images',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 120,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          // URL-based images
+                          ...widget.journalEntry.embeddedImages.map((imageUrl) => 
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: SizedBox(
+                                  width: 120,
+                                  height: 120,
+                                  child: AppImageWidget(
+                                    imageUrl: imageUrl,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          
+                          // Locally stored images
+                          ...widget.journalEntry.embeddedImageIds.map((imageId) => 
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: SizedBox(
+                                  width: 120,
+                                  height: 120,
+                                  child: AppImageWidget(
+                                    imageId: imageId,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ],
               ),

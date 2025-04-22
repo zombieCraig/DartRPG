@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/game_provider.dart';
 import 'providers/datasworn_provider.dart';
+import 'providers/image_manager_provider.dart';
 import 'screens/game_selection_screen.dart';
 import 'utils/logging_service.dart';
 
@@ -24,36 +25,48 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => GameProvider()),
         ChangeNotifierProvider(create: (_) => DataswornProvider()),
+        ChangeNotifierProvider(create: (_) => ImageManagerProvider()..loadImages()),
       ],
-      child: Consumer<SettingsProvider>(
-        builder: (context, settings, _) {
-          return MaterialApp(
-            title: 'Fe-Runners Journal',
-            theme: settings.getTheme(false),
-            darkTheme: settings.getTheme(true),
-            themeMode: settings.themeMode,
-            home: const GameSelectionScreen(),
-            // Custom page transitions
-            onGenerateRoute: (settings) {
-              // Only apply custom transitions if animations are enabled
-              if (!context.read<SettingsProvider>().enableAnimations) {
-                return null; // Use default transitions
-              }
-              
-              // Get the route settings
-              final name = settings.name;
-              final arguments = settings.arguments;
-              
-              // Handle specific named routes if needed
-              if (name == '/') {
-                return MaterialPageRoute(
-                  builder: (_) => const GameSelectionScreen(),
-                  settings: settings,
-                );
-              }
-              
-              // For other routes, return null to use the default behavior
-              return null;
+      child: Builder(
+        builder: (context) {
+          // Connect the GameProvider and ImageManagerProvider
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final gameProvider = Provider.of<GameProvider>(context, listen: false);
+            final imageManagerProvider = Provider.of<ImageManagerProvider>(context, listen: false);
+            gameProvider.setImageManagerProvider(imageManagerProvider);
+          });
+          
+          return Consumer<SettingsProvider>(
+            builder: (context, settings, _) {
+              return MaterialApp(
+                title: 'Fe-Runners Journal',
+                theme: settings.getTheme(false),
+                darkTheme: settings.getTheme(true),
+                themeMode: settings.themeMode,
+                home: const GameSelectionScreen(),
+                // Custom page transitions
+                onGenerateRoute: (settings) {
+                  // Only apply custom transitions if animations are enabled
+                  if (!context.read<SettingsProvider>().enableAnimations) {
+                    return null; // Use default transitions
+                  }
+                  
+                  // Get the route settings
+                  final name = settings.name;
+                  final arguments = settings.arguments;
+                  
+                  // Handle specific named routes if needed
+                  if (name == '/') {
+                    return MaterialPageRoute(
+                      builder: (_) => const GameSelectionScreen(),
+                      settings: settings,
+                    );
+                  }
+                  
+                  // For other routes, return null to use the default behavior
+                  return null;
+                },
+              );
             },
           );
         },

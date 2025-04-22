@@ -1,13 +1,18 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/datasworn_provider.dart';
+import '../../providers/image_manager_provider.dart';
 import '../../services/autosave_service.dart';
+import '../../models/journal_entry.dart';
+import '../../widgets/common/image_picker_dialog.dart';
 import 'editor_toolbar.dart';
 import 'autocomplete_system.dart';
 import 'linked_items_manager.dart';
 import 'location_oracle_shortcuts.dart';
+import 'linked_items_summary.dart';
 
 /// A widget for editing journal entries with rich text formatting and autocompletion.
 class JournalEntryEditor extends StatefulWidget {
@@ -41,6 +46,12 @@ class JournalEntryEditor extends StatefulWidget {
   /// Callback for when a quest is requested.
   final Function()? onQuestRequested;
   
+  /// Callback for when a new entry is requested.
+  final Function()? onNewEntryRequested;
+  
+  /// Callback for when the linked items button is pressed.
+  final Function()? onLinkedItemsPressed;
+  
   /// The controller for the text field.
   final TextEditingController? controller;
   
@@ -66,6 +77,8 @@ class JournalEntryEditor extends StatefulWidget {
     this.onMoveRequested,
     this.onOracleRequested,
     this.onQuestRequested,
+    this.onNewEntryRequested,
+    this.onLinkedItemsPressed,
     this.controller,
     this.focusNode,
     this.autosaveService,
@@ -102,6 +115,9 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
   late AutocompleteSystem _autocompleteSystem;
   late LinkedItemsManager _linkedItemsManager;
   late AutosaveService? _autosaveService;
+  
+  // State for linked items visibility
+  bool _showLinkedItems = false;
   
   @override
   void initState() {
@@ -147,6 +163,13 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
     super.dispose();
   }
   
+  // Toggle linked items visibility
+  void _toggleLinkedItems() {
+    setState(() {
+      _showLinkedItems = !_showLinkedItems;
+    });
+  }
+  
   // Handle keyboard shortcuts
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
     // Check for Ctrl+M for Move
@@ -173,6 +196,15 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
         (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) &&
         widget.onQuestRequested != null) {
       widget.onQuestRequested!();
+      return KeyEventResult.handled;
+    }
+    
+    // Check for Ctrl+N for New Entry
+    if (event is KeyDownEvent && 
+        event.logicalKey == LogicalKeyboardKey.keyN && 
+        (HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed) &&
+        widget.onNewEntryRequested != null) {
+      widget.onNewEntryRequested!();
       return KeyEventResult.handled;
     }
     
@@ -366,65 +398,94 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
   }
   
   // Add an image to the document
-  void _addImage() {
-    // Show dialog to enter URL
-    _showImageUrlDialog().then((imageUrl) {
-      if (imageUrl != null && imageUrl.isNotEmpty) {
-        // Insert the image placeholder at the current cursor position
+  Future<void> _addImage() async {
+    // Show image picker dialog
+    final result = await ImagePickerDialog.show(context);
+    
+    if (result != null) {
+      final imageManagerProvider = Provider.of<ImageManagerProvider>(context, listen: false);
+      String? imageUrl;
+      String? imageId;
+      
+      // Process the result based on the type
+      if (result['type'] == 'url') {
+        // URL selected
+        imageUrl = result['url'];
+      } else if (result['type'] == 'file') {
+        // File selected
+        final file = result['file'] as File;
+        
+        // Show loading indicator
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Saving image...'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+        
+        // Save the image
+        final image = await imageManagerProvider.addImageFromFile(
+          file,
+          metadata: {'usage': 'journal'},
+        );
+        
+        if (image != null) {
+          imageId = image.id;
+        }
+      } else if (result['type'] == 'saved') {
+        // Saved image selected
+        imageId = result['imageId'];
+      }
+      
+      // Insert the image placeholder at the current cursor position
+      if (imageUrl != null || imageId != null) {
         final cursorPosition = _controller.selection.baseOffset;
-        final imagePlaceholder = '![image]($imageUrl)';
+        String imagePlaceholder;
         
-        final newText = _controller.text.replaceRange(
-          cursorPosition, 
-          cursorPosition, 
-          imagePlaceholder
-        );
+        if (imageId != null) {
+          // Use a special format for local images
+          imagePlaceholder = '![image](id:$imageId)';
+        } else {
+          imagePlaceholder = '![image]($imageUrl)';
+        }
         
-        _controller.value = TextEditingValue(
-          text: newText,
-          selection: TextSelection.collapsed(offset: cursorPosition + imagePlaceholder.length),
-        );
-        
-        // Notify parent about the change
-        widget.onChanged(_controller.text, _controller.text);
-        
-        // Notify parent about added image
-        if (widget.onImageAdded != null) {
-          widget.onImageAdded!(imageUrl);
-          _linkedItemsManager.addEmbeddedImage(imageUrl);
+        // Make sure cursorPosition is valid
+        if (cursorPosition >= 0 && cursorPosition <= _controller.text.length) {
+          final newText = _controller.text.replaceRange(
+            cursorPosition, 
+            cursorPosition, 
+            imagePlaceholder
+          );
+          
+          _controller.value = TextEditingValue(
+            text: newText,
+            selection: TextSelection.collapsed(offset: cursorPosition + imagePlaceholder.length),
+          );
+          
+          // Notify parent about the change
+          widget.onChanged(_controller.text, _controller.text);
+          
+          // Notify parent about added image
+          if (widget.onImageAdded != null) {
+            if (imageUrl != null) {
+              widget.onImageAdded!(imageUrl);
+              _linkedItemsManager.addEmbeddedImage(imageUrl);
+            } else if (imageId != null) {
+              widget.onImageAdded!('id:$imageId');
+              _linkedItemsManager.addEmbeddedImageId(imageId);
+            }
+          }
+        } else {
+          // Handle invalid cursor position
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: Invalid cursor position'),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
       }
-    });
-  }
-  
-  // Show dialog to enter image URL
-  Future<String?> _showImageUrlDialog() async {
-    final controller = TextEditingController();
-    
-    return showDialog<String>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Enter Image URL'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              hintText: 'https://example.com/image.jpg',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, controller.text),
-              child: const Text('Add'),
-            ),
-          ],
-        );
-      },
-    );
+    }
   }
   
   // Start the autosave timer
@@ -458,6 +519,280 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
   int _lastMentionCheckTime = 0;
   bool _shouldCheckMentions = false;
   
+  // Show character details dialog
+  void _showCharacterDetailsDialog(BuildContext context, dynamic character) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(character.name),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (character.bio != null && character.bio!.isNotEmpty) ...[
+                  const Text(
+                    'Bio:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(character.bio!),
+                  const SizedBox(height: 16),
+                ],
+                
+                // Stats
+                if (character.stats.isNotEmpty) ...[
+                  const Text(
+                    'Stats:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 8,
+                    children: character.stats.map((stat) => 
+                      Chip(
+                        label: Text('${stat.name}: ${stat.value}'),
+                        backgroundColor: Colors.grey[200],
+                      )
+                    ).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                
+                // Notes
+                if (character.notes.isNotEmpty) ...[
+                  const Text(
+                    'Notes:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  ...character.notes.map((note) => 
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4.0),
+                      child: Text('• $note'),
+                    )
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  
+  // Show location details dialog
+  void _showLocationDetailsDialog(BuildContext context, dynamic location) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(location.name),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (location.description != null && location.description!.isNotEmpty) ...[
+                  const Text(
+                    'Description:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(location.description!),
+                  const SizedBox(height: 16),
+                ],
+                
+                if (location.notes.isNotEmpty) ...[
+                  const Text(
+                    'Notes:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  ...location.notes.map((note) => 
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4.0),
+                      child: Text('• $note'),
+                    )
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  
+  // Show move roll details dialog
+  void _showMoveRollDetailsDialog(BuildContext context, dynamic moveRoll) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('${moveRoll.moveName} Roll'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (moveRoll.moveDescription != null) ...[
+                  Text(moveRoll.moveDescription!),
+                  const SizedBox(height: 16),
+                ],
+                
+                if (moveRoll.rollType == 'action_roll') ...[
+                  Text('Action Die: ${moveRoll.actionDie}'),
+                  
+                  if (moveRoll.statValue != null) ...[
+                    const SizedBox(height: 4),
+                    Text('Stat: ${moveRoll.stat} (${moveRoll.statValue})'),
+                    const SizedBox(height: 4),
+                    Text('Total Action Value: ${moveRoll.actionDie + moveRoll.statValue!}'),
+                  ],
+                  
+                  if (moveRoll.modifier != null && moveRoll.modifier != 0) ...[
+                    const SizedBox(height: 4),
+                    Text('Modifier: ${moveRoll.modifier! > 0 ? '+' : ''}${moveRoll.modifier}'),
+                  ],
+                ],
+                
+                if (moveRoll.rollType == 'progress_roll' && moveRoll.progressValue != null) ...[
+                  Text('Progress Value: ${moveRoll.progressValue}'),
+                ],
+                
+                if (moveRoll.challengeDice.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text('Challenge Dice: ${moveRoll.challengeDice.join(' and ')}'),
+                ],
+                
+                if (moveRoll.outcome != 'performed') ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    'Outcome: ${moveRoll.outcome.toUpperCase()}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _getOutcomeColor(moveRoll.outcome),
+                    ),
+                  ),
+                  
+                  // Add Momentum Burned indicator
+                  if (moveRoll.momentumBurned) ...[
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Momentum Burned',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.purple,
+                      ),
+                    ),
+                  ],
+                ] else ...[
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Move performed successfully',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                  ),
+                  
+                  // Show oracle result if this is an oracle roll
+                  if (moveRoll.rollType == 'oracle_roll' && 
+                      moveRoll.moveData != null && 
+                      moveRoll.moveData!.containsKey('oracleResult')) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Oracle Result: ${moveRoll.moveData!['oracleResult']}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  
+  // Show oracle roll details dialog
+  void _showOracleRollDetailsDialog(BuildContext context, dynamic oracleRoll) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('${oracleRoll.oracleName} Result'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (oracleRoll.oracleTable != null) ...[
+                  Text('Table: ${oracleRoll.oracleTable}'),
+                  const SizedBox(height: 8),
+                ],
+                
+                Text('Roll: ${oracleRoll.dice.join(', ')}'),
+                const SizedBox(height: 16),
+                
+                Text(
+                  'Result: ${oracleRoll.result}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+  
+  // Get color for move outcome
+  Color _getOutcomeColor(String outcome) {
+    switch (outcome.toLowerCase()) {
+      case 'strong hit':
+        return Colors.green;
+      case 'weak hit':
+        return Colors.orange;
+      case 'miss':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
     final stopwatch = Stopwatch()..start();
@@ -479,6 +814,7 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
         onMovePressed: widget.onMoveRequested,
         onOraclePressed: widget.onOracleRequested,
         onQuestPressed: widget.onQuestRequested,
+        onLinkedItemsPressed: _toggleLinkedItems,
       ) : null;
     
     // Only check for mentions if we need to
@@ -519,6 +855,51 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
                   // Start autosave timer
                   _startAutoSaveTimer();
                 },
+              );
+            },
+          ),
+          
+        // Linked Items Summary - only show when toggled
+        if (_showLinkedItems && !widget.readOnly)
+          Consumer<GameProvider>(
+            builder: (context, gameProvider, _) {
+              // Create temporary journal entry for the summary
+              final tempEntry = JournalEntry(
+                id: 'temp',
+                content: _controller.text,
+                linkedCharacterIds: _linkedItemsManager.linkedCharacterIds,
+                linkedLocationIds: _linkedItemsManager.linkedLocationIds,
+                moveRolls: _linkedItemsManager.moveRolls,
+                oracleRolls: _linkedItemsManager.oracleRolls,
+                embeddedImages: _linkedItemsManager.embeddedImages,
+              );
+              
+              return Container(
+                constraints: const BoxConstraints(maxHeight: 300), // Limit height
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: LinkedItemsSummary(
+                      journalEntry: tempEntry,
+                      onCharacterTap: (characterId) {
+                        final character = gameProvider.currentGame!.characters
+                            .firstWhere((c) => c.id == characterId);
+                        _showCharacterDetailsDialog(context, character);
+                      },
+                      onLocationTap: (locationId) {
+                        final location = gameProvider.currentGame!.locations
+                            .firstWhere((l) => l.id == locationId);
+                        _showLocationDetailsDialog(context, location);
+                      },
+                      onMoveRollTap: (moveRoll) {
+                        _showMoveRollDetailsDialog(context, moveRoll);
+                      },
+                      onOracleRollTap: (oracleRoll) {
+                        _showOracleRollDetailsDialog(context, oracleRoll);
+                      },
+                    ),
+                  ),
+                ),
               );
             },
           ),

@@ -19,6 +19,9 @@ class LinkedItemsManager {
   /// The list of embedded image URLs.
   List<String> _embeddedImages = [];
   
+  /// The list of embedded image IDs.
+  List<String> _embeddedImageIds = [];
+  
   /// Creates a new LinkedItemsManager.
   LinkedItemsManager({
     List<String>? linkedCharacterIds,
@@ -26,12 +29,14 @@ class LinkedItemsManager {
     List<MoveRoll>? moveRolls,
     List<OracleRoll>? oracleRolls,
     List<String>? embeddedImages,
+    List<String>? embeddedImageIds,
   }) {
     _linkedCharacterIds = linkedCharacterIds ?? [];
     _linkedLocationIds = linkedLocationIds ?? [];
     _moveRolls = moveRolls ?? [];
     _oracleRolls = oracleRolls ?? [];
     _embeddedImages = embeddedImages ?? [];
+    _embeddedImageIds = embeddedImageIds ?? [];
   }
   
   /// Creates a LinkedItemsManager from a journal entry.
@@ -42,6 +47,7 @@ class LinkedItemsManager {
       moveRolls: List.from(entry.moveRolls),
       oracleRolls: List.from(entry.oracleRolls),
       embeddedImages: List.from(entry.embeddedImages),
+      embeddedImageIds: List.from(entry.embeddedImageIds),
     );
   }
   
@@ -101,6 +107,18 @@ class LinkedItemsManager {
     _embeddedImages.remove(imageUrl);
   }
   
+  /// Adds an embedded image ID to the embedded image IDs list.
+  void addEmbeddedImageId(String imageId) {
+    if (!_embeddedImageIds.contains(imageId)) {
+      _embeddedImageIds.add(imageId);
+    }
+  }
+  
+  /// Removes an embedded image ID from the embedded image IDs list.
+  void removeEmbeddedImageId(String imageId) {
+    _embeddedImageIds.remove(imageId);
+  }
+  
   /// Updates a journal entry with the linked items.
   void updateJournalEntry(JournalEntry entry) {
     entry.linkedCharacterIds = List.from(_linkedCharacterIds);
@@ -108,6 +126,7 @@ class LinkedItemsManager {
     entry.moveRolls = List.from(_moveRolls);
     entry.oracleRolls = List.from(_oracleRolls);
     entry.embeddedImages = List.from(_embeddedImages);
+    entry.embeddedImageIds = List.from(_embeddedImageIds);
   }
   
   /// Gets the list of linked character IDs.
@@ -124,6 +143,9 @@ class LinkedItemsManager {
   
   /// Gets the list of embedded image URLs.
   List<String> get embeddedImages => List.unmodifiable(_embeddedImages);
+  
+  /// Gets the list of embedded image IDs.
+  List<String> get embeddedImageIds => List.unmodifiable(_embeddedImageIds);
   
   /// Validates character references in the linked characters list.
   /// 
@@ -148,5 +170,6 @@ class LinkedItemsManager {
     _moveRolls.clear();
     _oracleRolls.clear();
     _embeddedImages.clear();
+    _embeddedImageIds.clear();
   }
 }

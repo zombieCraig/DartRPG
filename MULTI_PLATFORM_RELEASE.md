@@ -163,6 +163,17 @@ The script will:
 
 The app includes a changelog screen accessible from the About section in Settings. This screen displays all version history with changes in a user-friendly format.
 
+## GitHub Pages Deployment
+
+The multi-platform release workflow now includes automatic deployment to GitHub Pages:
+
+1. After the release assets are built and uploaded, a separate job runs to deploy to GitHub Pages
+2. This job updates the changelog.json file with the new version
+3. It then builds the Flutter web app and deploys it to the gh-pages branch
+4. The GitHub Pages site is automatically updated with the latest version
+
+This ensures that the changelog in the about section on the gh-pages site always shows the current release version, without requiring manual intervention.
+
 ## Future Enhancements
 
 Potential future enhancements to the release process:

@@ -4,7 +4,10 @@ This document outlines the process for deploying the DartRPG Flutter web app to 
 
 ## Automatic Deployment with GitHub Actions
 
-The repository is configured with a GitHub Actions workflow that automatically builds and deploys the Flutter web app to GitHub Pages whenever changes are pushed to the `main` branch.
+The repository is configured with GitHub Actions workflows that automatically build and deploy the Flutter web app to GitHub Pages in two scenarios:
+
+1. **When changes are pushed to the `main` branch**: The web app is built and deployed to GitHub Pages.
+2. **When a new release is created**: As part of the multi-platform release process, the web app is also built and deployed to GitHub Pages with the updated changelog.
 
 ### How It Works
 

@@ -148,3 +148,44 @@ jobs:
           body: ${{ env.CHANGELOG_CONTENT }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+  deploy-to-gh-pages:
+    name: Deploy to GitHub Pages
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.2'
+          channel: 'stable'
+          
+      - name: Update changelog
+        shell: bash
+        run: |
+          # Update changelog.json with the new version
+          python3 scripts/update_changelog.py ${GITHUB_REF#refs/tags/v} || echo "No changes found in memory-bank files"
+          
+          # Verify the changelog was updated
+          cat dart_rpg/assets/data/changelog.json | grep "${GITHUB_REF#refs/tags/v}" || echo "Version not found in changelog"
+          
+      - name: Install dependencies
+        shell: bash
+        run: |
+          cd dart_rpg
+          flutter pub get
+          
+      - name: Build for web
+        shell: bash
+        run: |
+          cd dart_rpg
+          flutter build web --release --base-href /DartRPG/
+          
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dart_rpg/build/web

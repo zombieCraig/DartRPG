@@ -1,0 +1,42 @@
+{
+  "versions": [
+    {
+      "version": "0.0.7",
+      "date": "2025-04-22",
+      "changes": [
+        "**Features**",
+        "Implemented a robust image handling system for uploading, saving, and displaying images with 22 related improvements",
+        "Added an index file for easy importing of all location graph components with 3 related improvements",
+        "Created comprehensive documentation in a README file and related improvements",
+        "**Improvements**",
+        "Enhanced screen transitions with improved visual effects and added a new Circuit Reveal transition with 13 related improvements",
+        "Enhanced the Move model to handle embedded oracles with 4 related improvements",
+        "Improved test reliability by making tests more resilient to UI changes and related improvements",
+        "**Bug Fixes**",
+        "Fixed deprecated withOpacity() method usage throughout the codebase and related improvements",
+        "Updated multiple files including location_graph_widget",
+        "Updated MoveDetails widget to include the MoveOraclePanel when a move has embedded oracles with 5 related improvements",
+        "**Other Improvements**",
+        "Simplified the search functionality in the Move Dialog and Moves Screen to only search move titles and 8 related improvements",
+        "Further modularized the Location Graph System into specialized components following the component extraction pattern and related improvements",
+        "Replaced all instances with withAlpha() for better precision and future compatibility and 3 related improvements"
+      ]
+    },
+    {
+      "version": "0.0.2",
+      "date": "2025-04-20",
+      "changes": [
+        "Fixed GitHub Actions workflow for multi-platform builds",
+        "Implemented Countdown Clock feature for tracking game events",
+        "Enhanced screen transitions with improved visual effects",
+        "Fixed deprecated withOpacity() method usage throughout codebase",
+        "Implemented dropdown and dice button for moves with embedded oracles",
+        "Redesigned asset card system to properly display abilities",
+        "Implemented tutorial system with contextual help popups",
+        "Enhanced character short name functionality with auto-generation",
+        "Implemented loading screen for resource-intensive operations",
+        "Restructured the Location Graph System into specialized components"
+      ]
+    }
+  ]
+}

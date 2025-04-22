@@ -87,9 +87,16 @@ The multi-platform release workflow has been updated to address several issues:
    - Improved error reporting for macOS packaging
 
 4. **Cross-Platform Shell Compatibility**:
-   - Added explicit shell specification for version extraction step
-   - Ensures bash is used on all platforms including Windows
+   - Added explicit shell specification for all steps in the workflow
+   - Ensures bash is used consistently on all platforms including Windows
    - Fixes PowerShell compatibility issues with bash syntax
+   - Prevents sed command errors on Windows runners
+
+5. **Improved Error Handling**:
+   - Added error handling for the changelog update process
+   - Modified the update_changelog.py script to continue even when no changes are found
+   - Added fallback to a generic "Maintenance update" entry when no specific changes are found
+   - Prevents workflow failures due to missing changelog entries
 
 ## Troubleshooting
 
@@ -145,6 +152,12 @@ You can use the changelog script manually to:
   ```bash
   python3 scripts/update_changelog.py <version> --extract-only
   ```
+
+The script will:
+- Extract changes from the "Recent Changes" section in memory-bank/activeContext.md
+- Extract changes from the "Recently Completed" section in memory-bank/progress.md
+- If no changes are found, it will add a generic "Maintenance update" entry
+- Update the changelog.json file with the new version and changes
 
 ### In-App Changelog
 

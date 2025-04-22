@@ -4,6 +4,7 @@ import 'providers/settings_provider.dart';
 import 'providers/game_provider.dart';
 import 'providers/datasworn_provider.dart';
 import 'providers/image_manager_provider.dart';
+import 'providers/ai_image_provider.dart';
 import 'screens/game_selection_screen.dart';
 import 'utils/logging_service.dart';
 
@@ -26,6 +27,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => GameProvider()),
         ChangeNotifierProvider(create: (_) => DataswornProvider()),
         ChangeNotifierProvider(create: (_) => ImageManagerProvider()..loadImages()),
+        ChangeNotifierProvider(create: (_) => AiImageProvider()),
       ],
       child: Builder(
         builder: (context) {

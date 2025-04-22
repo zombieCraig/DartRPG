@@ -443,6 +443,13 @@ class _CharacterFormState extends State<CharacterForm> {
                     icon: const Icon(Icons.photo_library),
                     label: const Text('Select Image'),
                     onPressed: () async {
+                      // Use the character as context for AI image generation
+                      final character = Character(
+                        name: widget.nameController.text,
+                        handle: widget.handleController.text.isEmpty ? null : widget.handleController.text,
+                        bio: widget.bioController.text.isEmpty ? null : widget.bioController.text,
+                      );
+                      
                       final result = await ImagePickerDialog.show(
                         context,
                         initialImageUrl: widget.imageUrlController.text.startsWith('id:') 
@@ -451,6 +458,8 @@ class _CharacterFormState extends State<CharacterForm> {
                         initialImageId: widget.imageUrlController.text.startsWith('id:') 
                             ? widget.imageUrlController.text.substring(3) 
                             : null,
+                        contextObject: character,
+                        contextType: 'character',
                       );
                       
                       if (result != null) {
@@ -486,8 +495,8 @@ class _CharacterFormState extends State<CharacterForm> {
                               widget.imageUrlController.text = 'id:${image.id}';
                             });
                           }
-                        } else if (type == 'saved') {
-                          // Saved image selected
+                        } else if (type == 'saved' || type == 'ai') {
+                          // Saved or AI-generated image selected
                           setState(() {
                             // Store the imageId in the URL field (temporary solution)
                             widget.imageUrlController.text = 'id:${result['imageId']}';

@@ -1016,6 +1016,65 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
   
+  // AI Image Generation methods
+  
+  // Update aiImageGenerationEnabled setting
+  Future<void> updateAiImageGenerationEnabled(bool enabled) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    _currentGame!.setAiImageGenerationEnabled(enabled);
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Update aiImageProvider setting
+  Future<void> updateAiImageProvider(String? provider) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    _currentGame!.setAiImageProvider(provider);
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Update API key for a specific provider
+  Future<void> updateAiApiKey(String provider, String apiKey) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    _currentGame!.setAiApiKey(provider, apiKey);
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Remove API key for a specific provider
+  Future<void> removeAiApiKey(String provider) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    _currentGame!.removeAiApiKey(provider);
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Check if AI image generation is available
+  bool isAiImageGenerationAvailable() {
+    if (_currentGame == null) {
+      return false;
+    }
+    
+    return _currentGame!.isAiImageGenerationAvailable();
+  }
+  
   // Get AI personas from the datasworn provider
   List<Map<String, String>> getAiPersonas(DataswornProvider dataswornProvider) {
     // Use the recursive search function from OracleService with just "persona" as the key

@@ -399,8 +399,50 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
   
   // Add an image to the document
   Future<void> _addImage() async {
-    // Show image picker dialog
-    final result = await ImagePickerDialog.show(context);
+    // Get the current context object and type from the parent widget
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final currentGame = gameProvider.currentGame;
+    
+    // Determine the context type based on the current entry
+    dynamic contextObject;
+    String? contextType;
+    
+    // If we have linked characters, use the first one as context
+    if (_linkedItemsManager.linkedCharacterIds.isNotEmpty && currentGame != null) {
+      try {
+        final characterId = _linkedItemsManager.linkedCharacterIds.first;
+        contextObject = currentGame.characters.firstWhere((c) => c.id == characterId);
+        contextType = 'character';
+      } catch (e) {
+        // Character not found, ignore
+      }
+    }
+    // If we have linked locations, use the first one as context
+    else if (_linkedItemsManager.linkedLocationIds.isNotEmpty && currentGame != null) {
+      try {
+        final locationId = _linkedItemsManager.linkedLocationIds.first;
+        contextObject = currentGame.locations.firstWhere((l) => l.id == locationId);
+        contextType = 'location';
+      } catch (e) {
+        // Location not found, ignore
+      }
+    }
+    // Otherwise, use the journal entry itself as context
+    else {
+      // Create a temporary journal entry object with the current content
+      contextObject = JournalEntry(
+        id: 'temp',
+        content: _controller.text,
+      );
+      contextType = 'journal';
+    }
+    
+    // Show image picker dialog with context
+    final result = await ImagePickerDialog.show(
+      context,
+      contextObject: contextObject,
+      contextType: contextType,
+    );
     
     if (result != null) {
       final imageManagerProvider = Provider.of<ImageManagerProvider>(context, listen: false);
@@ -432,8 +474,8 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
         if (image != null) {
           imageId = image.id;
         }
-      } else if (result['type'] == 'saved') {
-        // Saved image selected
+      } else if (result['type'] == 'saved' || result['type'] == 'ai') {
+        // Saved or AI-generated image selected
         imageId = result['imageId'];
       }
       

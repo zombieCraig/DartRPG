@@ -486,6 +486,12 @@ class _CharacterEditDialogState extends State<CharacterEditDialog> {
               setState(() {
                 isEditing = false;
               });
+              
+              // Call the onCharacterDeleted callback to refresh the screen
+              // This callback is actually used as a general refresh callback
+              if (widget.onCharacterDeleted != null) {
+                widget.onCharacterDeleted!();
+              }
             } else {
               Navigator.pop(context);
             }

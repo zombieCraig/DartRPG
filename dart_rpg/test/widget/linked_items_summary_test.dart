@@ -205,6 +205,31 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   String? getRandomAiPersona(DataswornProvider dataswornProvider) {
     return null;
   }
+  
+  // Image-related methods
+  @override
+  Future<void> loadImagesFromGame() async {}
+  
+  @override
+  void setImageManagerProvider(dynamic provider) {}
+  
+  // AI Image Generation methods
+  @override
+  Future<void> updateAiImageGenerationEnabled(bool enabled) async {}
+  
+  @override
+  Future<void> updateAiImageProvider(String? provider) async {}
+  
+  @override
+  Future<void> updateAiApiKey(String provider, String apiKey) async {}
+  
+  @override
+  Future<void> removeAiApiKey(String provider) async {}
+  
+  @override
+  bool isAiImageGenerationAvailable() {
+    return false;
+  }
 }
 
 void main() {

@@ -97,6 +97,51 @@ class GameProvider extends ChangeNotifier {
       }
     }
     
+    // Load Sentient AI image if available
+    if (_currentGame!.sentientAiEnabled && 
+        _currentGame!.sentientAiImagePath != null && 
+        _currentGame!.sentientAiImagePath!.isNotEmpty &&
+        _currentGame!.sentientAiImagePath!.startsWith('http')) {
+      
+      // Save the image from URL and get an imageId
+      final image = await _imageManagerProvider!.addImageFromUrl(
+        _currentGame!.sentientAiImagePath!,
+        metadata: {'usage': 'sentientAi', 'gameId': _currentGame!.id},
+      );
+      
+      if (image != null) {
+        // Update the game with the imageId (store in sentientAiImagePath)
+        _currentGame!.sentientAiImagePath = image.id;
+        loggingService.debug(
+          'Saved Sentient AI image: ${_currentGame!.sentientAiName ?? "AI"} (URL: ${_currentGame!.sentientAiImagePath}, ID: ${image.id})',
+          tag: 'GameProvider',
+        );
+      }
+    }
+    
+    // Load location images if they have imageUrl properties
+    for (final location in _currentGame!.locations) {
+      // Check if Location has an imageUrl property and it's not empty
+      // Note: This is a placeholder - you'll need to add imageUrl to Location model if it doesn't exist
+      if (location.imageUrl != null && location.imageUrl!.isNotEmpty) {
+        // Save the image from URL and get an imageId
+        final image = await _imageManagerProvider!.addImageFromUrl(
+          location.imageUrl!,
+          metadata: {'usage': 'location', 'locationId': location.id},
+        );
+        
+        if (image != null) {
+          // Update the location with the imageId
+          // Note: You'll need to add imageId to Location model if it doesn't exist
+          location.imageId = image.id;
+          loggingService.debug(
+            'Saved location image: ${location.name} (URL: ${location.imageUrl}, ID: ${image.id})',
+            tag: 'GameProvider',
+          );
+        }
+      }
+    }
+    
     // Save the game with updated imageIds
     await _saveGames();
   }
@@ -969,6 +1014,65 @@ class GameProvider extends ChangeNotifier {
     
     await _saveGames();
     notifyListeners();
+  }
+  
+  // AI Image Generation methods
+  
+  // Update aiImageGenerationEnabled setting
+  Future<void> updateAiImageGenerationEnabled(bool enabled) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    _currentGame!.setAiImageGenerationEnabled(enabled);
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Update aiImageProvider setting
+  Future<void> updateAiImageProvider(String? provider) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    _currentGame!.setAiImageProvider(provider);
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Update API key for a specific provider
+  Future<void> updateAiApiKey(String provider, String apiKey) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    _currentGame!.setAiApiKey(provider, apiKey);
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Remove API key for a specific provider
+  Future<void> removeAiApiKey(String provider) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    _currentGame!.removeAiApiKey(provider);
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Check if AI image generation is available
+  bool isAiImageGenerationAvailable() {
+    if (_currentGame == null) {
+      return false;
+    }
+    
+    return _currentGame!.isAiImageGenerationAvailable();
   }
   
   // Get AI personas from the datasworn provider

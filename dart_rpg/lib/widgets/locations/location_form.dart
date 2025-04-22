@@ -5,7 +5,6 @@ import '../../models/node_type_info.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../services/oracle_service.dart';
 import '../../utils/logging_service.dart';
-import '../../utils/oracle_reference_processor.dart';
 
 /// A form for creating or editing a location
 class LocationForm extends StatefulWidget {

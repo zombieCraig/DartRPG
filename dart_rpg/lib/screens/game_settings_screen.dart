@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../widgets/sentient_ai_settings_widget.dart';
+import '../widgets/ai_image_generation_settings_widget.dart';
 
 class GameSettingsScreen extends StatefulWidget {
   const GameSettingsScreen({super.key});
@@ -43,6 +44,15 @@ class _GameSettingsScreenState extends State<GameSettingsScreen> {
                 gameProvider: gameProvider,
                 dataswornProvider: dataswornProvider,
                 initiallyExpanded: true,
+                showDividers: true,
+                showHelpText: true,
+              ),
+              
+              // AI Image Generation settings
+              AiImageGenerationSettingsWidget(
+                game: game,
+                gameProvider: gameProvider,
+                initiallyExpanded: false,
                 showDividers: true,
                 showHelpText: true,
               ),

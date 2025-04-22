@@ -40,6 +40,20 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Comprehensive logging system and log viewer
 
 ### Recently Completed
+- ✅ Implemented AI image generation for character portraits and other game assets:
+  - ✅ Created `AiImageProvider` to handle generating images using AI services
+  - ✅ Added support for the Minimax API as the initial AI provider
+  - ✅ Implemented context-aware prompt generation based on character, location, or journal entry data
+  - ✅ Created `AiImageGenerationSettingsWidget` for configuring AI image generation settings
+  - ✅ Enhanced `ImagePickerDialog` with an AI tab for generating and selecting AI images
+  - ✅ Added support for saving API keys for different AI providers
+  - ✅ Implemented proper error handling for API responses, including "insufficient balance" errors
+  - ✅ Added detailed logging for debugging API interactions
+  - ✅ Ensured AI-generated images are properly saved to permanent storage
+  - ✅ Updated the character screen to refresh immediately when images are updated
+  - ✅ Modified the `Game` model to store AI image generation settings
+  - ✅ Added help text and links to guide users in setting up their API keys
+  - ✅ This implementation provides a powerful tool for creating thematic images for game content
 - ✅ Implemented a robust image handling system for uploading, saving, and displaying images:
   - ✅ Created `AppImage` model to represent images with metadata
   - ✅ Implemented `ImageStorageService` to handle saving and loading images to/from disk
@@ -300,6 +314,7 @@ The DartRPG application is in active development with core functionality impleme
 - **Tablet Support**: UI not fully optimized for tablet screens
 
 ### Recently Fixed Issues
+- ✅ **AI Image Generation**: Fixed issue with AI-generated images not being properly saved to permanent storage and not refreshing in the character screen after editing
 - ✅ **Image Handling System**: Implemented a robust system for uploading, saving, and displaying images from both URLs and local storage, with support for custom image markdown syntax
 - ✅ **Journal Editor Linked Items**: Added a Linked Items feature to the journal editor that allows viewing and interacting with linked characters, locations, move rolls, and oracle rolls while editing
 - ✅ **Move Results Formatting**: Fixed formatting issue with the move results screen in the journal editor by adding `softLineBreak: true` to all MarkdownBody widgets, ensuring consistent text formatting with soft newline returns
@@ -330,6 +345,22 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Journal Navigation**: Added "Jump to last entry" button on journal screen when entries are scrollable
 
 ## Recent Milestones
+
+### Milestone: AI Image Generation Feature Implementation (April 2025)
+- ✅ Implemented AI image generation for character portraits and other game assets:
+  - ✅ Created `AiImageProvider` to handle generating images using AI services
+  - ✅ Added support for the Minimax API as the initial AI provider
+  - ✅ Implemented context-aware prompt generation based on character, location, or journal entry data
+  - ✅ Created `AiImageGenerationSettingsWidget` for configuring AI image generation settings
+  - ✅ Enhanced `ImagePickerDialog` with an AI tab for generating and selecting AI images
+  - ✅ Added support for saving API keys for different AI providers
+  - ✅ Implemented proper error handling for API responses, including "insufficient balance" errors
+  - ✅ Added detailed logging for debugging API interactions
+  - ✅ Ensured AI-generated images are properly saved to permanent storage
+  - ✅ Updated the character screen to refresh immediately when images are updated
+  - ✅ Modified the `Game` model to store AI image generation settings
+  - ✅ Added help text and links to guide users in setting up their API keys
+  - ✅ This implementation provides a powerful tool for creating thematic images for game content
 
 ### Milestone: Image Handling System Implementation (April 2025)
 - ✅ Implemented a robust image handling system for uploading, saving, and displaying images:
@@ -430,230 +461,4 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Created Clock model with properties for title, segments, type, and progress
 - ✅ Developed a custom ClockSegmentPainter for drawing circular segmented clocks
 - ✅ Added clock-related methods to the Game model and GameProvider
-- ✅ Created specialized components for the clock system:
-  - ✅ ClockService: Service for clock operations
-  - ✅ ClockForm: Component for clock data entry
-  - ✅ ClockDialog: Component for clock creation and editing
-  - ✅ ClockProgressPanel: Component for displaying and managing clock progress
-  - ✅ ClockCard: Component for displaying individual clocks
-  - ✅ ClocksTabView: Component for displaying the clocks tab
-- ✅ Added a new "Clocks" tab to the Quests screen
-- ✅ Implemented "Advance all Campaign" and "Advance all Tension" buttons for batch operations
-- ✅ Added journal entry creation when clocks are filled completely
-- ✅ Created unit tests for the Clock model and Game model's clock-related methods
-- ✅ Enhanced the UI with clear, high-contrast buttons for better readability
-
-### Milestone: Move Oracle Integration (April 2025)
-- ✅ Implemented dropdown and dice button for moves with embedded oracles
-- ✅ Created MoveOracle model to represent embedded oracles in moves
-- ✅ Enhanced the Move model to handle embedded oracles
-- ✅ Created MoveOraclePanel widget to display the dropdown and dice button
-- ✅ Updated MoveDetails widget to include the MoveOraclePanel when a move has embedded oracles
-- ✅ Updated MoveDialog class to handle oracle rolls from moves
-- ✅ Fixed issue with oracle results not showing in the journal
-- ✅ Stored oracle results in the MoveRoll's moveData property
-- ✅ Enhanced journal entry display to show oracle results
-- ✅ Added tests to verify the implementation
-- ✅ Improved the user experience for moves with embedded oracles
-
-### Milestone: Asset Card System Improvements (April 2025)
-- ✅ Redesigned the asset card system to properly display abilities with toggle circles
-- ✅ Created a flexible AssetContentWidget that handles both summary and detail views
-- ✅ Fixed layout issues that were causing overflow errors in asset cards
-- ✅ Improved the display of asset abilities with toggle circles (empty when disabled, filled when enabled)
-- ✅ Updated all asset display locations to use the new components consistently
-- ✅ Removed the asset description section as it's not a field in the JSON
-- ✅ Modified the AssetPanel to use the AssetDetailDialog for consistent display
-- ✅ Enhanced the user experience when viewing and managing character assets
-
-### Milestone: Tutorial System Implementation (April 2025)
-- ✅ Implemented a tutorial system to help guide new players through the application
-- ✅ Created a TutorialService to manage tutorial state and display logic
-- ✅ Developed a reusable TutorialPopup widget for displaying contextual help
-- ✅ Added a global setting to enable/disable tutorials in the SettingsProvider
-- ✅ Added a per-game setting to enable/disable tutorials during game creation
-- ✅ Integrated tutorials with the Journal Screen to guide users in creating sessions
-- ✅ Added tutorial popups that explain what sessions are and how to use them
-- ✅ Implemented persistence of tutorial state using SharedPreferences
-- ✅ Added ability to disable all tutorials directly from any tutorial popup
-- ✅ Designed the system to be easily extensible for adding more tutorials in the future
-
-### Milestone: Character Short Name Enhancements (April 2025)
-- ✅ Enhanced character short name (handle) functionality with automatic generation and customization
-- ✅ Added auto-generation of short name when field gets focus and is empty but name field is filled
-- ✅ Implemented "Random Handle" button that rolls on the fe_runner_handles oracle
-- ✅ Added "Make l33t" button with terminal icon to convert short names to leet speak
-- ✅ Created LeetSpeakConverter utility for converting text to leet speak
-- ✅ Enhanced OracleService with recursive search for oracle tables by key anywhere in hierarchy
-- ✅ Improved oracle table lookup to work with nested tables like "social/fe_runner_handles"
-- ✅ Made the character creation process more thematically consistent with the cyberpunk theme
-
-### Milestone: Loading Screen Implementation (April 2025)
-- ✅ Implemented a specialized loading screen for handling resource-intensive operations
-- ✅ Created a console-style text animation with typing effect for visual engagement
-- ✅ Implemented background loading of Datasworn data with proper coordination
-- ✅ Added support for fixed initial messages with guaranteed minimum display times
-- ✅ Created a dynamic message provider system for flexible content generation
-- ✅ Implemented random "boot" messages during loading for visual interest
-- ✅ Added "System ready." message that only appears when loading is complete
-- ✅ Ensured minimum loading time for better user experience
-- ✅ Implemented proper error handling and navigation after loading
-- ✅ Enhanced the separation of concerns with specialized components
-- ✅ Documented the loading screen architecture in the system patterns
-
-### Milestone: Location Graph System Restructuring (April 2025)
-- ✅ Restructured the Location Graph functionality into a more modular architecture
-- ✅ Created specialized components for different aspects of the location system
-- ✅ Improved code organization and maintainability
-- ✅ Reduced risk of data loss by isolating changes to specific components
-- ✅ Enhanced the separation of concerns in the location system
-- ✅ Simplified the LocationScreen by delegating to specialized components
-- ✅ Improved error handling and user feedback
-
-### Milestone: Quest Management System Restructuring (April 2025)
-- ✅ Restructured the Quest Management functionality into a more modular architecture
-- ✅ Created specialized components for different aspects of the quest system
-- ✅ Improved code organization and maintainability
-- ✅ Reduced risk of data loss by isolating changes to specific components
-- ✅ Enhanced the separation of concerns in the quest system
-- ✅ Added tests for the new components
-
-### Milestone: Oracle Reference Processing Implementation (April 2025)
-- ✅ Enhanced DataswornLinkParser to handle both link formats for oracle references
-- ✅ Created OracleReferenceProcessor utility to process nested oracle references
-- ✅ Updated OracleResultText widget to handle reference processing with loading indicators
-- ✅ Enhanced OracleRoll model to store nested oracle rolls
-- ✅ Modified all oracle rolling methods to use the new reference processing functionality
-- ✅ Added comprehensive error handling and logging for oracle reference processing
-- ✅ Improved oracle result display to show nested oracle rolls
-- ✅ Added unit tests to verify oracle reference processing functionality
-
-### Milestone: Quest System Implementation (March 2025)
-- ✅ Created Quest model with title, rank, progress, status, and notes
-- ✅ Implemented QuestsScreen with tabs for Ongoing, Completed, and Forsaken quests
-- ✅ Added quest management methods to GameProvider
-- ✅ Implemented progress tracking with 10-segment progress bar
-- ✅ Added quest status changes (complete, forsake)
-- ✅ Integrated with keyboard shortcuts (CTRL+Q)
-- ✅ Connected quest system with journal entries
-
-### Milestone: Journal Entry Improvements (March 2025)
-- ✅ Implemented rich text editor with formatting toolbar
-- ✅ Added character handle property and automatic generation
-- ✅ Created character and location reference system with autocompletion
-- ✅ Implemented linked items summary for journal entries
-- ✅ Updated navigation flow based on character creation status
-- ✅ Added "Jump to last entry" button for improved journal navigation
-
-### Milestone: Location Graph Implementation (March 2025)
-- ✅ Updated Location model with segment and connection support
-- ✅ Created LocationGraphWidget for visualization
-- ✅ Implemented connection management in Game and GameProvider
-- ✅ Updated LocationScreen with graph and list views
-- ✅ Added segment-based organization and color coding
-
-### Milestone: Logging System Implementation (February 2025)
-- ✅ Created LoggingService class
-- ✅ Implemented different log levels
-- ✅ Added proper error handling in catch blocks
-- ✅ Created LogViewerScreen
-- ✅ Added log level configuration to settings
-
-### Milestone: Core Game Functionality (January 2025)
-- ✅ Implemented game creation and management
-- ✅ Added character and location tracking
-- ✅ Created journal system
-- ✅ Integrated moves and oracles
-
-## Upcoming Milestones
-
-### Milestone: Code Quality Improvements (April 2025)
-- ✅ Fix deprecated `withOpacity()` method usage throughout the codebase
-- ✅ Document best practices for handling color opacity in Flutter
-- ⬜ Continue to run `flutter analyze` regularly to catch new deprecation warnings
-- ⬜ Address any remaining code quality issues
-- ⬜ Implement the code review checklist for new code
-- ⬜ Consider creating helper methods for common opacity-to-alpha conversions
-
-### Milestone: Countdown Clock Enhancements (April 2025)
-- ⬜ Add widget tests for ClocksTabView and components
-- ⬜ Test clock advancement and reset functionality
-- ⬜ Verify integration with journal entry system
-- ⬜ Test batch operations for advancing clocks by type
-- ⬜ Improve the visual design of the clock visualization
-- ⬜ Add animations for clock advancement
-- ⬜ Optimize mobile experience for the clocks tab
-- ⬜ Enhance accessibility features for the clock components
-
-### Milestone: Quest System Enhancements (April 2025)
-- ⬜ Add unit tests for Quest model methods
-- ⬜ Implement widget tests for QuestsScreen
-- ⬜ Enhance quest filtering and sorting
-- ⬜ Improve quest card visualization
-- ⬜ Optimize quest data persistence
-
-### Milestone: Journal System Enhancements (April 2025)
-- ⬜ Rich text editor improvements and bug fixes
-- ⬜ Enhanced autocompletion for character and location references
-- ⬜ Improved image handling and embedding
-- ⬜ Better performance with large journal entries
-
-### Milestone: Graph Enhancements and Stability (April 2025)
-- ⬜ Performance optimization for large graphs
-- ⬜ Improved graph layout algorithms
-- ⬜ Enhanced visual design for nodes and connections
-- ⬜ Bug fixes and stability improvements
-
-### Milestone: Enhanced User Experience (May 2025)
-- ⬜ UI refinements and visual polish
-- ⬜ Improved accessibility
-- ⬜ Additional customization options
-- ✅ In-app help and tutorials
-
-### Milestone: Advanced Features (June 2025)
-- ⬜ Multimedia support
-- ⬜ Data backup and sync
-- ⬜ Advanced game mechanics
-- ⬜ Community features
-
-## Performance Metrics
-
-### Current Performance
-- **App Size**: ~16MB
-- **Startup Time**: ~2 seconds on mid-range devices
-- **Memory Usage**: ~120MB during normal operation
-- **Storage Usage**: Varies based on game data (typically <10MB per game)
-
-### Performance Goals
-- **App Size**: <20MB
-- **Startup Time**: <1.5 seconds on mid-range devices
-- **Memory Usage**: <150MB during normal operation
-- **Storage Usage**: Efficient storage with compression for large games
-
-## Testing Status
-
-### Automated Testing
-- **Unit Tests**: Moderate coverage, primarily for utility functions and model classes
-- **Widget Tests**: Limited coverage, focused on critical UI components
-- **Integration Tests**: Not yet implemented
-
-### Manual Testing
-- **Functional Testing**: Ongoing for all features
-- **Usability Testing**: Limited, more needed
-- **Performance Testing**: Basic testing completed
-- **Cross-platform Testing**: Tested on Android, limited testing on iOS
-
-## Next Development Focus
-
-The immediate focus will be on:
-
-1. **Continuing Code Quality Improvements**: Regularly running `flutter analyze` to catch new deprecation warnings
-2. **Testing Countdown Clock Features**: Ensuring clock creation, advancement, and completion work correctly
-3. **Countdown Clock UI Refinements**: Improving the visual design and interaction of clock visualization
-4. **Testing Quest System Features**: Ensuring quest creation, progress tracking, and status changes work correctly
-5. **Quest UI Refinements**: Improving the visual design and interaction of quest cards
-6. **Performance Optimization**: Addressing potential performance issues with large numbers of quests and clocks
-7. **Mobile Experience**: Enhancing the touch interaction for mobile devices
-8. **Location Graph Performance**: Optimizing the location graph for large numbers of nodes and edges
-
-Following this, the focus will shift to enhancing the user experience and adding more advanced features such as quest dependencies, full-text search across journal entries, and relationship mapping between characters, locations, and quests.
+- ✅ Created specialized components for the clock

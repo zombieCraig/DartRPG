@@ -22,6 +22,22 @@ This work enhances the overall architecture of the application, making it more m
 
 ## Recent Changes
 
+### AI Image Generation Feature Implementation (April 2025)
+- ✅ Implemented AI image generation for character portraits and other game assets:
+  - Created `AiImageProvider` to handle generating images using AI services
+  - Added support for the Minimax API as the initial AI provider
+  - Implemented context-aware prompt generation based on character, location, or journal entry data
+  - Created `AiImageGenerationSettingsWidget` for configuring AI image generation settings
+  - Enhanced `ImagePickerDialog` with an AI tab for generating and selecting AI images
+  - Added support for saving API keys for different AI providers
+  - Implemented proper error handling for API responses, including "insufficient balance" errors
+  - Added detailed logging for debugging API interactions
+  - Ensured AI-generated images are properly saved to permanent storage
+  - Updated the character screen to refresh immediately when images are updated
+  - Modified the `Game` model to store AI image generation settings
+  - Added help text and links to guide users in setting up their API keys
+  - This implementation provides a powerful tool for creating thematic images for game content
+
 ### Image Handling System Implementation (April 2025)
 - ✅ Implemented a robust image handling system for uploading, saving, and displaying images:
   - Created `AppImage` model to represent images with metadata
@@ -36,7 +52,6 @@ This work enhances the overall architecture of the application, making it more m
   - Updated the `LinkedItemsSummary` widget to display both types of images
   - Added special handling for image markdown syntax (![alt](url))
   - Implemented support for a custom format for local images (id:imageId)
-  - This implementation lays the groundwork for future enhancements like AI-generated images
 
 ### Journal Editor Linked Items Feature Implementation (April 2025)
 - ✅ Implemented a Linked Items feature in the journal editor to view linked characters, locations, move rolls, and oracle rolls:

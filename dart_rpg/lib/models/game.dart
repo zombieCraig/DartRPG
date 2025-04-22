@@ -26,6 +26,11 @@ class Game {
   String? sentientAiName;
   String? sentientAiPersona;
   String? sentientAiImagePath;
+  
+  // AI Image Generation settings
+  bool aiImageGenerationEnabled;
+  String? aiImageProvider; // e.g., "minimax"
+  Map<String, String> aiApiKeys = {}; // Store keys for different providers
 
   Game({
     String? id,
@@ -45,6 +50,9 @@ class Game {
     this.sentientAiName,
     this.sentientAiPersona,
     this.sentientAiImagePath,
+    this.aiImageGenerationEnabled = false,
+    this.aiImageProvider,
+    Map<String, String>? aiApiKeys,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now(),
         lastPlayedAt = lastPlayedAt ?? DateTime.now(),
@@ -88,6 +96,9 @@ class Game {
       'sentientAiName': sentientAiName,
       'sentientAiPersona': sentientAiPersona,
       'sentientAiImagePath': sentientAiImagePath,
+      'aiImageGenerationEnabled': aiImageGenerationEnabled,
+      'aiImageProvider': aiImageProvider,
+      'aiApiKeys': aiApiKeys,
     };
   }
 
@@ -147,6 +158,11 @@ class Game {
       sentientAiName: json['sentientAiName'],
       sentientAiPersona: json['sentientAiPersona'],
       sentientAiImagePath: json['sentientAiImagePath'],
+      aiImageGenerationEnabled: json['aiImageGenerationEnabled'] ?? false,
+      aiImageProvider: json['aiImageProvider'],
+      aiApiKeys: json['aiApiKeys'] != null 
+          ? Map<String, String>.from(json['aiApiKeys']) 
+          : {},
     );
   }
 
@@ -287,5 +303,39 @@ class Game {
     );
     sessions.add(session);
     return session;
+  }
+  
+  // AI Image Generation methods
+  
+  // Set the AI image generation enabled flag
+  void setAiImageGenerationEnabled(bool enabled) {
+    aiImageGenerationEnabled = enabled;
+  }
+  
+  // Set the AI image provider
+  void setAiImageProvider(String? provider) {
+    aiImageProvider = provider;
+  }
+  
+  // Set an API key for a specific provider
+  void setAiApiKey(String provider, String apiKey) {
+    aiApiKeys[provider] = apiKey;
+  }
+  
+  // Get the API key for a specific provider
+  String? getAiApiKey(String provider) {
+    return aiApiKeys[provider];
+  }
+  
+  // Remove an API key for a specific provider
+  void removeAiApiKey(String provider) {
+    aiApiKeys.remove(provider);
+  }
+  
+  // Check if AI image generation is available
+  bool isAiImageGenerationAvailable() {
+    if (!aiImageGenerationEnabled) return false;
+    if (aiImageProvider == null) return false;
+    return aiApiKeys.containsKey(aiImageProvider!);
   }
 }

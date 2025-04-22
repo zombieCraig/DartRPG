@@ -1,7 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:image_picker/image_picker.dart' as picker;
+import '../../models/app_image.dart';
+import '../../providers/ai_image_provider.dart';
+import '../../providers/game_provider.dart';
 import '../../providers/image_manager_provider.dart';
 
 /// A dialog for picking images from different sources.
@@ -11,12 +14,20 @@ class ImagePickerDialog extends StatefulWidget {
   
   /// The initial image ID.
   final String? initialImageId;
+  
+  /// The context object for AI image generation (e.g., Character, Location, JournalEntry).
+  final dynamic contextObject;
+  
+  /// The context type for AI image generation (e.g., "character", "location", "journal").
+  final String? contextType;
 
   /// Creates a new ImagePickerDialog.
   const ImagePickerDialog({
     super.key,
     this.initialImageUrl,
     this.initialImageId,
+    this.contextObject,
+    this.contextType,
   });
 
   /// Shows the image picker dialog and returns the selected image info.
@@ -24,12 +35,16 @@ class ImagePickerDialog extends StatefulWidget {
     BuildContext context, {
     String? initialImageUrl,
     String? initialImageId,
+    dynamic contextObject,
+    String? contextType,
   }) async {
     return showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => ImagePickerDialog(
         initialImageUrl: initialImageUrl,
         initialImageId: initialImageId,
+        contextObject: contextObject,
+        contextType: contextType,
       ),
     );
   }
@@ -41,13 +56,18 @@ class ImagePickerDialog extends StatefulWidget {
 class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _urlController = TextEditingController();
+  final TextEditingController _promptController = TextEditingController();
   String? _selectedImageId;
   File? _selectedFile;
+  AppImage? _selectedAiImage;
+  List<AppImage> _generatedImages = [];
+  bool _isGeneratingImages = false;
+  String? _generationError;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
 
     // Initialize with existing values if provided
     if (widget.initialImageUrl != null) {
@@ -63,14 +83,15 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
   void dispose() {
     _tabController.dispose();
     _urlController.dispose();
+    _promptController.dispose();
     super.dispose();
   }
 
   /// Pick image from gallery
   Future<void> _pickImage() async {
     try {
-      final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+      final imagePicker = picker.ImagePicker();
+      final pickedFile = await imagePicker.pickImage(source: picker.ImageSource.gallery);
 
       if (pickedFile != null) {
         setState(() {
@@ -104,6 +125,7 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
                 Tab(text: 'URL'),
                 Tab(text: 'Gallery'),
                 Tab(text: 'Saved'),
+                Tab(text: 'AI'),
               ],
             ),
 
@@ -120,6 +142,9 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
 
                   // Saved Tab
                   _buildSavedTab(),
+                  
+                  // AI Tab
+                  _buildAiTab(),
                 ],
               ),
             ),
@@ -132,7 +157,7 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
           child: const Text('Cancel'),
         ),
         TextButton(
-          onPressed: () {
+          onPressed: () async {
             // Return the selected image info based on the active tab
             final activeTab = _tabController.index;
 
@@ -154,6 +179,52 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
                 'type': 'saved',
                 'imageId': _selectedImageId,
               });
+            } else if (activeTab == 3 && _selectedAiImage != null) {
+              // AI tab - Ensure the image is saved to permanent storage
+              final imageManagerProvider = Provider.of<ImageManagerProvider>(context, listen: false);
+              
+              // Check if the image is already in the image manager
+              final existingImage = imageManagerProvider.getImageById(_selectedAiImage!.id);
+              
+              if (existingImage != null) {
+                // Image is already saved, just return the ID
+                Navigator.pop(context, {
+                  'type': 'saved',  // Use 'saved' type since it's now in permanent storage
+                  'imageId': existingImage.id,
+                });
+              } else {
+                // Image is not saved yet, save it to permanent storage
+                final imageFile = File(_selectedAiImage!.localPath);
+                
+                // Show loading indicator
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Saving image...'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+                
+                // Save the image to permanent storage
+                final savedImage = await imageManagerProvider.addImageFromFile(
+                  imageFile,
+                  metadata: _selectedAiImage!.metadata,
+                );
+                
+                if (savedImage != null) {
+                  Navigator.pop(context, {
+                    'type': 'saved',  // Use 'saved' type since it's now in permanent storage
+                    'imageId': savedImage.id,
+                  });
+                } else {
+                  // Failed to save image
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Failed to save image'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             } else {
               // No valid selection
               ScaffoldMessenger.of(context).showSnackBar(
@@ -276,5 +347,257 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
         );
       },
     );
+  }
+  
+  /// Build the AI tab
+  Widget _buildAiTab() {
+    // Get the game provider to check if AI image generation is available
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final aiImageProvider = Provider.of<AiImageProvider>(context, listen: false);
+    
+    // Check if AI image generation is available
+    final isAiAvailable = gameProvider.isAiImageGenerationAvailable();
+    
+    if (!isAiAvailable) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.image_not_supported,
+                size: 64,
+                color: Colors.grey,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'AI Image Generation is not available',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'To use this feature, you need to enable AI Image Generation in the Game Settings and configure an API key.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.settings),
+                label: const Text('Go to Settings'),
+                onPressed: () {
+                  // Close the dialog
+                  Navigator.pop(context);
+                  
+                  // Navigate to the Game Settings screen
+                  Navigator.pushNamed(context, '/game_settings');
+                },
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
+    // Generate a context-aware prompt if contextObject and contextType are provided
+    if (_promptController.text.isEmpty && widget.contextObject != null && widget.contextType != null) {
+      _promptController.text = aiImageProvider.generateContextAwarePrompt(
+        widget.contextObject,
+        widget.contextType!,
+      );
+    }
+    
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Prompt input
+          TextField(
+            controller: _promptController,
+            decoration: const InputDecoration(
+              labelText: 'Prompt',
+              hintText: 'Describe the image you want to generate',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 3,
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Generate button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.auto_awesome),
+              label: const Text('Generate Images'),
+              onPressed: _isGeneratingImages ? null : () => _generateImages(context),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Loading indicator or error message
+          if (_isGeneratingImages)
+            const Center(
+              child: Column(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 8),
+                  Text('Generating images...'),
+                ],
+              ),
+            )
+          else if (_generationError != null)
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red),
+              ),
+              child: Text(
+                _generationError!,
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
+          
+          // Generated images
+          if (_generatedImages.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Text(
+              'Generated Images',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                ),
+                itemCount: _generatedImages.length,
+                itemBuilder: (context, index) {
+                  final image = _generatedImages[index];
+                  final isSelected = _selectedAiImage?.id == image.id;
+                  
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedAiImage = image;
+                      });
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
+                          width: 3,
+                        ),
+                      ),
+                      child: Image.file(
+                        File(image.localPath),
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(
+                            child: Icon(Icons.broken_image),
+                          );
+                        },
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+  
+  /// Generate images using the AI provider
+  Future<void> _generateImages(BuildContext context) async {
+    // Get the game provider and AI image provider
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final aiImageProvider = Provider.of<AiImageProvider>(context, listen: false);
+    final imageManagerProvider = Provider.of<ImageManagerProvider>(context, listen: false);
+    
+    // Check if the prompt is empty
+    if (_promptController.text.isEmpty) {
+      setState(() {
+        _generationError = 'Please enter a prompt';
+      });
+      return;
+    }
+    
+    // Get the API key and provider
+    final provider = gameProvider.currentGame!.aiImageProvider;
+    final apiKey = gameProvider.currentGame!.getAiApiKey(provider!);
+    
+    if (apiKey == null) {
+      setState(() {
+        _generationError = 'API key not found';
+      });
+      return;
+    }
+    
+    // Clear any previous error
+    setState(() {
+      _isGeneratingImages = true;
+      _generationError = null;
+    });
+    
+    try {
+      // Generate images
+      List<AppImage> generatedImages;
+      
+      if (provider == 'minimax') {
+        generatedImages = await aiImageProvider.generateImagesWithMinimax(
+          prompt: _promptController.text,
+          apiKey: apiKey,
+          metadata: {
+            'usage': 'ai_generated',
+            'prompt': _promptController.text,
+          },
+        );
+      } else {
+        throw Exception('Unsupported provider: $provider');
+      }
+      
+      // Save the generated images to the ImageManagerProvider and keep track of the saved images
+      final List<AppImage> savedImages = [];
+      
+      for (final image in generatedImages) {
+        final savedImage = await imageManagerProvider.addImageFromFile(
+          File(image.localPath),
+          metadata: image.metadata,
+        );
+        
+        if (savedImage != null) {
+          savedImages.add(savedImage);
+        }
+      }
+      
+      // Update the state with the saved images
+      setState(() {
+        _generatedImages = savedImages.isNotEmpty ? savedImages : generatedImages;
+        _isGeneratingImages = false;
+        
+        // Select the first image by default
+        if (_generatedImages.isNotEmpty) {
+          _selectedAiImage = _generatedImages.first;
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isGeneratingImages = false;
+        _generationError = 'Failed to generate images: ${e.toString()}';
+      });
+    }
   }
 }

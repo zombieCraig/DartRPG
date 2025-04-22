@@ -57,6 +57,7 @@ class Location {
   String name;
   String? description;
   String? imageUrl;
+  String? imageId; // ID of the locally stored image
   List<String> notes;
   List<String> connectedLocationIds;
   LocationSegment segment;
@@ -70,6 +71,7 @@ class Location {
     required this.name,
     this.description,
     this.imageUrl,
+    this.imageId,
     List<String>? notes,
     List<String>? connectedLocationIds,
     this.segment = LocationSegment.core,
@@ -87,6 +89,7 @@ class Location {
       'name': name,
       'description': description,
       'imageUrl': imageUrl,
+      'imageId': imageId,
       'notes': notes,
       'connectedLocationIds': connectedLocationIds,
       'segment': segment.toString().split('.').last,
@@ -103,6 +106,7 @@ class Location {
       name: json['name'],
       description: json['description'],
       imageUrl: json['imageUrl'],
+      imageId: json['imageId'],
       notes: (json['notes'] as List?)?.cast<String>() ?? [],
       connectedLocationIds: (json['connectedLocationIds'] as List?)?.cast<String>() ?? [],
       segment: json['segment'] != null 

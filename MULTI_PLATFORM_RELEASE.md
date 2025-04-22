@@ -82,9 +82,12 @@ The multi-platform release workflow has been updated to address several issues:
    - Added directory verification to provide better error messages if the path is incorrect
    - Added directory listing to help diagnose path issues
 
-3. **macOS Build Verification**:
+3. **macOS Build Verification and Packaging**:
    - Added file existence verification after creating the macOS zip file
    - Improved error reporting for macOS packaging
+   - Fixed path handling issues with absolute paths for artifact creation
+   - Added detailed directory tracking throughout the packaging process
+   - Enhanced verification steps to confirm file existence before upload
 
 4. **Cross-Platform Shell Compatibility**:
    - Added explicit shell specification for all steps in the workflow

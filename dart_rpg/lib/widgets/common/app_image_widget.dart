@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../models/app_image.dart';
 import '../../providers/image_manager_provider.dart';
 
 /// A widget for displaying images from either a URL or local storage.

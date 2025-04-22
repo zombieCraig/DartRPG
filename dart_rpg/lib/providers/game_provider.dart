@@ -15,6 +15,7 @@ import '../utils/logging_service.dart';
 import '../utils/dice_roller.dart';
 import '../services/oracle_service.dart';
 import 'datasworn_provider.dart';
+import 'image_manager_provider.dart';
 
 class GameProvider extends ChangeNotifier {
   
@@ -35,8 +36,69 @@ class GameProvider extends ChangeNotifier {
     await _saveGames();
   }
 
+  // Reference to the ImageManagerProvider
+  ImageManagerProvider? _imageManagerProvider;
+
+  // Set the ImageManagerProvider reference
+  void setImageManagerProvider(ImageManagerProvider provider) {
+    _imageManagerProvider = provider;
+  }
+
   GameProvider() {
     _loadGames();
+  }
+  
+  // Load images from the current game into the ImageManagerProvider
+  Future<void> loadImagesFromGame() async {
+    if (_currentGame == null || _imageManagerProvider == null) return;
+    
+    final loggingService = LoggingService();
+    loggingService.info('Loading images from game: ${_currentGame!.name}', tag: 'GameProvider');
+    
+    // Load images from characters
+    for (final character in _currentGame!.characters) {
+      if (character.imageUrl != null && character.imageUrl!.isNotEmpty) {
+        // Save the image from URL and get an imageId
+        final image = await _imageManagerProvider!.addImageFromUrl(
+          character.imageUrl!,
+          metadata: {'usage': 'character', 'characterId': character.id},
+        );
+        
+        if (image != null) {
+          // Update the character with the imageId
+          character.imageId = image.id;
+          loggingService.debug(
+            'Saved character image: ${character.name} (URL: ${character.imageUrl}, ID: ${image.id})',
+            tag: 'GameProvider',
+          );
+        }
+      }
+    }
+    
+    // Load images from journal entries
+    if (_currentSession != null) {
+      for (final entry in _currentSession!.entries) {
+        for (final imageUrl in entry.embeddedImages) {
+          // Save the image from URL and get an imageId
+          final image = await _imageManagerProvider!.addImageFromUrl(
+            imageUrl,
+            metadata: {'usage': 'journal', 'entryId': entry.id},
+          );
+          
+          if (image != null) {
+            // Add the imageId to the entry
+            entry.addEmbeddedImageId(image.id);
+            loggingService.debug(
+              'Saved journal image: ${entry.id} (URL: $imageUrl, ID: ${image.id})',
+              tag: 'GameProvider',
+            );
+          }
+        }
+      }
+    }
+    
+    // Save the game with updated imageIds
+    await _saveGames();
   }
 
   // Load games from storage using SharedPreferences for all platforms
@@ -197,6 +259,10 @@ class GameProvider extends ChangeNotifier {
     _currentSession = null;
     
     await _saveGames();
+    
+    // Load images from the game
+    await loadImagesFromGame();
+    
     notifyListeners();
     
     return game;

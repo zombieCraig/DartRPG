@@ -1,10 +1,14 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/character.dart';
 import '../../providers/datasworn_provider.dart';
+import '../../providers/image_manager_provider.dart';
 import '../../services/oracle_service.dart';
 import '../../utils/leet_speak_converter.dart';
 import '../../utils/logging_service.dart';
+import '../../widgets/common/app_image_widget.dart';
+import '../../widgets/common/image_picker_dialog.dart';
 
 /// A component for character data entry.
 class CharacterForm extends StatefulWidget {
@@ -397,12 +401,116 @@ class _CharacterFormState extends State<CharacterForm> {
           ],
         ),
         const SizedBox(height: 16),
-        TextField(
-          controller: widget.imageUrlController,
-          decoration: const InputDecoration(
-            labelText: 'Image URL (optional)',
-            hintText: 'Enter URL to character image',
-          ),
+        // Image selection
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image preview
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Consumer<ImageManagerProvider>(
+                builder: (context, imageManager, _) {
+                  // Check if we have an imageId stored in the URL field (temporary solution)
+                  final imageId = widget.imageUrlController.text.startsWith('id:') 
+                      ? widget.imageUrlController.text.substring(3) 
+                      : null;
+                  
+                  return AppImageWidget(
+                    imageUrl: imageId == null ? widget.imageUrlController.text : null,
+                    imageId: imageId,
+                    fit: BoxFit.cover,
+                    errorWidget: const Center(
+                      child: Icon(Icons.image, size: 40, color: Colors.grey),
+                    ),
+                  );
+                },
+              ),
+            ),
+            
+            const SizedBox(width: 16),
+            
+            // Image selection controls
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.photo_library),
+                    label: const Text('Select Image'),
+                    onPressed: () async {
+                      final result = await ImagePickerDialog.show(
+                        context,
+                        initialImageUrl: widget.imageUrlController.text.startsWith('id:') 
+                            ? null 
+                            : widget.imageUrlController.text,
+                        initialImageId: widget.imageUrlController.text.startsWith('id:') 
+                            ? widget.imageUrlController.text.substring(3) 
+                            : null,
+                      );
+                      
+                      if (result != null) {
+                        final type = result['type'];
+                        
+                        if (type == 'url') {
+                          // URL selected
+                          setState(() {
+                            widget.imageUrlController.text = result['url'];
+                          });
+                        } else if (type == 'file') {
+                          // File selected
+                          final file = result['file'] as File;
+                          final imageManager = Provider.of<ImageManagerProvider>(context, listen: false);
+                          
+                          // Show loading indicator
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Saving image...'),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                          
+                          // Save the image
+                          final image = await imageManager.addImageFromFile(
+                            file,
+                            metadata: {'usage': 'character'},
+                          );
+                          
+                          if (image != null) {
+                            setState(() {
+                              // Store the imageId in the URL field (temporary solution)
+                              widget.imageUrlController.text = 'id:${image.id}';
+                            });
+                          }
+                        } else if (type == 'saved') {
+                          // Saved image selected
+                          setState(() {
+                            // Store the imageId in the URL field (temporary solution)
+                            widget.imageUrlController.text = 'id:${result['imageId']}';
+                          });
+                        }
+                      }
+                    },
+                  ),
+                  
+                  if (widget.imageUrlController.text.isNotEmpty)
+                    TextButton.icon(
+                      icon: const Icon(Icons.delete),
+                      label: const Text('Remove Image'),
+                      onPressed: () {
+                        setState(() {
+                          widget.imageUrlController.text = '';
+                        });
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ],
         ),
         if (widget.isPlayerCharacterSwitchVisible) ...[
           const SizedBox(height: 16),

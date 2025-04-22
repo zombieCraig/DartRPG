@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../providers/game_provider.dart';
+import '../../providers/image_manager_provider.dart';
 import '../../models/character.dart';
 import '../../models/location.dart';
 import '../../models/journal_entry.dart';
 import '../../models/game.dart';
+import '../../widgets/common/app_image_widget.dart';
 
 class JournalEntryViewer extends StatelessWidget {
   final String content;
@@ -49,6 +51,7 @@ class JournalEntryViewer extends StatelessWidget {
     final locationRegex = RegExp(r'#([^\s\[\]]+)');
     final moveRegex = RegExp(r'\[(.*?) - (.*?)\]');
     final oracleRegex = RegExp(r'\[(.*?): (.*?)\]');
+    final imageRegex = RegExp(r'!\[(?:.*?)\]\((.*?)\)');
     
     // Find all matches and sort them by position
     final allMatches = <_TextMatch>[];
@@ -115,6 +118,31 @@ class JournalEntryViewer extends StatelessWidget {
       }
     }
     
+    // Find image references
+    for (final match in imageRegex.allMatches(content)) {
+      final url = match.group(1)!;
+      
+      // Check if it's a local image (id:imageId) or a URL
+      String? imageUrl;
+      String? imageId;
+      
+      if (url.startsWith('id:')) {
+        imageId = url.substring(3);
+      } else {
+        imageUrl = url;
+      }
+      
+      allMatches.add(_TextMatch(
+        start: match.start,
+        end: match.end,
+        type: _MatchType.image,
+        data: {
+          'url': imageUrl,
+          'id': imageId,
+        },
+      ));
+    }
+    
     // If no special references, just use MarkdownBody
     if (allMatches.isEmpty) {
       return SingleChildScrollView(
@@ -129,8 +157,8 @@ class JournalEntryViewer extends StatelessWidget {
     // Sort matches by position
     allMatches.sort((a, b) => a.start.compareTo(b.start));
     
-    // Create a list to hold all the text spans
-    final List<TextSpan> spans = [];
+    // Create a list to hold all the spans
+    final List<InlineSpan> spans = [];
     
     // Current position in the text
     int currentPosition = 0;
@@ -177,7 +205,7 @@ class JournalEntryViewer extends StatelessWidget {
   }
   
   // Helper method to build markdown spans for text segments
-  List<InlineSpan> _buildMarkdownSpans(BuildContext context, String text) {
+  List<TextSpan> _buildMarkdownSpans(BuildContext context, String text) {
     // For simplicity, we'll handle basic markdown formatting here
     // Bold: **text**
     // Italic: *text*
@@ -223,12 +251,34 @@ class JournalEntryViewer extends StatelessWidget {
     return _parseFormattedText(context, text);
   }
   
-  TextSpan _createClickableSpan(
+  InlineSpan _createClickableSpan(
     BuildContext context,
     String text,
     _MatchType type,
     dynamic data,
   ) {
+    // Special handling for images
+    if (type == _MatchType.image) {
+      final imageData = data as Map<String, String?>;
+      
+      return WidgetSpan(
+        child: GestureDetector(
+          onTap: () => _showImageDialog(context, imageData),
+          child: Container(
+            height: 150,
+            width: 150,
+            margin: const EdgeInsets.symmetric(vertical: 8.0),
+            child: AppImageWidget(
+              imageUrl: imageData['url'],
+              imageId: imageData['id'],
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+      );
+    }
+    
+    // For other types, use a text span
     Color color;
     
     switch (type) {
@@ -244,6 +294,9 @@ class JournalEntryViewer extends StatelessWidget {
         break;
       case _MatchType.oracle:
         color = Colors.purple;
+        break;
+      case _MatchType.image:
+        color = Colors.grey;
         break;
     }
     
@@ -293,7 +346,37 @@ class JournalEntryViewer extends StatelessWidget {
           _showDefaultOracleRollDialog(context, data as OracleRoll);
         }
         break;
+      case _MatchType.image:
+        // Show image in a dialog
+        _showImageDialog(context, data);
+        break;
     }
+  }
+  
+  // Show image in a dialog
+  void _showImageDialog(BuildContext context, Map<String, String?> imageData) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: SizedBox(
+            width: 300,
+            height: 300,
+            child: AppImageWidget(
+              imageUrl: imageData['url'],
+              imageId: imageData['id'],
+              fit: BoxFit.contain,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
   }
   
   void _showDefaultCharacterDialog(BuildContext context, Character character) {
@@ -577,8 +660,8 @@ class JournalEntryViewer extends StatelessWidget {
   }
   
   // Helper method to parse formatted text with HTML-like tags
-  List<InlineSpan> _parseFormattedText(BuildContext context, String text) {
-    final List<InlineSpan> spans = [];
+  List<TextSpan> _parseFormattedText(BuildContext context, String text) {
+    final List<TextSpan> spans = [];
     
     // Parse <b>, <i>, <h1>-<h6> tags
     final regex = RegExp(r'<(b|i|h[1-6])>(.*?)</\1>|([^<]+)', dotAll: true);
@@ -663,6 +746,7 @@ enum _MatchType {
   location,
   move,
   oracle,
+  image,
 }
 
 class _TextMatch {

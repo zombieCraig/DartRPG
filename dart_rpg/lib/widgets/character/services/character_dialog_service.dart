@@ -46,7 +46,13 @@ class CharacterDialogService {
     
     // Set bio and image
     character.bio = bio;
-    character.imageUrl = imageUrl;
+    
+    // Handle the new image ID format
+    if (imageUrl != null && imageUrl.startsWith('id:')) {
+      character.imageId = imageUrl.substring(3);
+    } else {
+      character.imageUrl = imageUrl;
+    }
     
     // Set NPC character details
     if (!isPlayerCharacter) {
@@ -76,7 +82,15 @@ class CharacterDialogService {
       // Update the character with our custom data
       final createdCharacter = gameProvider.currentGame!.characters.last;
       createdCharacter.bio = character.bio;
-      createdCharacter.imageUrl = character.imageUrl;
+      
+      // Set image properties
+      if (character.imageId != null) {
+        createdCharacter.imageId = character.imageId;
+        createdCharacter.imageUrl = null;
+      } else {
+        createdCharacter.imageUrl = character.imageUrl;
+        createdCharacter.imageId = null;
+      }
       
       // Update NPC character details if it's not a player character
       if (!isPlayerCharacter) {
@@ -210,7 +224,14 @@ class CharacterDialogService {
           character.setHandle(handle);
         }
         character.bio = bio;
-        character.imageUrl = imageUrl;
+        // Handle the new image ID format
+        if (imageUrl != null && imageUrl.startsWith('id:')) {
+          character.imageId = imageUrl.substring(3);
+          character.imageUrl = null; // Clear the URL since we're using an ID
+        } else {
+          character.imageUrl = imageUrl;
+          character.imageId = null; // Clear the ID since we're using a URL
+        }
         
         // Update notes
         if (notes != null) {

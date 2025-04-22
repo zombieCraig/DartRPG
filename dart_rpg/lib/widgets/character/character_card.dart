@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/character.dart';
 import '../../utils/asset_utils.dart';
+import '../../widgets/common/app_image_widget.dart';
 import 'panels/character_key_stats_panel.dart';
 import 'panels/mobile_stats_summary.dart';
 
@@ -36,29 +37,19 @@ class CharacterCard extends StatelessWidget {
                 // Character image (now scrollable)
                 AspectRatio(
                   aspectRatio: 3/2, // Maintain aspect ratio for image
-                  child: character.imageUrl != null
-                      ? Image.network(
-                          character.imageUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.grey[300],
-                              child: const Icon(
-                                Icons.person,
-                                size: 64,
-                                color: Colors.grey,
-                              ),
-                            );
-                          },
-                        )
-                      : Container(
-                          color: Colors.grey[300],
-                          child: const Icon(
-                            Icons.person,
-                            size: 64,
-                            color: Colors.grey,
-                          ),
-                        ),
+                  child: AppImageWidget(
+                    imageUrl: character.imageUrl,
+                    imageId: character.imageId,
+                    fit: BoxFit.cover,
+                    errorWidget: Container(
+                      color: Colors.grey[300],
+                      child: const Icon(
+                        Icons.person,
+                        size: 64,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
                 ),
                 
                 // Character info

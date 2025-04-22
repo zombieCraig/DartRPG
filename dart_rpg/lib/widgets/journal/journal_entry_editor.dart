@@ -1,10 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/datasworn_provider.dart';
+import '../../providers/image_manager_provider.dart';
 import '../../services/autosave_service.dart';
 import '../../models/journal_entry.dart';
+import '../../widgets/common/image_picker_dialog.dart';
 import 'editor_toolbar.dart';
 import 'autocomplete_system.dart';
 import 'linked_items_manager.dart';
@@ -395,65 +398,94 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
   }
   
   // Add an image to the document
-  void _addImage() {
-    // Show dialog to enter URL
-    _showImageUrlDialog().then((imageUrl) {
-      if (imageUrl != null && imageUrl.isNotEmpty) {
-        // Insert the image placeholder at the current cursor position
+  Future<void> _addImage() async {
+    // Show image picker dialog
+    final result = await ImagePickerDialog.show(context);
+    
+    if (result != null) {
+      final imageManagerProvider = Provider.of<ImageManagerProvider>(context, listen: false);
+      String? imageUrl;
+      String? imageId;
+      
+      // Process the result based on the type
+      if (result['type'] == 'url') {
+        // URL selected
+        imageUrl = result['url'];
+      } else if (result['type'] == 'file') {
+        // File selected
+        final file = result['file'] as File;
+        
+        // Show loading indicator
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Saving image...'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+        
+        // Save the image
+        final image = await imageManagerProvider.addImageFromFile(
+          file,
+          metadata: {'usage': 'journal'},
+        );
+        
+        if (image != null) {
+          imageId = image.id;
+        }
+      } else if (result['type'] == 'saved') {
+        // Saved image selected
+        imageId = result['imageId'];
+      }
+      
+      // Insert the image placeholder at the current cursor position
+      if (imageUrl != null || imageId != null) {
         final cursorPosition = _controller.selection.baseOffset;
-        final imagePlaceholder = '![image]($imageUrl)';
+        String imagePlaceholder;
         
-        final newText = _controller.text.replaceRange(
-          cursorPosition, 
-          cursorPosition, 
-          imagePlaceholder
-        );
+        if (imageId != null) {
+          // Use a special format for local images
+          imagePlaceholder = '![image](id:$imageId)';
+        } else {
+          imagePlaceholder = '![image]($imageUrl)';
+        }
         
-        _controller.value = TextEditingValue(
-          text: newText,
-          selection: TextSelection.collapsed(offset: cursorPosition + imagePlaceholder.length),
-        );
-        
-        // Notify parent about the change
-        widget.onChanged(_controller.text, _controller.text);
-        
-        // Notify parent about added image
-        if (widget.onImageAdded != null) {
-          widget.onImageAdded!(imageUrl);
-          _linkedItemsManager.addEmbeddedImage(imageUrl);
+        // Make sure cursorPosition is valid
+        if (cursorPosition >= 0 && cursorPosition <= _controller.text.length) {
+          final newText = _controller.text.replaceRange(
+            cursorPosition, 
+            cursorPosition, 
+            imagePlaceholder
+          );
+          
+          _controller.value = TextEditingValue(
+            text: newText,
+            selection: TextSelection.collapsed(offset: cursorPosition + imagePlaceholder.length),
+          );
+          
+          // Notify parent about the change
+          widget.onChanged(_controller.text, _controller.text);
+          
+          // Notify parent about added image
+          if (widget.onImageAdded != null) {
+            if (imageUrl != null) {
+              widget.onImageAdded!(imageUrl);
+              _linkedItemsManager.addEmbeddedImage(imageUrl);
+            } else if (imageId != null) {
+              widget.onImageAdded!('id:$imageId');
+              _linkedItemsManager.addEmbeddedImageId(imageId);
+            }
+          }
+        } else {
+          // Handle invalid cursor position
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error: Invalid cursor position'),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
       }
-    });
-  }
-  
-  // Show dialog to enter image URL
-  Future<String?> _showImageUrlDialog() async {
-    final controller = TextEditingController();
-    
-    return showDialog<String>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Enter Image URL'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              hintText: 'https://example.com/image.jpg',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, controller.text),
-              child: const Text('Add'),
-            ),
-          ],
-        );
-      },
-    );
+    }
   }
   
   // Start the autosave timer

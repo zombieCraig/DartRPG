@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:uuid/uuid.dart';
+import 'app_image.dart';
 
 class CharacterStat {
   String name;
@@ -299,6 +300,7 @@ class Character {
   String? handle; // Short name or nickname for the character
   String? bio;
   String? imageUrl;
+  String? imageId; // ID of the locally stored image
   List<CharacterStat> stats;
   List<Asset> assets;
   List<String> notes;
@@ -350,6 +352,7 @@ class Character {
     this.handle,
     this.bio,
     this.imageUrl,
+    this.imageId,
     List<CharacterStat>? stats,
     List<Asset>? assets,
     List<String>? notes,
@@ -456,6 +459,13 @@ class Character {
     }
   }
   
+  // Helper method to get the image source (URL or local)
+  ImageSource get imageSource {
+    if (imageId != null) return ImageSource.gallery;
+    if (imageUrl != null) return ImageSource.url;
+    return ImageSource.url; // Default
+  }
+  
   // Create a copy of this character for animation purposes
   Character copy() {
     return Character(
@@ -464,6 +474,7 @@ class Character {
       handle: handle,
       bio: bio,
       imageUrl: imageUrl,
+      imageId: imageId,
       stats: stats.map((s) => CharacterStat(name: s.name, value: s.value)).toList(),
       assets: assets.map((a) => Asset.fromJson(a.toJson())).toList(),
       notes: List<String>.from(notes),
@@ -535,6 +546,7 @@ class Character {
       'handle': handle,
       'bio': bio,
       'imageUrl': imageUrl,
+      'imageId': imageId,
       'stats': stats.map((s) => s.toJson()).toList(),
       'assets': assets.map((a) => a.toJson()).toList(),
       'notes': notes,
@@ -577,6 +589,7 @@ class Character {
       handle: json['handle'],
       bio: json['bio'],
       imageUrl: json['imageUrl'],
+      imageId: json['imageId'],
       stats: (json['stats'] as List?)
           ?.map((s) => CharacterStat.fromJson(s))
           .toList() ?? [],

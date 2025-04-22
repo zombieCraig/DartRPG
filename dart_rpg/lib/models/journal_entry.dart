@@ -161,6 +161,7 @@ class JournalEntry {
   List<MoveRoll> moveRolls; // Changed from single moveRoll to list
   List<OracleRoll> oracleRolls; // Changed from single oracleRoll to list
   List<String> embeddedImages; // URLs of embedded images
+  List<String> embeddedImageIds; // IDs of locally stored images
   Map<String, dynamic>? metadata; // Additional metadata for the entry
 
   JournalEntry({
@@ -174,6 +175,7 @@ class JournalEntry {
     List<MoveRoll>? moveRolls,
     List<OracleRoll>? oracleRolls,
     List<String>? embeddedImages,
+    List<String>? embeddedImageIds,
     this.metadata,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now(),
@@ -182,7 +184,8 @@ class JournalEntry {
         linkedLocationIds = linkedLocationIds ?? [],
         moveRolls = moveRolls ?? [],
         oracleRolls = oracleRolls ?? [],
-        embeddedImages = embeddedImages ?? [];
+        embeddedImages = embeddedImages ?? [],
+        embeddedImageIds = embeddedImageIds ?? [];
 
   Map<String, dynamic> toJson() {
     return {
@@ -196,6 +199,7 @@ class JournalEntry {
       'moveRolls': moveRolls.map((roll) => roll.toJson()).toList(),
       'oracleRolls': oracleRolls.map((roll) => roll.toJson()).toList(),
       'embeddedImages': embeddedImages,
+      'embeddedImageIds': embeddedImageIds,
       'metadata': metadata,
     };
   }
@@ -240,6 +244,7 @@ class JournalEntry {
       moveRolls: moveRollsList,
       oracleRolls: oracleRollsList,
       embeddedImages: (json['embeddedImages'] as List?)?.cast<String>() ?? [],
+      embeddedImageIds: (json['embeddedImageIds'] as List?)?.cast<String>() ?? [],
       metadata: json['metadata'],
     );
   }
@@ -312,5 +317,15 @@ class JournalEntry {
   
   void removeEmbeddedImage(String imageUrl) {
     embeddedImages.remove(imageUrl);
+  }
+  
+  void addEmbeddedImageId(String imageId) {
+    if (!embeddedImageIds.contains(imageId)) {
+      embeddedImageIds.add(imageId);
+    }
+  }
+  
+  void removeEmbeddedImageId(String imageId) {
+    embeddedImageIds.remove(imageId);
   }
 }

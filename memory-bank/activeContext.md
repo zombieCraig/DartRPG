@@ -22,6 +22,22 @@ This work enhances the overall architecture of the application, making it more m
 
 ## Recent Changes
 
+### Image Handling System Implementation (April 2025)
+- ✅ Implemented a robust image handling system for uploading, saving, and displaying images:
+  - Created `AppImage` model to represent images with metadata
+  - Implemented `ImageStorageService` to handle saving and loading images to/from disk
+  - Added `ImageManagerProvider` to manage images throughout the app
+  - Created `AppImageWidget` for displaying images from both URLs and local storage
+  - Implemented `ImagePickerDialog` for selecting images from different sources
+  - Enhanced the `JournalEntry` model to support both URL-based and locally stored images
+  - Updated the `Character` model to include an `imageId` field for locally stored images
+  - Modified the `JournalEntryEditor` to use the new image picker dialog
+  - Enhanced the `JournalEntryViewer` to render both URL and local images inline
+  - Updated the `LinkedItemsSummary` widget to display both types of images
+  - Added special handling for image markdown syntax (![alt](url))
+  - Implemented support for a custom format for local images (id:imageId)
+  - This implementation lays the groundwork for future enhancements like AI-generated images
+
 ### Journal Editor Linked Items Feature Implementation (April 2025)
 - ✅ Implemented a Linked Items feature in the journal editor to view linked characters, locations, move rolls, and oracle rolls:
   - Added a "Linked Items" button to the editor toolbar for toggling the linked items section

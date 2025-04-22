@@ -4,6 +4,7 @@ import json
 import os
 import sys
 from datetime import datetime
+from collections import defaultdict
 
 def extract_changes_from_memory_bank():
     """Extract recent changes from memory-bank files."""
@@ -53,6 +54,155 @@ def extract_changes_from_memory_bank():
     
     return changes
 
+def summarize_changes(changes):
+    """Summarize changes by grouping related items and creating concise descriptions."""
+    if not changes:
+        return ["Maintenance update"]
+    
+    # Clean up changes - remove checkmarks and detailed sub-bullets
+    cleaned_changes = []
+    for change in changes:
+        # Remove checkmarks
+        change = re.sub(r'✅\s*', '', change)
+        
+        # Extract just the main part before any colon or detailed list
+        main_part = re.split(r':|with \d+ sub-components', change)[0].strip()
+        
+        # If it's too long, try to get just the first sentence
+        if len(main_part) > 100:
+            sentence_match = re.match(r'^([^\.]+)\.', main_part)
+            if sentence_match:
+                main_part = sentence_match.group(1).strip()
+        
+        # Remove any remaining markdown formatting
+        main_part = re.sub(r'`([^`]+)`', r'\1', main_part)
+        
+        if main_part and main_part not in cleaned_changes:
+            cleaned_changes.append(main_part)
+    
+    # Define categories and their keywords
+    categories = {
+        "Features": ["Implement", "Add", "Create", "Develop", "Introduce"],
+        "Improvements": ["Enhance", "Improve", "Optimize", "Refactor", "Restructure", "Modularize"],
+        "Bug Fixes": ["Fix", "Resolve", "Address", "Correct", "Update"]
+    }
+    
+    # Group changes by category
+    categorized_changes = defaultdict(list)
+    uncategorized = []
+    
+    for change in cleaned_changes:
+        categorized = False
+        for category, keywords in categories.items():
+            for keyword in keywords:
+                if change.startswith(keyword) or f" {keyword.lower()} " in change.lower():
+                    categorized_changes[category].append(change)
+                    categorized = True
+                    break
+            if categorized:
+                break
+        
+        if not categorized:
+            uncategorized.append(change)
+    
+    # Add uncategorized changes to a default category
+    if uncategorized:
+        categorized_changes["Other Improvements"].extend(uncategorized)
+    
+    # Group related changes within each category
+    summarized_changes = []
+    
+    # Function to find related changes
+    def find_related_changes(changes, main_topic):
+        related = []
+        remaining = []
+        main_words = set(re.findall(r'\b\w+\b', main_topic.lower()))
+        
+        for change in changes:
+            change_words = set(re.findall(r'\b\w+\b', change.lower()))
+            # If there's significant word overlap or the change contains the main topic
+            if len(main_words.intersection(change_words)) >= 2 or main_topic.lower() in change.lower():
+                related.append(change)
+            else:
+                remaining.append(change)
+        
+        return related, remaining
+    
+    # Process each category
+    for category, changes_list in categorized_changes.items():
+        # Skip empty categories
+        if not changes_list:
+            continue
+            
+        processed_changes = []
+        remaining_changes = changes_list.copy()
+        
+        # Process until all changes are handled
+        while remaining_changes:
+            main_change = remaining_changes.pop(0)
+            related_changes, remaining_changes = find_related_changes(remaining_changes, main_change)
+            
+            if related_changes:
+                # Create a summary for the main change and its related changes
+                if len(related_changes) > 2:
+                    # Extract the main component or feature being changed
+                    match = re.search(r'(?:Implement|Add|Create|Enhance|Improve|Fix|Update|Restructure)\w* (?:a |the )?([^:]+)', main_change)
+                    if match:
+                        feature = match.group(1).strip()
+                        summary = f"{main_change} with {len(related_changes)} related improvements"
+                    else:
+                        summary = f"{main_change} and {len(related_changes)} related improvements"
+                else:
+                    # For just a couple related changes, be more specific
+                    related_text = ", ".join(related_changes)
+                    # If the combined text is too long, simplify
+                    if len(main_change) + len(related_text) > 100:
+                        summary = f"{main_change} and related improvements"
+                    else:
+                        summary = f"{main_change} and {related_text}"
+                
+                processed_changes.append(summary)
+            else:
+                processed_changes.append(main_change)
+        
+        # Add category header and changes to the final list
+        if processed_changes:
+            summarized_changes.append(f"**{category}**")
+            summarized_changes.extend(processed_changes)
+    
+    # Limit to a reasonable number of entries (max 15)
+    if len(summarized_changes) > 15:
+        # Keep category headers and reduce entries proportionally
+        headers = [item for item in summarized_changes if item.startswith('**')]
+        entries = [item for item in summarized_changes if not item.startswith('**')]
+        
+        # Calculate how many entries to keep per category
+        entries_per_category = max(1, 15 // len(headers))
+        
+        # Rebuild the summarized changes list
+        final_changes = []
+        current_category = None
+        category_count = 0
+        
+        for item in summarized_changes:
+            if item.startswith('**'):
+                if current_category:
+                    # Add a "and X more improvements" entry if we truncated items
+                    remaining = len([e for e in entries if current_category in e])
+                    if remaining > 0:
+                        final_changes.append(f"...and {remaining} more improvements")
+                
+                current_category = item[2:-2]  # Extract category name
+                category_count = 0
+                final_changes.append(item)
+            elif category_count < entries_per_category:
+                final_changes.append(item)
+                category_count += 1
+        
+        summarized_changes = final_changes
+    
+    return summarized_changes
+
 def update_changelog(changes, version):
     """Update the changelog.json file with new changes."""
     changelog_path = 'dart_rpg/assets/data/changelog.json'
@@ -76,12 +226,15 @@ def update_changelog(changes, version):
             print(f"Version {version} already exists in changelog")
             return
     
+    # Summarize the changes
+    summarized_changes = summarize_changes(changes)
+    
     # Add new version
     today = datetime.now().strftime('%Y-%m-%d')
     new_version = {
         "version": version,
         "date": today,
-        "changes": changes
+        "changes": summarized_changes
     }
     
     changelog["versions"].insert(0, new_version)  # Add at the beginning
@@ -90,7 +243,7 @@ def update_changelog(changes, version):
     with open(changelog_path, 'w') as f:
         json.dump(changelog, f, indent=2)
     
-    print(f"Updated changelog with {len(changes)} changes for version {version}")
+    print(f"Updated changelog with {len(summarized_changes)} changes for version {version}")
 
 def extract_changelog_for_release(version):
     """Extract changelog content for GitHub release description."""
@@ -106,8 +259,17 @@ def extract_changelog_for_release(version):
         for v in changelog["versions"]:
             if v["version"] == version:
                 content = f"## Version {version} ({v['date']})\n\n"
+                
+                # Group by categories
+                current_category = None
                 for change in v["changes"]:
-                    content += f"- {change}\n"
+                    if change.startswith("**") and change.endswith("**"):
+                        # This is a category header
+                        current_category = change[2:-2]  # Remove ** from both ends
+                        content += f"### {current_category}\n"
+                    else:
+                        content += f"- {change}\n"
+                
                 return content
         
         return f"## Version {version}\n\nNo changelog entries found for this version."

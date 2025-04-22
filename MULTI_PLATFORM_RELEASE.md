@@ -73,11 +73,21 @@ The workflow automatically updates the version in `pubspec.yaml` and the changel
 
 The multi-platform release workflow has been updated to address several issues:
 
-1. **Deprecated GitHub Actions Commands**: 
+1. **Independent GitHub Pages Deployment**:
+   - Modified the workflow to deploy GitHub Pages even if platform builds fail
+   - Removed the dependency between the build-and-release and deploy-to-gh-pages jobs
+   - This ensures the web version is always updated with the latest release
+
+2. **Windows Build Fix**:
+   - Fixed the PowerShell command that was causing Windows builds to fail
+   - Added `-Exclude 'temp_dir'` to prevent the temp_dir from being copied into itself
+   - This resolves the "Cannot overwrite the item with itself" error
+
+3. **Deprecated GitHub Actions Commands**: 
    - Replaced the deprecated `actions/upload-release-asset@v1` action with the modern `softprops/action-gh-release@v1`
    - This resolves the warning about the deprecated `set-output` command
 
-2. **Windows Build Path Fix**:
+4. **Windows Build Path Fix**:
    - Updated the Windows build path to include the `x64` directory: `build/windows/x64/runner/Release`
    - Added directory verification to provide better error messages if the path is incorrect
    - Added directory listing to help diagnose path issues

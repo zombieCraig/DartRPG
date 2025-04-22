@@ -40,6 +40,16 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Comprehensive logging system and log viewer
 
 ### Recently Completed
+- ✅ Implemented a Linked Items feature in the journal editor to view linked characters, locations, move rolls, and oracle rolls:
+  - ✅ Added a "Linked Items" button to the editor toolbar for toggling the linked items section
+  - ✅ Reused the existing LinkedItemsSummary component from the journal entry viewer
+  - ✅ Implemented dialog-based viewing of linked item details when clicked
+  - ✅ Modified the following files:
+    - ✅ `dart_rpg/lib/widgets/journal/editor_toolbar.dart`: Added Linked Items button
+    - ✅ `dart_rpg/lib/widgets/journal/journal_entry_editor.dart`: Added linked items section and dialog methods
+    - ✅ `dart_rpg/lib/screens/journal_entry_screen.dart`: Updated to pass the onLinkedItemsPressed callback
+  - ✅ This feature provides easy access to linked content while editing journal entries
+  - ✅ Improves user experience by allowing reference to linked items without leaving the editor
 - ✅ Simplified the search functionality in the Move Dialog and Moves Screen to only search move titles:
   - ✅ Modified the search filter in both locations to only check `move.name` instead of also checking `move.description` and `move.trigger`
   - ✅ Updated the hint text from "Enter move name or description" to "Enter move title" for clarity
@@ -277,6 +287,7 @@ The DartRPG application is in active development with core functionality impleme
 - **Tablet Support**: UI not fully optimized for tablet screens
 
 ### Recently Fixed Issues
+- ✅ **Journal Editor Linked Items**: Added a Linked Items feature to the journal editor that allows viewing and interacting with linked characters, locations, move rolls, and oracle rolls while editing
 - ✅ **Move Results Formatting**: Fixed formatting issue with the move results screen in the journal editor by adding `softLineBreak: true` to all MarkdownBody widgets, ensuring consistent text formatting with soft newline returns
 - ✅ **Journal Entry Navigation**: Fixed issue with duplicate back buttons in the journal editor when accessed from the quests screen by adding metadata to journal entries and conditionally hiding the AppBar back button
 - ✅ **GitHub Actions Windows Build**: Fixed PowerShell compatibility issue by adding explicit bash shell specification for the version extraction step
@@ -305,6 +316,19 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Journal Navigation**: Added "Jump to last entry" button on journal screen when entries are scrollable
 
 ## Recent Milestones
+
+### Milestone: Journal Editor Linked Items Feature Implementation (April 2025)
+- ✅ Implemented a Linked Items feature in the journal editor to view linked characters, locations, move rolls, and oracle rolls:
+  - ✅ Added a "Linked Items" button to the editor toolbar for toggling the linked items section
+  - ✅ Reused the existing LinkedItemsSummary component from the journal entry viewer
+  - ✅ Implemented dialog-based viewing of linked item details when clicked
+  - ✅ Modified the following files:
+    - ✅ `dart_rpg/lib/widgets/journal/editor_toolbar.dart`: Added Linked Items button
+    - ✅ `dart_rpg/lib/widgets/journal/journal_entry_editor.dart`: Added linked items section and dialog methods
+    - ✅ `dart_rpg/lib/screens/journal_entry_screen.dart`: Updated to pass the onLinkedItemsPressed callback
+  - ✅ This feature provides easy access to linked content while editing journal entries
+  - ✅ Improves user experience by allowing reference to linked items without leaving the editor
+  - ✅ Ensures consistent behavior between the journal entry viewer and editor
 
 ### Milestone: Move Results Screen Formatting Fix (April 2025)
 - ✅ Fixed formatting issue with the move results screen in the journal editor:

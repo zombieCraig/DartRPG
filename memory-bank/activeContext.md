@@ -22,6 +22,18 @@ This work enhances the overall architecture of the application, making it more m
 
 ## Recent Changes
 
+### Journal Editor Linked Items Feature Implementation (April 2025)
+- ✅ Implemented a Linked Items feature in the journal editor to view linked characters, locations, move rolls, and oracle rolls:
+  - Added a "Linked Items" button to the editor toolbar for toggling the linked items section
+  - Reused the existing LinkedItemsSummary component from the journal entry viewer
+  - Implemented dialog-based viewing of linked item details when clicked
+  - Modified the following files:
+    - `dart_rpg/lib/widgets/journal/editor_toolbar.dart`: Added Linked Items button
+    - `dart_rpg/lib/widgets/journal/journal_entry_editor.dart`: Added linked items section and dialog methods
+    - `dart_rpg/lib/screens/journal_entry_screen.dart`: Updated to pass the onLinkedItemsPressed callback
+  - This feature provides easy access to linked content while editing journal entries
+  - Improves user experience by allowing reference to linked items without leaving the editor
+
 ### Move Search Simplification (April 2025)
 - ✅ Simplified the search functionality in the Move Dialog and Moves Screen to only search move titles:
   - Modified the search filter in both locations to only check `move.name` instead of also checking `move.description` and `move.trigger`

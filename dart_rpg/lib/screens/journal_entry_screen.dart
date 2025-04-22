@@ -1450,6 +1450,9 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                         _navigateToQuests(context);
                       } : null,
                       onNewEntryRequested: _saveAndCreateNew,
+                      onLinkedItemsPressed: () {
+                        // This is handled internally by the JournalEntryEditor
+                      },
                     )
                   : JournalEntryViewer(
                       content: _content,

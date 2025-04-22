@@ -22,7 +22,7 @@ class AutosaveService {
   /// the specified delay.
   void startAutoSaveTimer({
     required Function() onSave,
-    Duration delay = const Duration(seconds: 2),
+    Duration delay = const Duration(seconds: 10), // Increased from 2 to 10 seconds
   }) {
     // Cancel any existing timer
     _autoSaveTimer?.cancel();
@@ -52,10 +52,17 @@ class AutosaveService {
     required List<OracleRoll> oracleRolls,
     required List<String> embeddedImages,
   }) async {
+    // Skip autosave for very short content to reduce unnecessary saves
+    if (content.length < 20 && entryId == null && _createdEntryId == null) {
+      return;
+    }
+    
     // Prevent multiple auto-saves from running simultaneously
     if (_isAutoSaving) return;
     
     _isAutoSaving = true;
+    
+    final stopwatch = Stopwatch()..start();
     
     try {
       // Auto-save for both new and existing entries
@@ -145,6 +152,12 @@ class AutosaveService {
       );
     } finally {
       _isAutoSaving = false;
+      
+      // Log performance metrics
+      LoggingService().debug(
+        'Autosave completed in ${stopwatch.elapsedMilliseconds}ms',
+        tag: 'AutosaveService',
+      );
     }
   }
   

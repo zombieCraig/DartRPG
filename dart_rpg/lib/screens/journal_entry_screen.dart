@@ -140,8 +140,8 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     // Cancel any existing timer
     _autoSaveTimer?.cancel();
     
-    // Start a new timer that will save after 2 seconds of inactivity
-    _autoSaveTimer = Timer(const Duration(seconds: 2), () {
+    // Start a new timer that will save after 10 seconds of inactivity (increased from 2)
+    _autoSaveTimer = Timer(const Duration(seconds: 10), () {
       if (_isEditing) {
         _autoSave();
       }
@@ -155,11 +155,21 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   // Focus node for the editor
   final FocusNode _editorFocusNode = FocusNode();
   
+  // Performance metrics
+  int _lastAutoSaveDuration = 0;
+  
   void _autoSave() async {
+    // Skip autosave for very short content
+    if (_content.length < 20 && widget.entryId == null && _createdEntryId == null) {
+      return;
+    }
+    
     // Prevent multiple auto-saves from running simultaneously
     if (_isAutoSaving) return;
     
     _isAutoSaving = true;
+    
+    final stopwatch = Stopwatch()..start();
     
     try {
       // Auto-save for both new and existing entries
@@ -251,6 +261,13 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
       );
     } finally {
       _isAutoSaving = false;
+      _lastAutoSaveDuration = stopwatch.elapsedMilliseconds;
+      
+      // Log performance metrics
+      LoggingService().debug(
+        'Journal entry autosave completed in ${stopwatch.elapsedMilliseconds}ms',
+        tag: 'JournalEntryScreen',
+      );
     }
   }
 
@@ -1232,6 +1249,8 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   
   @override
   Widget build(BuildContext context) {
+    final buildStopwatch = Stopwatch()..start();
+    
     final gameProvider = Provider.of<GameProvider>(context);
     final currentGame = gameProvider.currentGame;
     

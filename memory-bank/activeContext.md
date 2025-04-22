@@ -42,6 +42,7 @@ This work enhances the overall architecture of the application, making it more m
   - Added directory listing to help diagnose path issues
   - Added file existence verification after creating the macOS zip file
   - Improved error reporting for macOS packaging
+  - Added explicit bash shell specification for the version extraction step to fix PowerShell compatibility issues on Windows
   - Updated the MULTI_PLATFORM_RELEASE.md documentation to reflect these changes
 
 ### Location Graph "Fit to Screen" Functionality Fix (April 2025)

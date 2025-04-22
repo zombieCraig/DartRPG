@@ -21,8 +21,20 @@ class AutocompleteSystem {
   /// The current inline suggestion.
   String? _inlineSuggestion;
   
+  /// Cache for the last search text to avoid redundant filtering
+  String _lastSearchText = '';
+  
+  /// Cache for the filtered suggestions
+  List<dynamic> _cachedSuggestions = [];
+  
+  /// Performance metrics
+  int _lastCheckDuration = 0;
+  
   /// Creates a new AutocompleteSystem.
   AutocompleteSystem();
+  
+  /// Gets the last check duration in milliseconds
+  int get lastCheckDuration => _lastCheckDuration;
   
   /// Checks for @ and # characters to trigger autocompletion.
   /// 
@@ -33,34 +45,98 @@ class AutocompleteSystem {
     required List<Character> characters,
     required List<Location> locations,
   }) {
+    final stopwatch = Stopwatch()..start();
+    
     if (cursorPosition <= 0 || cursorPosition > text.length) {
       _clearInlineSuggestion();
+      _lastCheckDuration = stopwatch.elapsedMicroseconds;
+      return false;
+    }
+    
+    // Quick check if we're potentially in a mention context
+    // Only proceed with more expensive operations if we might be in a mention
+    final charAtCursor = cursorPosition < text.length ? text[cursorPosition] : '';
+    final charBeforeCursor = cursorPosition > 0 ? text[cursorPosition - 1] : '';
+    
+    // Special case: If we just typed @ or #, we always want to check for mentions
+    final justTypedMentionChar = charBeforeCursor == '@' || charBeforeCursor == '#';
+    
+    // If we're not in a mention context and didn't just type a mention character, return early
+    if (!justTypedMentionChar && 
+        !_showCharacterSuggestions && 
+        !_showLocationSuggestions) {
+      _clearInlineSuggestion();
+      _lastCheckDuration = stopwatch.elapsedMicroseconds;
       return false;
     }
     
     // Find the word being typed (from the last space or newline to the cursor)
+    // Only compute this if we're potentially in a mention context
     final textBeforeCursor = text.substring(0, cursorPosition);
     final lastSpaceOrNewline = textBeforeCursor.lastIndexOf(RegExp(r'[\s\n]'));
     final wordStart = lastSpaceOrNewline + 1;
-    final currentWord = textBeforeCursor.substring(wordStart);
     
-    // Check if we're typing @ or # followed by at least one character
-    if (currentWord.startsWith('@') && currentWord.length > 1) {
-      _currentSearchText = currentWord.substring(1).toLowerCase();
-      _showCharacterSuggestions = true;
-      _showLocationSuggestions = false;
-      _suggestionStartPosition = wordStart;
-      _updateSuggestions(characters, locations);
-      return true;
-    } else if (currentWord.startsWith('#') && currentWord.length > 1) {
-      _currentSearchText = currentWord.substring(1).toLowerCase();
-      _showCharacterSuggestions = false;
-      _showLocationSuggestions = true;
-      _suggestionStartPosition = wordStart;
-      _updateSuggestions(characters, locations);
-      return true;
+    // Only extract the current word if we're potentially in a mention context
+    // This avoids unnecessary string operations
+    String currentWord;
+    if (wordStart < textBeforeCursor.length) {
+      currentWord = textBeforeCursor.substring(wordStart);
     } else {
       _clearInlineSuggestion();
+      _lastCheckDuration = stopwatch.elapsedMicroseconds;
+      return false;
+    }
+    
+    // Check if we're typing @ or # followed by at least one character
+    if (currentWord.startsWith('@')) {
+      if (currentWord.length > 1) {
+        final searchText = currentWord.substring(1).toLowerCase();
+        
+        // Only update if the search text has changed
+        if (searchText != _currentSearchText || _showLocationSuggestions) {
+          _currentSearchText = searchText;
+          _showCharacterSuggestions = true;
+          _showLocationSuggestions = false;
+          _suggestionStartPosition = wordStart;
+          _updateSuggestions(characters, locations);
+        }
+        
+        _lastCheckDuration = stopwatch.elapsedMicroseconds;
+        return true;
+      } else {
+        // Even if we just have @, we should set up the state for character suggestions
+        _showCharacterSuggestions = true;
+        _showLocationSuggestions = false;
+        _suggestionStartPosition = wordStart;
+        _lastCheckDuration = stopwatch.elapsedMicroseconds;
+        return true;
+      }
+    } else if (currentWord.startsWith('#')) {
+      if (currentWord.length > 1) {
+        final searchText = currentWord.substring(1).toLowerCase();
+        
+        // Only update if the search text has changed
+        if (searchText != _currentSearchText || _showCharacterSuggestions) {
+          _currentSearchText = searchText;
+          _showCharacterSuggestions = false;
+          _showLocationSuggestions = true;
+          _suggestionStartPosition = wordStart;
+          _updateSuggestions(characters, locations);
+        }
+        
+        _lastCheckDuration = stopwatch.elapsedMicroseconds;
+        return true;
+      } else {
+        // Even if we just have #, we should set up the state for location suggestions
+        _showCharacterSuggestions = false;
+        _showLocationSuggestions = true;
+        _suggestionStartPosition = wordStart;
+        _lastCheckDuration = stopwatch.elapsedMicroseconds;
+        return true;
+      }
+    } else {
+      _clearInlineSuggestion();
+      _lastCheckDuration = stopwatch.elapsedMicroseconds;
       return false;
     }
   }
@@ -76,18 +152,29 @@ class AutocompleteSystem {
   
   /// Updates the list of suggestions based on the current search text.
   void _updateSuggestions(List<Character> characters, List<Location> locations) {
+    // If the search text hasn't changed, use cached results
+    if (_lastSearchText == _currentSearchText && !_filteredSuggestions.isEmpty) {
+      return;
+    }
+    
+    _lastSearchText = _currentSearchText;
+    
     if (_showCharacterSuggestions) {
       // Match on handle if available, otherwise name
+      // Limit to 10 suggestions for performance
       _filteredSuggestions = characters
           .where((c) {
             final handle = c.handle ?? c.getHandle();
             return handle.toLowerCase().contains(_currentSearchText) ||
                    c.name.toLowerCase().contains(_currentSearchText);
           })
+          .take(10)
           .toList();
     } else if (_showLocationSuggestions) {
+      // Limit to 10 suggestions for performance
       _filteredSuggestions = locations
           .where((l) => l.name.toLowerCase().contains(_currentSearchText))
+          .take(10)
           .toList();
     } else {
       _filteredSuggestions = [];
@@ -113,6 +200,9 @@ class AutocompleteSystem {
       
       _inlineSuggestion = completionText;
     }
+    
+    // Cache the results
+    _cachedSuggestions = List.from(_filteredSuggestions);
   }
   
   /// Inserts a mention at the current cursor position.

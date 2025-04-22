@@ -296,7 +296,7 @@ class _JournalScreenState extends State<JournalScreen> {
                   children: [
                     ...linkedCharacters.map((character) => Chip(
                           avatar: const Icon(Icons.person, size: 16),
-                          label: Text(character.name),
+                          label: Text(character.handle ?? character.getHandle()),
                         )),
                     ...linkedLocations.map((location) => Chip(
                           avatar: const Icon(Icons.place, size: 16),

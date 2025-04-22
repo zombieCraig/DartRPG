@@ -67,9 +67,7 @@ class _MovesScreenState extends State<MovesScreen> {
           for (final category in movesByCategory.keys) {
           filteredMoves.addAll(
             movesByCategory[category]!.where((move) => 
-              move.name.toLowerCase().contains(_searchQuery) ||
-              (move.description != null && move.description!.toLowerCase().contains(_searchQuery)) ||
-              (move.trigger != null && move.trigger!.toLowerCase().contains(_searchQuery))
+              move.name.toLowerCase().contains(_searchQuery)
             )
           );
           }
@@ -84,7 +82,7 @@ class _MovesScreenState extends State<MovesScreen> {
                 controller: _searchController,
                 decoration: InputDecoration(
                   labelText: 'Search Moves',
-                  hintText: 'Enter move name or description',
+                  hintText: 'Enter move title',
                   prefixIcon: const Icon(Icons.search),
                   border: const OutlineInputBorder(),
                   suffixIcon: _searchQuery.isNotEmpty

@@ -40,6 +40,14 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ Comprehensive logging system and log viewer
 
 ### Recently Completed
+- ✅ Simplified the search functionality in the Move Dialog and Moves Screen to only search move titles:
+  - ✅ Modified the search filter in both locations to only check `move.name` instead of also checking `move.description` and `move.trigger`
+  - ✅ Updated the hint text from "Enter move name or description" to "Enter move title" for clarity
+  - ✅ Modified the following files:
+    - ✅ `dart_rpg/lib/widgets/journal/move_dialog.dart`: Updated search filter and hint text
+    - ✅ `dart_rpg/lib/screens/moves_screen.dart`: Updated search filter and hint text
+  - ✅ This change makes the search more focused and only returns moves whose titles match the search query
+  - ✅ Improved user experience by providing more relevant search results
 - ✅ Further modularized the Location Graph System into specialized components following the component extraction pattern:
   - ✅ LocationGraphController: Manages the state and logic for the graph
   - ✅ LocationNodeRenderer: Handles the rendering of location nodes

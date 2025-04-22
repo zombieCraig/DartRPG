@@ -76,9 +76,7 @@ class MoveDialog {
                   for (final category in movesByCategory.keys) {
                     filteredMoves.addAll(
                       movesByCategory[category]!.where((move) => 
-                        move.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
-                        (move.description?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false) ||
-                        (move.trigger?.toLowerCase().contains(searchQuery.toLowerCase()) ?? false)
+                        move.name.toLowerCase().contains(searchQuery.toLowerCase())
                       )
                     );
                   }
@@ -98,7 +96,7 @@ class MoveDialog {
                             controller: searchController,
                             decoration: InputDecoration(
                               labelText: 'Search Moves',
-                              hintText: 'Enter move name or description',
+                              hintText: 'Enter move title',
                               prefixIcon: const Icon(Icons.search),
                               border: const OutlineInputBorder(),
                               suffixIcon: searchQuery.isNotEmpty

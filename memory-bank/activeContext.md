@@ -22,6 +22,16 @@ This work enhances the overall architecture of the application, making it more m
 
 ## Recent Changes
 
+### Move Search Simplification (April 2025)
+- ✅ Simplified the search functionality in the Move Dialog and Moves Screen to only search move titles:
+  - Modified the search filter in both locations to only check `move.name` instead of also checking `move.description` and `move.trigger`
+  - Updated the hint text from "Enter move name or description" to "Enter move title" for clarity
+  - Modified the following files:
+    - `dart_rpg/lib/widgets/journal/move_dialog.dart`: Updated search filter and hint text
+    - `dart_rpg/lib/screens/moves_screen.dart`: Updated search filter and hint text
+  - This change makes the search more focused and only returns moves whose titles match the search query
+  - Improved user experience by providing more relevant search results
+
 ### Move Results Screen Formatting Fix (April 2025)
 - Fixed formatting issue with the move results screen in the journal editor:
   - Added `softLineBreak: true` to all MarkdownBody widgets in the move results screens

@@ -3,6 +3,7 @@ name: Multi-Platform Release
 on:
   release:
     types: [created]
+  workflow_dispatch:
 
 jobs:
   build-and-release:

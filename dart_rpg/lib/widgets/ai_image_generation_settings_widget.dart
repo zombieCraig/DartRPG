@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/game.dart';
 import '../providers/game_provider.dart';
+import '../utils/logging_service.dart';
 
 /// A reusable widget for AI image generation settings that can be used in both
 /// the game settings screen and the new game screen.
@@ -246,7 +247,28 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                         _notifyNewGameSettingsChanged();
                       } else if (aiImageProvider != null) {
                         if (value.isNotEmpty) {
+                          // Log the API key length before updating
+                          LoggingService().debug(
+                            'Setting API key for $aiImageProvider with length: ${value.length}',
+                            tag: 'AiImageGenerationSettingsWidget'
+                          );
+                          
+                          // Update the API key in the game provider
                           widget.gameProvider.updateAiApiKey(aiImageProvider, value);
+                          
+                          // Verify the API key was set correctly in the game object
+                          final apiKey = widget.game.getAiApiKey(aiImageProvider);
+                          if (apiKey != null) {
+                            LoggingService().debug(
+                              'API key for $aiImageProvider was set successfully with length: ${apiKey.length}',
+                              tag: 'AiImageGenerationSettingsWidget'
+                            );
+                          } else {
+                            LoggingService().warning(
+                              'Failed to set API key for $aiImageProvider',
+                              tag: 'AiImageGenerationSettingsWidget'
+                            );
+                          }
                         } else {
                           widget.gameProvider.removeAiApiKey(aiImageProvider);
                         }

@@ -183,6 +183,29 @@ class GameProvider extends ChangeNotifier {
         }
       }
       
+      // Log the loaded games
+      for (final game in _games) {
+        if (game.aiImageGenerationEnabled && game.aiImageProvider != null) {
+          LoggingService().info(
+            'Loaded game with AI image generation enabled: ${game.name} (Provider: ${game.aiImageProvider})',
+            tag: 'GameProvider'
+          );
+          
+          // Log API keys without exposing the actual keys
+          if (game.aiApiKeys.isNotEmpty) {
+            LoggingService().debug(
+              'Game has ${game.aiApiKeys.length} API key(s) for providers: ${game.aiApiKeys.keys.join(", ")}',
+              tag: 'GameProvider'
+            );
+          } else {
+            LoggingService().warning(
+              'Game has AI image generation enabled but no API keys are set',
+              tag: 'GameProvider'
+            );
+          }
+        }
+      }
+      
       // Load last played game
       final lastPlayedId = prefs.getString('lastPlayedGameId');
       if (lastPlayedId != null) {
@@ -244,6 +267,28 @@ class GameProvider extends ChangeNotifier {
       // Save each game
       for (final game in _games) {
         final jsonString = game.toJsonString();
+        
+        // Log API keys information before saving
+        if (game.aiImageGenerationEnabled && game.aiImageProvider != null) {
+          LoggingService().debug(
+            'Saving game with API keys: ${game.aiApiKeys.keys.join(", ")}',
+            tag: 'GameProvider'
+          );
+          
+          // Check if aiApiKeys is in the JSON string (without logging the actual keys)
+          if (jsonString.contains('"aiApiKeys":{')) {
+            LoggingService().debug(
+              'JSON contains aiApiKeys field',
+              tag: 'GameProvider'
+            );
+          } else {
+            LoggingService().warning(
+              'JSON does NOT contain aiApiKeys field',
+              tag: 'GameProvider'
+            );
+          }
+        }
+        
         await prefs.setString('game_${game.id}', jsonString);
         LoggingService().debug(
           'Saved game to SharedPreferences: ${game.name} (ID: ${game.id}) - JSON length: ${jsonString.length}',
@@ -1048,7 +1093,40 @@ class GameProvider extends ChangeNotifier {
       throw Exception('No game selected');
     }
     
+    LoggingService().info(
+      'Updating API key for provider: $provider',
+      tag: 'GameProvider'
+    );
+    
     _currentGame!.setAiApiKey(provider, apiKey);
+    
+    // Log that the API key was set without exposing the actual key
+    LoggingService().debug(
+      'API key for $provider was set successfully',
+      tag: 'GameProvider'
+    );
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
+  // Update artistic direction for a specific provider
+  Future<void> updateAiArtisticDirection(String provider, String artisticDirection) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    LoggingService().info(
+      'Updating artistic direction for provider: $provider',
+      tag: 'GameProvider'
+    );
+    
+    _currentGame!.setAiArtisticDirection(provider, artisticDirection);
+    
+    LoggingService().debug(
+      'Artistic direction for $provider was set successfully',
+      tag: 'GameProvider'
+    );
     
     await _saveGames();
     notifyListeners();
@@ -1060,7 +1138,17 @@ class GameProvider extends ChangeNotifier {
       throw Exception('No game selected');
     }
     
+    LoggingService().info(
+      'Removing API key for provider: $provider',
+      tag: 'GameProvider'
+    );
+    
     _currentGame!.removeAiApiKey(provider);
+    
+    LoggingService().debug(
+      'API key for $provider was removed successfully',
+      tag: 'GameProvider'
+    );
     
     await _saveGames();
     notifyListeners();

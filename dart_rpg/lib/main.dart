@@ -6,6 +6,7 @@ import 'providers/datasworn_provider.dart';
 import 'providers/image_manager_provider.dart';
 import 'providers/ai_image_provider.dart';
 import 'screens/game_selection_screen.dart';
+import 'screens/game_settings_screen.dart';
 import 'utils/logging_service.dart';
 
 void main() {
@@ -46,6 +47,9 @@ class MyApp extends StatelessWidget {
                 darkTheme: settings.getTheme(true),
                 themeMode: settings.themeMode,
                 home: const GameSelectionScreen(),
+                routes: {
+                  '/game_settings': (context) => const GameSettingsScreen(),
+                },
                 // Custom page transitions
                 onGenerateRoute: (settings) {
                   // Only apply custom transitions if animations are enabled

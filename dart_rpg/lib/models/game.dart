@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:uuid/uuid.dart';
+import '../utils/logging_service.dart';
 import 'character.dart';
 import 'clock.dart';
 import 'location.dart';
@@ -31,6 +32,7 @@ class Game {
   bool aiImageGenerationEnabled;
   String? aiImageProvider; // e.g., "minimax"
   Map<String, String> aiApiKeys = {}; // Store keys for different providers
+  Map<String, String> aiArtisticDirections = {}; // Store artistic directions for different providers
 
   Game({
     String? id,
@@ -53,6 +55,7 @@ class Game {
     this.aiImageGenerationEnabled = false,
     this.aiImageProvider,
     Map<String, String>? aiApiKeys,
+    Map<String, String>? aiArtisticDirections,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now(),
         lastPlayedAt = lastPlayedAt ?? DateTime.now(),
@@ -61,6 +64,33 @@ class Game {
         sessions = sessions ?? [],
         quests = quests ?? [],
         clocks = clocks ?? [] {
+    // Initialize aiApiKeys if provided
+    if (aiApiKeys != null) {
+      this.aiApiKeys = Map<String, String>.from(aiApiKeys);
+      LoggingService().debug(
+        'Initialized Game with API keys: ${this.aiApiKeys.keys.join(", ")}',
+        tag: 'Game'
+      );
+    }
+    
+    // Initialize aiArtisticDirections if provided
+    if (aiArtisticDirections != null) {
+      this.aiArtisticDirections = Map<String, String>.from(aiArtisticDirections);
+      LoggingService().debug(
+        'Initialized Game with artistic directions: ${this.aiArtisticDirections.keys.join(", ")}',
+        tag: 'Game'
+      );
+    }
+    
+    // Set default artistic direction for Minimax if not provided
+    if (!this.aiArtisticDirections.containsKey('minimax')) {
+      this.aiArtisticDirections['minimax'] = "cyberpunk scene, digital art, detailed illustration";
+      LoggingService().debug(
+        'Set default artistic direction for Minimax',
+        tag: 'Game'
+      );
+    }
+    
     // Create "Your Rig" location if it doesn't exist and no locations are provided
     if (locations == null || locations.isEmpty) {
       createRigLocation();
@@ -78,7 +108,43 @@ class Game {
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    // Log API keys information before serialization
+    final loggingService = LoggingService();
+    if (aiImageGenerationEnabled && aiImageProvider != null) {
+      loggingService.debug(
+        'Serializing game with API keys: ${aiApiKeys.keys.join(", ")}',
+        tag: 'Game'
+      );
+      
+      if (aiApiKeys.isEmpty) {
+        loggingService.warning(
+          'Game has AI image generation enabled but no API keys to serialize',
+          tag: 'Game'
+        );
+      }
+    }
+    
+    // Convert aiApiKeys to a Map<String, dynamic> for JSON serialization
+    final Map<String, dynamic> apiKeysJson = {};
+    aiApiKeys.forEach((key, value) {
+      apiKeysJson[key] = value;
+      loggingService.debug(
+        'Adding API key for provider $key to JSON (length: ${value.length})',
+        tag: 'Game'
+      );
+    });
+    
+    // Convert aiArtisticDirections to a Map<String, dynamic> for JSON serialization
+    final Map<String, dynamic> artisticDirectionsJson = {};
+    aiArtisticDirections.forEach((key, value) {
+      artisticDirectionsJson[key] = value;
+      loggingService.debug(
+        'Adding artistic direction for provider $key to JSON',
+        tag: 'Game'
+      );
+    });
+    
+    final json = {
       'id': id,
       'name': name,
       'createdAt': createdAt.toIso8601String(),
@@ -98,10 +164,60 @@ class Game {
       'sentientAiImagePath': sentientAiImagePath,
       'aiImageGenerationEnabled': aiImageGenerationEnabled,
       'aiImageProvider': aiImageProvider,
-      'aiApiKeys': aiApiKeys,
+      'aiApiKeys': apiKeysJson,
+      'aiArtisticDirections': artisticDirectionsJson,
     };
+    
+    // Verify aiApiKeys is in the JSON
+    if (aiImageGenerationEnabled && aiImageProvider != null) {
+      if (json.containsKey('aiApiKeys')) {
+        loggingService.debug(
+          'JSON contains aiApiKeys field',
+          tag: 'Game'
+        );
+      } else {
+        loggingService.warning(
+          'JSON does NOT contain aiApiKeys field',
+          tag: 'Game'
+        );
+      }
+    }
+    
+    return json;
   }
 
+  // Helper method to properly parse artistic directions from JSON
+  static Map<String, String> _parseArtisticDirections(dynamic artisticDirectionsJson) {
+    final loggingService = LoggingService();
+    
+    if (artisticDirectionsJson == null) {
+      loggingService.debug('No artistic directions found in JSON', tag: 'Game');
+      return {};
+    }
+    
+    try {
+      // First, convert to a Map<String, dynamic>
+      final Map<String, dynamic> dynamicMap = Map<String, dynamic>.from(artisticDirectionsJson);
+      
+      // Then, explicitly convert each value to a string
+      final Map<String, String> stringMap = {};
+      dynamicMap.forEach((key, value) {
+        stringMap[key] = value.toString();
+        loggingService.debug('Parsed artistic direction for provider: $key', tag: 'Game');
+      });
+      
+      return stringMap;
+    } catch (e) {
+      loggingService.error(
+        'Failed to parse artistic directions from JSON',
+        tag: 'Game',
+        error: e,
+        stackTrace: StackTrace.current
+      );
+      return {};
+    }
+  }
+  
   factory Game.fromJson(Map<String, dynamic> json) {
     final List<Character> characters = (json['characters'] as List)
         .map((c) => Character.fromJson(c))
@@ -160,16 +276,118 @@ class Game {
       sentientAiImagePath: json['sentientAiImagePath'],
       aiImageGenerationEnabled: json['aiImageGenerationEnabled'] ?? false,
       aiImageProvider: json['aiImageProvider'],
-      aiApiKeys: json['aiApiKeys'] != null 
-          ? Map<String, String>.from(json['aiApiKeys']) 
-          : {},
+      aiApiKeys: _parseApiKeys(json['aiApiKeys']),
+      aiArtisticDirections: _parseArtisticDirections(json['aiArtisticDirections']),
     );
+  }
+
+  // Helper method to properly parse API keys from JSON
+  static Map<String, String> _parseApiKeys(dynamic apiKeysJson) {
+    final loggingService = LoggingService();
+    
+    if (apiKeysJson == null) {
+      loggingService.debug('No API keys found in JSON', tag: 'Game');
+      return {};
+    }
+    
+    try {
+      // First, convert to a Map<String, dynamic>
+      final Map<String, dynamic> dynamicMap = Map<String, dynamic>.from(apiKeysJson);
+      
+      // Then, explicitly convert each value to a string
+      final Map<String, String> stringMap = {};
+      dynamicMap.forEach((key, value) {
+        stringMap[key] = value.toString();
+        loggingService.debug('Parsed API key for provider: $key', tag: 'Game');
+      });
+      
+      return stringMap;
+    } catch (e) {
+      loggingService.error(
+        'Failed to parse API keys from JSON',
+        tag: 'Game',
+        error: e,
+        stackTrace: StackTrace.current
+      );
+      return {};
+    }
   }
 
   String toJsonString() => jsonEncode(toJson());
 
   factory Game.fromJsonString(String jsonString) {
-    return Game.fromJson(jsonDecode(jsonString));
+    final loggingService = LoggingService();
+    
+    try {
+      // Check if the JSON string contains aiApiKeys
+      if (jsonString.contains('"aiApiKeys":{')) {
+        loggingService.debug(
+          'JSON string contains aiApiKeys field',
+          tag: 'Game'
+        );
+      } else if (jsonString.contains('"aiApiKeys":{}')) {
+        loggingService.debug(
+          'JSON string contains empty aiApiKeys field',
+          tag: 'Game'
+        );
+      } else if (jsonString.contains('"aiApiKeys":null')) {
+        loggingService.debug(
+          'JSON string contains null aiApiKeys field',
+          tag: 'Game'
+        );
+      } else if (jsonString.contains('"aiApiKeys"')) {
+        loggingService.debug(
+          'JSON string contains aiApiKeys field but in unknown format',
+          tag: 'Game'
+        );
+      } else {
+        loggingService.warning(
+          'JSON string does NOT contain aiApiKeys field',
+          tag: 'Game'
+        );
+      }
+      
+      // Decode the JSON string
+      final jsonMap = jsonDecode(jsonString);
+      
+      // Check if the decoded JSON contains aiApiKeys
+      if (jsonMap.containsKey('aiApiKeys')) {
+        final apiKeys = jsonMap['aiApiKeys'];
+        if (apiKeys != null) {
+          if (apiKeys is Map) {
+            loggingService.debug(
+              'Decoded JSON contains aiApiKeys map with ${apiKeys.length} entries',
+              tag: 'Game'
+            );
+          } else {
+            loggingService.warning(
+              'Decoded JSON contains aiApiKeys but it is not a map: ${apiKeys.runtimeType}',
+              tag: 'Game'
+            );
+          }
+        } else {
+          loggingService.debug(
+            'Decoded JSON contains null aiApiKeys',
+            tag: 'Game'
+          );
+        }
+      } else {
+        loggingService.warning(
+          'Decoded JSON does NOT contain aiApiKeys field',
+          tag: 'Game'
+        );
+      }
+      
+      return Game.fromJson(jsonMap);
+    } catch (e) {
+      loggingService.error(
+        'Failed to parse game JSON string',
+        tag: 'Game',
+        error: e,
+        stackTrace: StackTrace.current
+      );
+      rethrow;
+    }
   }
 
   void updateLastPlayed() {
@@ -319,7 +537,35 @@ class Game {
   
   // Set an API key for a specific provider
   void setAiApiKey(String provider, String apiKey) {
+    final loggingService = LoggingService();
+    loggingService.debug(
+      'Setting API key for provider: $provider with length: ${apiKey.length}',
+      tag: 'Game'
+    );
+    
+    // Store the API key
     aiApiKeys[provider] = apiKey;
+    
+    // Verify the API key was set correctly
+    if (aiApiKeys.containsKey(provider)) {
+      final storedKey = aiApiKeys[provider];
+      if (storedKey != null) {
+        loggingService.debug(
+          'API key for $provider was set successfully with length: ${storedKey.length}',
+          tag: 'Game'
+        );
+      } else {
+        loggingService.warning(
+          'API key for $provider was set but is null',
+          tag: 'Game'
+        );
+      }
+    } else {
+      loggingService.warning(
+        'Failed to set API key for $provider',
+        tag: 'Game'
+      );
+    }
   }
   
   // Get the API key for a specific provider
@@ -337,5 +583,51 @@ class Game {
     if (!aiImageGenerationEnabled) return false;
     if (aiImageProvider == null) return false;
     return aiApiKeys.containsKey(aiImageProvider!);
+  }
+  
+  // Set an artistic direction for a specific provider
+  void setAiArtisticDirection(String provider, String artisticDirection) {
+    final loggingService = LoggingService();
+    loggingService.debug(
+      'Setting artistic direction for provider: $provider',
+      tag: 'Game'
+    );
+    
+    // Store the artistic direction
+    aiArtisticDirections[provider] = artisticDirection;
+    
+    // Verify the artistic direction was set correctly
+    if (aiArtisticDirections.containsKey(provider)) {
+      final storedDirection = aiArtisticDirections[provider];
+      if (storedDirection != null) {
+        loggingService.debug(
+          'Artistic direction for $provider was set successfully',
+          tag: 'Game'
+        );
+      } else {
+        loggingService.warning(
+          'Artistic direction for $provider was set but is null',
+          tag: 'Game'
+        );
+      }
+    } else {
+      loggingService.warning(
+        'Failed to set artistic direction for $provider',
+        tag: 'Game'
+      );
+    }
+  }
+  
+  // Get the artistic direction for a specific provider
+  String? getAiArtisticDirection(String provider) {
+    return aiArtisticDirections[provider];
+  }
+  
+  // Get the artistic direction for the current provider, or a default if not set
+  String getAiArtisticDirectionOrDefault() {
+    if (aiImageProvider != null && aiArtisticDirections.containsKey(aiImageProvider!)) {
+      return aiArtisticDirections[aiImageProvider!]!;
+    }
+    return "cyberpunk scene, digital art, detailed illustration";
   }
 }

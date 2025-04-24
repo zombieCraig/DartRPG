@@ -30,6 +30,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
   bool _aiImageGenerationEnabled = false;
   String? _aiImageProvider;
   Map<String, String> _aiApiKeys = {};
+  Map<String, String> _aiArtisticDirections = {};
 
   @override
   void dispose() {
@@ -57,11 +58,13 @@ class _NewGameScreenState extends State<NewGameScreen> {
     bool enabled,
     String? provider,
     Map<String, String>? apiKeys,
+    Map<String, String>? artisticDirections,
   ) {
     setState(() {
       _aiImageGenerationEnabled = enabled;
       _aiImageProvider = provider;
       _aiApiKeys = apiKeys ?? {};
+      _aiArtisticDirections = artisticDirections ?? {};
     });
   }
 
@@ -87,6 +90,11 @@ class _NewGameScreenState extends State<NewGameScreen> {
           // Add API keys to the temp game
           for (final entry in _aiApiKeys.entries) {
             tempGame.setAiApiKey(entry.key, entry.value);
+          }
+          
+          // Add artistic directions to the temp game
+          for (final entry in _aiArtisticDirections.entries) {
+            tempGame.setAiArtisticDirection(entry.key, entry.value);
           }
           
           return Padding(
@@ -206,6 +214,11 @@ class _NewGameScreenState extends State<NewGameScreen> {
             // Set API keys
             for (final entry in _aiApiKeys.entries) {
               await gameProvider.updateAiApiKey(entry.key, entry.value);
+            }
+            
+            // Set artistic directions
+            for (final entry in _aiArtisticDirections.entries) {
+              await gameProvider.updateAiArtisticDirection(entry.key, entry.value);
             }
           }
         }

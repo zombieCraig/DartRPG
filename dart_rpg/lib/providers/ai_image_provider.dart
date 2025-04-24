@@ -26,7 +26,7 @@ class AiImageProvider extends ChangeNotifier {
     required String prompt,
     required String apiKey,
     String aspectRatio = "16:9",
-    int count = 3,
+    int count = 4,
     Map<String, dynamic>? metadata,
   }) async {
     try {
@@ -35,6 +35,66 @@ class AiImageProvider extends ChangeNotifier {
         tag: 'AiImageProvider',
       );
       
+      // Prepare the request body
+      final Map<String, dynamic> requestBody = {
+        'model': 'image-01',
+        'prompt': prompt,
+        'aspect_ratio': aspectRatio,
+        'response_format': 'url',
+        'n': count,
+        'prompt_optimizer': true,
+      };
+      
+      // Handle subject_reference
+      if (metadata != null) {
+        // Direct subject_reference (URL-based)
+        if (metadata.containsKey('subject_reference')) {
+          requestBody['subject_reference'] = metadata['subject_reference'];
+          _loggingService.debug(
+            'Including subject_reference in Minimax request: ${metadata['subject_reference']}',
+            tag: 'AiImageProvider',
+          );
+        }
+        // Local file-based subject_reference
+        else if (metadata.containsKey('subject_reference_file_path') && 
+                 metadata.containsKey('subject_reference_character_id')) {
+          final filePath = metadata['subject_reference_file_path'];
+          final characterId = metadata['subject_reference_character_id'];
+          
+          try {
+            // Read the file and convert to base64
+            final file = File(filePath);
+            if (await file.exists()) {
+              final bytes = await file.readAsBytes();
+              final base64Image = base64Encode(bytes);
+              final base64String = 'data:image/jpeg;base64,$base64Image';
+              
+              // Add to request body
+              requestBody['subject_reference'] = [{
+                'type': 'character',
+                'image_file': base64String
+              }];
+              
+              _loggingService.debug(
+                'Including base64 subject_reference for character: $characterId',
+                tag: 'AiImageProvider',
+              );
+            } else {
+              _loggingService.warning(
+                'Subject reference file does not exist: $filePath',
+                tag: 'AiImageProvider',
+              );
+            }
+          } catch (e) {
+            _loggingService.error(
+              'Failed to process subject reference file: $e',
+              tag: 'AiImageProvider',
+              error: e,
+            );
+          }
+        }
+      }
+      
       // Make the API request
       final response = await http.post(
         Uri.parse('https://api.minimaxi.chat/v1/image_generation'),
@@ -42,14 +102,7 @@ class AiImageProvider extends ChangeNotifier {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $apiKey',
         },
-        body: jsonEncode({
-          'model': 'image-01',
-          'prompt': prompt,
-          'aspect_ratio': aspectRatio,
-          'response_format': 'url',
-          'n': count,
-          'prompt_optimizer': true,
-        }),
+        body: jsonEncode(requestBody),
       );
       
       // Parse the response regardless of status code to check for specific error messages
@@ -192,23 +245,24 @@ class AiImageProvider extends ChangeNotifier {
   /// 
   /// [contextObject] - The object to generate a prompt from (Character, Location, JournalEntry, etc.)
   /// [contextType] - The type of context object (e.g., "character", "location", "journal")
+  /// [game] - The game object containing settings like artistic direction
   /// 
   /// Returns a prompt string that can be used for image generation.
-  String generateContextAwarePrompt(dynamic contextObject, String contextType) {
+  String generateContextAwarePrompt(dynamic contextObject, String contextType, dynamic game) {
     switch (contextType.toLowerCase()) {
       case 'character':
-        return _generateCharacterPrompt(contextObject);
+        return _generateCharacterPrompt(contextObject, game);
       case 'location':
-        return _generateLocationPrompt(contextObject);
+        return _generateLocationPrompt(contextObject, game);
       case 'journal':
-        return _generateJournalPrompt(contextObject);
+        return _generateJournalPrompt(contextObject, game);
       default:
-        return _generateGenericPrompt();
+        return _generateGenericPrompt(game);
     }
   }
   
   /// Generate a prompt for a character.
-  String _generateCharacterPrompt(dynamic character) {
+  String _generateCharacterPrompt(dynamic character, dynamic game) {
     final List<String> promptParts = [];
     
     // Add name
@@ -231,14 +285,20 @@ class AiImageProvider extends ChangeNotifier {
       promptParts.add("with ${character.trademarkAvatar}");
     }
     
-    // Add artistic direction
-    promptParts.add("detailed portrait, cyberpunk style, digital art");
+    // Add artistic direction from game settings
+    String artisticDirection = "detailed portrait, cyberpunk style, digital art";
+    if (game != null && 
+        game.aiImageProvider != null && 
+        game.aiArtisticDirections.containsKey(game.aiImageProvider)) {
+      artisticDirection = game.getAiArtisticDirectionOrDefault();
+    }
+    promptParts.add(artisticDirection);
     
     return promptParts.join(", ");
   }
   
   /// Generate a prompt for a location.
-  String _generateLocationPrompt(dynamic location) {
+  String _generateLocationPrompt(dynamic location, dynamic game) {
     final List<String> promptParts = [];
     
     // Add name
@@ -264,21 +324,56 @@ class AiImageProvider extends ChangeNotifier {
     }
     promptParts.add(segmentDescription);
     
-    // Add artistic direction
-    promptParts.add("cyberpunk digital location, detailed illustration");
+    // Add artistic direction from game settings
+    String artisticDirection = "cyberpunk digital location, detailed illustration";
+    if (game != null && 
+        game.aiImageProvider != null && 
+        game.aiArtisticDirections.containsKey(game.aiImageProvider)) {
+      artisticDirection = game.getAiArtisticDirectionOrDefault();
+    }
+    promptParts.add(artisticDirection);
     
     return promptParts.join(", ");
   }
   
   /// Generate a prompt for a journal entry.
-  String _generateJournalPrompt(dynamic entry) {
+  String _generateJournalPrompt(dynamic entry, dynamic game) {
     final List<String> promptParts = [];
     
-    // Remove markdown formatting
-    String plainText = entry.content.replaceAll(RegExp(r'\*\*(.*?)\*\*'), r'$1'); // Bold
-    plainText = plainText.replaceAll(RegExp(r'\*(.*?)\*'), r'$1'); // Italic
-    plainText = plainText.replaceAll(RegExp(r'#\s(.*)'), r'$1'); // Headings
-    plainText = plainText.replaceAll(RegExp(r'!\[(.*?)\]\(.*?\)'), ''); // Images
+    // Remove markdown formatting more comprehensively
+    String plainText = entry.content;
+    
+    // Remove bold formatting
+    plainText = plainText.replaceAll(RegExp(r'\*\*(.*?)\*\*'), r'$1');
+    
+    // Remove italic formatting
+    plainText = plainText.replaceAll(RegExp(r'\*(.*?)\*'), r'$1');
+    
+    // Remove heading formatting (all levels)
+    plainText = plainText.replaceAll(RegExp(r'#{1,6}\s(.*)'), r'$1');
+    
+    // Remove images
+    plainText = plainText.replaceAll(RegExp(r'!\[(.*?)\]\(.*?\)'), '');
+    
+    // Remove links but keep the text
+    plainText = plainText.replaceAll(RegExp(r'\[(.*?)\]\(.*?\)'), r'$1');
+    
+    // Remove bullet points and numbered lists
+    plainText = plainText.replaceAll(RegExp(r'^\s*[-*+]\s+', multiLine: true), '');
+    plainText = plainText.replaceAll(RegExp(r'^\s*\d+\.\s+', multiLine: true), '');
+    
+    // Remove blockquotes
+    plainText = plainText.replaceAll(RegExp(r'^\s*>\s+', multiLine: true), '');
+    
+    // Remove code blocks
+    plainText = plainText.replaceAll(RegExp(r'```.*?```', dotAll: true), '');
+    plainText = plainText.replaceAll(RegExp(r'`(.*?)`'), r'$1');
+    
+    // Remove horizontal rules
+    plainText = plainText.replaceAll(RegExp(r'^\s*[-*_]{3,}\s*$', multiLine: true), '');
+    
+    // Remove extra whitespace and normalize
+    plainText = plainText.replaceAll(RegExp(r'\s+'), ' ').trim();
     
     // Extract first 100-150 words or characters as a summary
     final words = plainText.split(' ');
@@ -287,14 +382,25 @@ class AiImageProvider extends ChangeNotifier {
     // Add summary
     promptParts.add(summary);
     
-    // Add artistic direction
-    promptParts.add("cyberpunk scene, digital art, detailed illustration");
+    // Add artistic direction from game settings
+    String artisticDirection = "cyberpunk scene, digital art, detailed illustration";
+    if (game != null && 
+        game.aiImageProvider != null && 
+        game.aiArtisticDirections.containsKey(game.aiImageProvider)) {
+      artisticDirection = game.getAiArtisticDirectionOrDefault();
+    }
+    promptParts.add(artisticDirection);
     
     return promptParts.join(", ");
   }
   
   /// Generate a generic prompt.
-  String _generateGenericPrompt() {
+  String _generateGenericPrompt(dynamic game) {
+    if (game != null && 
+        game.aiImageProvider != null && 
+        game.aiArtisticDirections.containsKey(game.aiImageProvider)) {
+      return game.getAiArtisticDirectionOrDefault();
+    }
     return "cyberpunk digital scene, detailed illustration, digital art";
   }
 }

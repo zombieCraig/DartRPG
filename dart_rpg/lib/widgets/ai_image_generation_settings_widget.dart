@@ -30,7 +30,7 @@ class AiImageGenerationSettingsWidget extends StatefulWidget {
   final bool isNewGame;
   
   /// Callback for when settings change in new game mode
-  final Function(bool enabled, String? provider, Map<String, String>? apiKeys)? 
+  final Function(bool enabled, String? provider, Map<String, String>? apiKeys, Map<String, String>? artisticDirections)? 
       onNewGameSettingsChanged;
 
   const AiImageGenerationSettingsWidget({
@@ -51,6 +51,7 @@ class AiImageGenerationSettingsWidget extends StatefulWidget {
 
 class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSettingsWidget> {
   final TextEditingController _apiKeyController = TextEditingController();
+  final TextEditingController _artisticDirectionController = TextEditingController();
   bool _aiImageGenerationExpanded = false;
   bool _showApiKey = false;
   
@@ -58,6 +59,7 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
   bool _aiImageGenerationEnabled = false;
   String? _aiImageProvider;
   Map<String, String> _aiApiKeys = {};
+  Map<String, String> _aiArtisticDirections = {};
   
   // List of supported AI providers
   final List<Map<String, String>> _supportedProviders = [
@@ -76,11 +78,21 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
       _aiImageGenerationEnabled = false;
       _aiImageProvider = null;
       _aiApiKeys = {};
+      _aiArtisticDirections = {};
+      _artisticDirectionController.text = "cyberpunk scene, digital art, detailed illustration";
     } else {
       // Initialize the API key controller with the current value if available
       if (widget.game.aiImageProvider != null && 
           widget.game.aiApiKeys.containsKey(widget.game.aiImageProvider!)) {
         _apiKeyController.text = widget.game.aiApiKeys[widget.game.aiImageProvider!]!;
+      }
+      
+      // Initialize the artistic direction controller with the current value if available
+      if (widget.game.aiImageProvider != null && 
+          widget.game.aiArtisticDirections.containsKey(widget.game.aiImageProvider!)) {
+        _artisticDirectionController.text = widget.game.aiArtisticDirections[widget.game.aiImageProvider!]!;
+      } else {
+        _artisticDirectionController.text = "cyberpunk scene, digital art, detailed illustration";
       }
     }
   }
@@ -88,6 +100,7 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
   @override
   void dispose() {
     _apiKeyController.dispose();
+    _artisticDirectionController.dispose();
     super.dispose();
   }
   
@@ -103,6 +116,15 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
     } else if (!widget.isNewGame && widget.game.aiImageProvider != null) {
       _apiKeyController.text = '';
     }
+    
+    // Update the artistic direction controller when the provider changes
+    if (!widget.isNewGame && 
+        widget.game.aiImageProvider != null && 
+        widget.game.aiArtisticDirections.containsKey(widget.game.aiImageProvider!)) {
+      _artisticDirectionController.text = widget.game.aiArtisticDirections[widget.game.aiImageProvider!]!;
+    } else if (!widget.isNewGame && widget.game.aiImageProvider != null) {
+      _artisticDirectionController.text = "cyberpunk scene, digital art, detailed illustration";
+    }
   }
   
   @override
@@ -114,6 +136,8 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
         _aiImageProvider : widget.game.aiImageProvider;
     final aiApiKeys = widget.isNewGame ? 
         _aiApiKeys : widget.game.aiApiKeys;
+    final aiArtisticDirections = widget.isNewGame ?
+        _aiArtisticDirections : widget.game.aiArtisticDirections;
     
     return Column(
       children: [
@@ -280,6 +304,62 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                     },
                   ),
                 ),
+                
+              // Artistic Direction input
+              if (aiImageProvider != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: TextField(
+                    controller: _artisticDirectionController,
+                    decoration: const InputDecoration(
+                      labelText: 'Artistic Direction',
+                      hintText: 'Enter artistic direction for AI images',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 2,
+                    onChanged: (value) {
+                      if (widget.isNewGame) {
+                        setState(() {
+                          if (value.isNotEmpty && _aiImageProvider != null) {
+                            _aiArtisticDirections[_aiImageProvider!] = value;
+                          } else if (_aiImageProvider != null) {
+                            _aiArtisticDirections.remove(_aiImageProvider!);
+                          }
+                        });
+                        _notifyNewGameSettingsChanged();
+                      } else if (aiImageProvider != null) {
+                        if (value.isNotEmpty) {
+                          // Log the artistic direction before updating
+                          LoggingService().debug(
+                            'Setting artistic direction for $aiImageProvider',
+                            tag: 'AiImageGenerationSettingsWidget'
+                          );
+                          
+                          // Update the artistic direction in the game provider
+                          widget.gameProvider.updateAiArtisticDirection(aiImageProvider, value);
+                          
+                          // Verify the artistic direction was set correctly in the game object
+                          final artisticDirection = widget.game.getAiArtisticDirection(aiImageProvider);
+                          if (artisticDirection != null) {
+                            LoggingService().debug(
+                              'Artistic direction for $aiImageProvider was set successfully',
+                              tag: 'AiImageGenerationSettingsWidget'
+                            );
+                          } else {
+                            LoggingService().warning(
+                              'Failed to set artistic direction for $aiImageProvider',
+                              tag: 'AiImageGenerationSettingsWidget'
+                            );
+                          }
+                        }
+                        
+                        if (widget.onSettingsChanged != null) {
+                          widget.onSettingsChanged!();
+                        }
+                      }
+                    },
+                  ),
+                ),
               
               // Help text
               if (widget.showHelpText)
@@ -400,6 +480,7 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
         _aiImageGenerationEnabled,
         _aiImageProvider,
         _aiApiKeys,
+        _aiArtisticDirections,
       );
     }
   }

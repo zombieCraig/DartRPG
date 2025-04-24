@@ -409,6 +409,7 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
       _promptController.text = aiImageProvider.generateContextAwarePrompt(
         widget.contextObject,
         widget.contextType!,
+        gameProvider.currentGame,
       );
     }
     

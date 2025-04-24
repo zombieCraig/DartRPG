@@ -32,6 +32,7 @@ class Game {
   bool aiImageGenerationEnabled;
   String? aiImageProvider; // e.g., "minimax"
   Map<String, String> aiApiKeys = {}; // Store keys for different providers
+  Map<String, String> aiArtisticDirections = {}; // Store artistic directions for different providers
 
   Game({
     String? id,
@@ -54,6 +55,7 @@ class Game {
     this.aiImageGenerationEnabled = false,
     this.aiImageProvider,
     Map<String, String>? aiApiKeys,
+    Map<String, String>? aiArtisticDirections,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now(),
         lastPlayedAt = lastPlayedAt ?? DateTime.now(),
@@ -67,6 +69,24 @@ class Game {
       this.aiApiKeys = Map<String, String>.from(aiApiKeys);
       LoggingService().debug(
         'Initialized Game with API keys: ${this.aiApiKeys.keys.join(", ")}',
+        tag: 'Game'
+      );
+    }
+    
+    // Initialize aiArtisticDirections if provided
+    if (aiArtisticDirections != null) {
+      this.aiArtisticDirections = Map<String, String>.from(aiArtisticDirections);
+      LoggingService().debug(
+        'Initialized Game with artistic directions: ${this.aiArtisticDirections.keys.join(", ")}',
+        tag: 'Game'
+      );
+    }
+    
+    // Set default artistic direction for Minimax if not provided
+    if (!this.aiArtisticDirections.containsKey('minimax')) {
+      this.aiArtisticDirections['minimax'] = "cyberpunk scene, digital art, detailed illustration";
+      LoggingService().debug(
+        'Set default artistic direction for Minimax',
         tag: 'Game'
       );
     }
@@ -114,6 +134,16 @@ class Game {
       );
     });
     
+    // Convert aiArtisticDirections to a Map<String, dynamic> for JSON serialization
+    final Map<String, dynamic> artisticDirectionsJson = {};
+    aiArtisticDirections.forEach((key, value) {
+      artisticDirectionsJson[key] = value;
+      loggingService.debug(
+        'Adding artistic direction for provider $key to JSON',
+        tag: 'Game'
+      );
+    });
+    
     final json = {
       'id': id,
       'name': name,
@@ -135,6 +165,7 @@ class Game {
       'aiImageGenerationEnabled': aiImageGenerationEnabled,
       'aiImageProvider': aiImageProvider,
       'aiApiKeys': apiKeysJson,
+      'aiArtisticDirections': artisticDirectionsJson,
     };
     
     // Verify aiApiKeys is in the JSON
@@ -155,6 +186,38 @@ class Game {
     return json;
   }
 
+  // Helper method to properly parse artistic directions from JSON
+  static Map<String, String> _parseArtisticDirections(dynamic artisticDirectionsJson) {
+    final loggingService = LoggingService();
+    
+    if (artisticDirectionsJson == null) {
+      loggingService.debug('No artistic directions found in JSON', tag: 'Game');
+      return {};
+    }
+    
+    try {
+      // First, convert to a Map<String, dynamic>
+      final Map<String, dynamic> dynamicMap = Map<String, dynamic>.from(artisticDirectionsJson);
+      
+      // Then, explicitly convert each value to a string
+      final Map<String, String> stringMap = {};
+      dynamicMap.forEach((key, value) {
+        stringMap[key] = value.toString();
+        loggingService.debug('Parsed artistic direction for provider: $key', tag: 'Game');
+      });
+      
+      return stringMap;
+    } catch (e) {
+      loggingService.error(
+        'Failed to parse artistic directions from JSON',
+        tag: 'Game',
+        error: e,
+        stackTrace: StackTrace.current
+      );
+      return {};
+    }
+  }
+  
   factory Game.fromJson(Map<String, dynamic> json) {
     final List<Character> characters = (json['characters'] as List)
         .map((c) => Character.fromJson(c))
@@ -214,6 +277,7 @@ class Game {
       aiImageGenerationEnabled: json['aiImageGenerationEnabled'] ?? false,
       aiImageProvider: json['aiImageProvider'],
       aiApiKeys: _parseApiKeys(json['aiApiKeys']),
+      aiArtisticDirections: _parseArtisticDirections(json['aiArtisticDirections']),
     );
   }
 
@@ -519,5 +583,51 @@ class Game {
     if (!aiImageGenerationEnabled) return false;
     if (aiImageProvider == null) return false;
     return aiApiKeys.containsKey(aiImageProvider!);
+  }
+  
+  // Set an artistic direction for a specific provider
+  void setAiArtisticDirection(String provider, String artisticDirection) {
+    final loggingService = LoggingService();
+    loggingService.debug(
+      'Setting artistic direction for provider: $provider',
+      tag: 'Game'
+    );
+    
+    // Store the artistic direction
+    aiArtisticDirections[provider] = artisticDirection;
+    
+    // Verify the artistic direction was set correctly
+    if (aiArtisticDirections.containsKey(provider)) {
+      final storedDirection = aiArtisticDirections[provider];
+      if (storedDirection != null) {
+        loggingService.debug(
+          'Artistic direction for $provider was set successfully',
+          tag: 'Game'
+        );
+      } else {
+        loggingService.warning(
+          'Artistic direction for $provider was set but is null',
+          tag: 'Game'
+        );
+      }
+    } else {
+      loggingService.warning(
+        'Failed to set artistic direction for $provider',
+        tag: 'Game'
+      );
+    }
+  }
+  
+  // Get the artistic direction for a specific provider
+  String? getAiArtisticDirection(String provider) {
+    return aiArtisticDirections[provider];
+  }
+  
+  // Get the artistic direction for the current provider, or a default if not set
+  String getAiArtisticDirectionOrDefault() {
+    if (aiImageProvider != null && aiArtisticDirections.containsKey(aiImageProvider!)) {
+      return aiArtisticDirections[aiImageProvider!]!;
+    }
+    return "cyberpunk scene, digital art, detailed illustration";
   }
 }

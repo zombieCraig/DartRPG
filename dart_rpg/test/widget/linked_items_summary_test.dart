@@ -230,6 +230,9 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   bool isAiImageGenerationAvailable() {
     return false;
   }
+  
+  @override
+  Future<void> updateAiArtisticDirection(String provider, String artisticDirection) async {}
 }
 
 void main() {

@@ -245,23 +245,24 @@ class AiImageProvider extends ChangeNotifier {
   /// 
   /// [contextObject] - The object to generate a prompt from (Character, Location, JournalEntry, etc.)
   /// [contextType] - The type of context object (e.g., "character", "location", "journal")
+  /// [game] - The game object containing settings like artistic direction
   /// 
   /// Returns a prompt string that can be used for image generation.
-  String generateContextAwarePrompt(dynamic contextObject, String contextType) {
+  String generateContextAwarePrompt(dynamic contextObject, String contextType, dynamic game) {
     switch (contextType.toLowerCase()) {
       case 'character':
-        return _generateCharacterPrompt(contextObject);
+        return _generateCharacterPrompt(contextObject, game);
       case 'location':
-        return _generateLocationPrompt(contextObject);
+        return _generateLocationPrompt(contextObject, game);
       case 'journal':
-        return _generateJournalPrompt(contextObject);
+        return _generateJournalPrompt(contextObject, game);
       default:
-        return _generateGenericPrompt();
+        return _generateGenericPrompt(game);
     }
   }
   
   /// Generate a prompt for a character.
-  String _generateCharacterPrompt(dynamic character) {
+  String _generateCharacterPrompt(dynamic character, dynamic game) {
     final List<String> promptParts = [];
     
     // Add name
@@ -284,14 +285,20 @@ class AiImageProvider extends ChangeNotifier {
       promptParts.add("with ${character.trademarkAvatar}");
     }
     
-    // Add artistic direction
-    promptParts.add("detailed portrait, cyberpunk style, digital art");
+    // Add artistic direction from game settings
+    String artisticDirection = "detailed portrait, cyberpunk style, digital art";
+    if (game != null && 
+        game.aiImageProvider != null && 
+        game.aiArtisticDirections.containsKey(game.aiImageProvider)) {
+      artisticDirection = game.getAiArtisticDirectionOrDefault();
+    }
+    promptParts.add(artisticDirection);
     
     return promptParts.join(", ");
   }
   
   /// Generate a prompt for a location.
-  String _generateLocationPrompt(dynamic location) {
+  String _generateLocationPrompt(dynamic location, dynamic game) {
     final List<String> promptParts = [];
     
     // Add name
@@ -317,14 +324,20 @@ class AiImageProvider extends ChangeNotifier {
     }
     promptParts.add(segmentDescription);
     
-    // Add artistic direction
-    promptParts.add("cyberpunk digital location, detailed illustration");
+    // Add artistic direction from game settings
+    String artisticDirection = "cyberpunk digital location, detailed illustration";
+    if (game != null && 
+        game.aiImageProvider != null && 
+        game.aiArtisticDirections.containsKey(game.aiImageProvider)) {
+      artisticDirection = game.getAiArtisticDirectionOrDefault();
+    }
+    promptParts.add(artisticDirection);
     
     return promptParts.join(", ");
   }
   
   /// Generate a prompt for a journal entry.
-  String _generateJournalPrompt(dynamic entry) {
+  String _generateJournalPrompt(dynamic entry, dynamic game) {
     final List<String> promptParts = [];
     
     // Remove markdown formatting more comprehensively
@@ -369,14 +382,25 @@ class AiImageProvider extends ChangeNotifier {
     // Add summary
     promptParts.add(summary);
     
-    // Add artistic direction
-    promptParts.add("cyberpunk scene, digital art, detailed illustration");
+    // Add artistic direction from game settings
+    String artisticDirection = "cyberpunk scene, digital art, detailed illustration";
+    if (game != null && 
+        game.aiImageProvider != null && 
+        game.aiArtisticDirections.containsKey(game.aiImageProvider)) {
+      artisticDirection = game.getAiArtisticDirectionOrDefault();
+    }
+    promptParts.add(artisticDirection);
     
     return promptParts.join(", ");
   }
   
   /// Generate a generic prompt.
-  String _generateGenericPrompt() {
+  String _generateGenericPrompt(dynamic game) {
+    if (game != null && 
+        game.aiImageProvider != null && 
+        game.aiArtisticDirections.containsKey(game.aiImageProvider)) {
+      return game.getAiArtisticDirectionOrDefault();
+    }
     return "cyberpunk digital scene, detailed illustration, digital art";
   }
 }

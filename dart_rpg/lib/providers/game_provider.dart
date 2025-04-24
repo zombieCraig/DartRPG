@@ -1110,6 +1110,28 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
   
+  // Update artistic direction for a specific provider
+  Future<void> updateAiArtisticDirection(String provider, String artisticDirection) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    LoggingService().info(
+      'Updating artistic direction for provider: $provider',
+      tag: 'GameProvider'
+    );
+    
+    _currentGame!.setAiArtisticDirection(provider, artisticDirection);
+    
+    LoggingService().debug(
+      'Artistic direction for $provider was set successfully',
+      tag: 'GameProvider'
+    );
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
   // Remove API key for a specific provider
   Future<void> removeAiApiKey(String provider) async {
     if (_currentGame == null) {

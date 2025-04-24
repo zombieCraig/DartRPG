@@ -403,38 +403,17 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final currentGame = gameProvider.currentGame;
     
-    // Determine the context type based on the current entry
-    dynamic contextObject;
-    String? contextType;
+    // Always use the journal entry as the primary context
+    dynamic contextObject = JournalEntry(
+      id: 'temp',
+      content: _controller.text,
+    );
+    String contextType = 'journal';
     
-    // If we have linked characters, use the first one as context
-    if (_linkedItemsManager.linkedCharacterIds.isNotEmpty && currentGame != null) {
-      try {
-        final characterId = _linkedItemsManager.linkedCharacterIds.first;
-        contextObject = currentGame.characters.firstWhere((c) => c.id == characterId);
-        contextType = 'character';
-      } catch (e) {
-        // Character not found, ignore
-      }
-    }
-    // If we have linked locations, use the first one as context
-    else if (_linkedItemsManager.linkedLocationIds.isNotEmpty && currentGame != null) {
-      try {
-        final locationId = _linkedItemsManager.linkedLocationIds.first;
-        contextObject = currentGame.locations.firstWhere((l) => l.id == locationId);
-        contextType = 'location';
-      } catch (e) {
-        // Location not found, ignore
-      }
-    }
-    // Otherwise, use the journal entry itself as context
-    else {
-      // Create a temporary journal entry object with the current content
-      contextObject = JournalEntry(
-        id: 'temp',
-        content: _controller.text,
-      );
-      contextType = 'journal';
+    // Check if there's a referenced character with an image to use as subject reference
+    String? referencedCharacterId;
+    if (currentGame != null && _linkedItemsManager.linkedCharacterIds.isNotEmpty) {
+      referencedCharacterId = _linkedItemsManager.linkedCharacterIds.first;
     }
     
     // Show image picker dialog with context

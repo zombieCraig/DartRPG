@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart' as picker;
 import '../../models/app_image.dart';
+import '../../models/journal_entry.dart';
 import '../../providers/ai_image_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/image_manager_provider.dart';
+import '../../utils/logging_service.dart';
 
 /// A dialog for picking images from different sources.
 class ImagePickerDialog extends StatefulWidget {
@@ -63,6 +65,7 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
   List<AppImage> _generatedImages = [];
   bool _isGeneratingImages = false;
   String? _generationError;
+  final LoggingService _loggingService = LoggingService();
 
   @override
   void initState() {
@@ -409,6 +412,12 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
       );
     }
     
+    // Check if there's a referenced character ID in the context object
+    String? referencedCharacterId;
+    if (widget.contextObject is JournalEntry && widget.contextObject.linkedCharacterIds.isNotEmpty) {
+      referencedCharacterId = widget.contextObject.linkedCharacterIds.first;
+    }
+    
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -557,13 +566,75 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
       List<AppImage> generatedImages;
       
       if (provider == 'minimax') {
+        // Check if there's a referenced character ID in the context object
+        String? referencedCharacterId;
+        if (widget.contextObject is JournalEntry && widget.contextObject.linkedCharacterIds.isNotEmpty) {
+          referencedCharacterId = widget.contextObject.linkedCharacterIds.first;
+        }
+        
+        // Get the character if available
+        dynamic referencedCharacter;
+        if (referencedCharacterId != null) {
+          try {
+            referencedCharacter = gameProvider.currentGame!.characters.firstWhere(
+              (c) => c.id == referencedCharacterId
+            );
+          } catch (e) {
+            // Character not found, ignore
+          }
+        }
+        
+        // Create metadata with subject reference if character has an image
+        Map<String, dynamic> metadata = {
+          'usage': 'ai_generated',
+          'prompt': _promptController.text,
+        };
+        
+        // Add subject_reference if character has an image
+        if (referencedCharacter != null) {
+          String? imageUrl;
+          String? imagePath;
+          
+          // Check if character has a URL-based image
+          if (referencedCharacter.imageUrl != null && referencedCharacter.imageUrl!.isNotEmpty) {
+            imageUrl = referencedCharacter.imageUrl;
+            
+            // Add subject_reference with URL
+            metadata['subject_reference'] = [{
+              'type': 'character',
+              'image_file': imageUrl
+            }];
+            
+            _loggingService.debug(
+              'Using character image URL for subject_reference: $imageUrl',
+              tag: 'ImagePickerDialog',
+            );
+          } 
+          // Check if character has a local image
+          else if (referencedCharacter.imageId != null && referencedCharacter.imageId!.isNotEmpty) {
+            // Get the image from the image manager
+            final imageManagerProvider = Provider.of<ImageManagerProvider>(context, listen: false);
+            final image = imageManagerProvider.getImageById(referencedCharacter.imageId!);
+            
+            if (image != null) {
+              imagePath = image.localPath;
+              
+              // Add subject_reference with local file path
+              metadata['subject_reference_file_path'] = imagePath;
+              metadata['subject_reference_character_id'] = referencedCharacterId;
+              
+              _loggingService.debug(
+                'Using character image file for subject_reference: $imagePath',
+                tag: 'ImagePickerDialog',
+              );
+            }
+          }
+        }
+        
         generatedImages = await aiImageProvider.generateImagesWithMinimax(
           prompt: _promptController.text,
           apiKey: apiKey,
-          metadata: {
-            'usage': 'ai_generated',
-            'prompt': _promptController.text,
-          },
+          metadata: metadata,
         );
       } else {
         throw Exception('Unsupported provider: $provider');

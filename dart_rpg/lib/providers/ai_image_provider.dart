@@ -26,7 +26,7 @@ class AiImageProvider extends ChangeNotifier {
     required String prompt,
     required String apiKey,
     String aspectRatio = "16:9",
-    int count = 3,
+    int count = 4,
     Map<String, dynamic>? metadata,
   }) async {
     try {

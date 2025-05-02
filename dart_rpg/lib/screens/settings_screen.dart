@@ -9,6 +9,7 @@ import '../transitions/navigation_service.dart';
 import 'animation_test_screen.dart';
 import 'log_viewer_screen.dart';
 import 'changelog_screen.dart';
+import 'book_overview_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -387,6 +388,18 @@ class SettingsScreen extends StatelessWidget {
                       const SnackBar(content: Text('Could not open URL')),
                     );
                   }
+                },
+              ),
+              ListTile(
+                title: const Text('Fe-Runners Book Overview'),
+                subtitle: const Text('View game rules and setting reference'),
+                leading: const Icon(Icons.menu_book),
+                onTap: () {
+                  final navigationService = NavigationService();
+                  navigationService.navigateTo(
+                    context,
+                    const BookOverviewScreen(),
+                  );
                 },
               ),
             ],

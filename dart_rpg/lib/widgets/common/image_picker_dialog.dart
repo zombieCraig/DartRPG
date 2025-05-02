@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart' as picker;
 import '../../models/app_image.dart';
@@ -8,6 +9,7 @@ import '../../providers/ai_image_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/image_manager_provider.dart';
 import '../../utils/logging_service.dart';
+import '../../utils/image_utils.dart';
 
 /// A dialog for picking images from different sources.
 class ImagePickerDialog extends StatefulWidget {
@@ -61,6 +63,7 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
   final TextEditingController _promptController = TextEditingController();
   String? _selectedImageId;
   File? _selectedFile;
+  String? _selectedImageUrl; // URL for web platforms
   AppImage? _selectedAiImage;
   List<AppImage> _generatedImages = [];
   bool _isGeneratingImages = false;
@@ -97,10 +100,22 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
       final pickedFile = await imagePicker.pickImage(source: picker.ImageSource.gallery);
 
       if (pickedFile != null) {
-        setState(() {
-          _selectedFile = File(pickedFile.path);
-          _selectedImageId = null; // Clear selected saved image
-        });
+        if (kIsWeb) {
+          // On web, we need to handle the file differently
+          // The path is actually a blob URL that we can use directly
+          setState(() {
+            _selectedFile = File(''); // Dummy file for web
+            _selectedImageUrl = pickedFile.path; // Store the blob URL
+            _selectedImageId = null; // Clear selected saved image
+          });
+        } else {
+          // On native platforms, we can use the file directly
+          setState(() {
+            _selectedFile = File(pickedFile.path);
+            _selectedImageUrl = null; // Clear any previous URL
+            _selectedImageId = null; // Clear selected saved image
+          });
+        }
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -172,10 +187,19 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
               });
             } else if (activeTab == 1 && _selectedFile != null) {
               // Gallery tab
-              Navigator.pop(context, {
-                'type': 'file',
-                'file': _selectedFile,
-              });
+              if (kIsWeb && _selectedImageUrl != null) {
+                // On web, return the URL instead of the file
+                Navigator.pop(context, {
+                  'type': 'url',
+                  'url': _selectedImageUrl,
+                });
+              } else {
+                // On native platforms, return the file
+                Navigator.pop(context, {
+                  'type': 'file',
+                  'file': _selectedFile,
+                });
+              }
             } else if (activeTab == 2 && _selectedImageId != null) {
               // Saved tab
               Navigator.pop(context, {
@@ -196,9 +220,6 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
                   'imageId': existingImage.id,
                 });
               } else {
-                // Image is not saved yet, save it to permanent storage
-                final imageFile = File(_selectedAiImage!.localPath);
-                
                 // Show loading indicator
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -208,10 +229,20 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
                 );
                 
                 // Save the image to permanent storage
-                final savedImage = await imageManagerProvider.addImageFromFile(
-                  imageFile,
-                  metadata: _selectedAiImage!.metadata,
-                );
+                AppImage? savedImage;
+                
+                if (!kIsWeb) {
+                  // On non-web platforms, we can use File
+                  final imageFile = File(_selectedAiImage!.localPath);
+                  savedImage = await imageManagerProvider.addImageFromFile(
+                    imageFile,
+                    metadata: _selectedAiImage!.metadata,
+                  );
+                } else {
+                  // On web, we can't use File, so we'll just use the existing image
+                  // This is a workaround since we can't create a File from a path on web
+                  savedImage = _selectedAiImage;
+                }
                 
                 if (savedImage != null) {
                   Navigator.pop(context, {
@@ -290,10 +321,7 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
           const SizedBox(height: 16),
           if (_selectedFile != null)
             Expanded(
-              child: Image.file(
-                _selectedFile!,
-                fit: BoxFit.contain,
-              ),
+              child: _buildImagePreview(_selectedFile),
             ),
         ],
       ),
@@ -335,15 +363,7 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
                     width: 3.0,
                   ),
                 ),
-                child: Image.file(
-                  File(image.localPath),
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const Center(
-                      child: Icon(Icons.broken_image),
-                    );
-                  },
-                ),
+                child: _buildAppImagePreview(image, isSelected),
               ),
             );
           },
@@ -432,10 +452,10 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
               hintText: 'Describe the image you want to generate',
               border: OutlineInputBorder(),
             ),
-            maxLines: 3,
+            maxLines: 2, // Reduced from 3 to 2 to save space
           ),
           
-          const SizedBox(height: 16),
+          const SizedBox(height: 8), // Reduced from 16 to 8
           
           // Generate button
           SizedBox(
@@ -447,16 +467,21 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
             ),
           ),
           
-          const SizedBox(height: 16),
+          const SizedBox(height: 8), // Reduced from 16 to 8
           
           // Loading indicator or error message
           if (_isGeneratingImages)
             const Center(
-              child: Column(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 8),
-                  Text('Generating images...'),
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 8),
+                  Text('Generating...'),
                 ],
               ),
             )
@@ -470,27 +495,42 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
               ),
               child: Text(
                 _generationError!,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(color: Colors.red, fontSize: 12),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           
           // Generated images
           if (_generatedImages.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            const Text(
-              'Generated Images',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+            const SizedBox(height: 8), // Reduced from 16 to 8
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Generated Images',
+                  style: TextStyle(
+                    fontSize: 14, // Reduced from 16 to 14
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'Select an image',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4), // Reduced from 8 to 4
             Expanded(
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   crossAxisSpacing: 8,
                   mainAxisSpacing: 8,
+                  childAspectRatio: 1.0, // Ensure square cells
                 ),
                 itemCount: _generatedImages.length,
                 itemBuilder: (context, index) {
@@ -510,15 +550,7 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
                           width: 3,
                         ),
                       ),
-                      child: Image.file(
-                        File(image.localPath),
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Center(
-                            child: Icon(Icons.broken_image),
-                          );
-                        },
-                      ),
+                      child: _buildAppImagePreview(image, isSelected),
                     ),
                   );
                 },
@@ -528,6 +560,129 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
         ],
       ),
     );
+  }
+  
+  /// Build an image preview for a File
+  Widget _buildImagePreview(File? file) {
+    if (file == null) return const SizedBox();
+    
+    if (kIsWeb) {
+      // On web, we can't use Image.file directly
+      // Instead, we use the URL we stored when picking the image
+      if (_selectedImageUrl != null) {
+        return Image.network(
+          _selectedImageUrl!,
+          fit: BoxFit.contain,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.broken_image,
+                    size: 64,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Error loading image',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      } else {
+        // No URL available yet
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.image,
+                size: 64,
+                color: Colors.grey,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Image selected',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+    } else {
+      // On native platforms, we can use Image.file
+      return Image.file(
+        file,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          return const Center(
+            child: Icon(Icons.broken_image),
+          );
+        },
+      );
+    }
+  }
+  
+  /// Build an image preview for an AppImage
+  Widget _buildAppImagePreview(AppImage image, bool isSelected) {
+    if (kIsWeb) {
+      // On web, we try to use the original URL if available
+      if (image.originalUrl != null && image.originalUrl!.isNotEmpty) {
+        return Image.network(
+          image.originalUrl!,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Center(
+              child: Icon(
+                Icons.image,
+                size: 40,
+                color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey[400],
+              ),
+            );
+          },
+        );
+      } else {
+        // If no URL is available, show an icon
+        return Center(
+          child: Icon(
+            Icons.image,
+            size: 40,
+            color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey[400],
+          ),
+        );
+      }
+    } else {
+      // On native platforms, we can use Image.file
+      return Image.file(
+        File(image.localPath),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return const Center(
+            child: Icon(Icons.broken_image),
+          );
+        },
+      );
+    }
   }
   
   /// Generate images using the AI provider
@@ -566,31 +721,31 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
       // Generate images
       List<AppImage> generatedImages;
       
+      // Check if there's a referenced character ID in the context object
+      String? referencedCharacterId;
+      if (widget.contextObject is JournalEntry && widget.contextObject.linkedCharacterIds.isNotEmpty) {
+        referencedCharacterId = widget.contextObject.linkedCharacterIds.first;
+      }
+      
+      // Get the character if available
+      dynamic referencedCharacter;
+      if (referencedCharacterId != null) {
+        try {
+          referencedCharacter = gameProvider.currentGame!.characters.firstWhere(
+            (c) => c.id == referencedCharacterId
+          );
+        } catch (e) {
+          // Character not found, ignore
+        }
+      }
+      
+      // Create metadata with subject reference if character has an image
+      Map<String, dynamic> metadata = {
+        'usage': 'ai_generated',
+        'prompt': _promptController.text,
+      };
+      
       if (provider == 'minimax') {
-        // Check if there's a referenced character ID in the context object
-        String? referencedCharacterId;
-        if (widget.contextObject is JournalEntry && widget.contextObject.linkedCharacterIds.isNotEmpty) {
-          referencedCharacterId = widget.contextObject.linkedCharacterIds.first;
-        }
-        
-        // Get the character if available
-        dynamic referencedCharacter;
-        if (referencedCharacterId != null) {
-          try {
-            referencedCharacter = gameProvider.currentGame!.characters.firstWhere(
-              (c) => c.id == referencedCharacterId
-            );
-          } catch (e) {
-            // Character not found, ignore
-          }
-        }
-        
-        // Create metadata with subject reference if character has an image
-        Map<String, dynamic> metadata = {
-          'usage': 'ai_generated',
-          'prompt': _promptController.text,
-        };
-        
         // Add subject_reference if character has an image
         if (referencedCharacter != null) {
           String? imageUrl;
@@ -637,6 +792,43 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
           apiKey: apiKey,
           metadata: metadata,
         );
+      } else if (provider == 'openai') {
+        // Get the OpenAI model from the game settings
+        final openaiModel = gameProvider.currentGame!.openaiModel ?? 'dall-e-2';
+        
+        // Add model to metadata
+        metadata['model'] = openaiModel;
+        
+        // Prepare reference image for image editing if available
+        File? referenceImage;
+        if (!kIsWeb && referencedCharacter != null && referencedCharacter.imageId != null) {
+          // Get the image from the image manager
+          final image = imageManagerProvider.getImageById(referencedCharacter.imageId!);
+          if (image != null) {
+            referenceImage = File(image.localPath);
+            
+            _loggingService.debug(
+              'Using character image file for OpenAI reference image: ${image.localPath}',
+              tag: 'ImagePickerDialog',
+            );
+          }
+        }
+        
+        // Set moderation level for gpt-image-1
+        String? moderationLevel;
+        if (openaiModel == 'gpt-image-1') {
+          moderationLevel = 'low'; // Default to low moderation
+        }
+        
+        // Generate images with OpenAI
+        generatedImages = await aiImageProvider.generateImagesWithOpenAI(
+          prompt: _promptController.text,
+          apiKey: apiKey,
+          model: openaiModel,
+          moderationLevel: moderationLevel,
+          referenceImage: referenceImage,
+          metadata: metadata,
+        );
       } else {
         throw Exception('Unsupported provider: $provider');
       }
@@ -645,10 +837,18 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
       final List<AppImage> savedImages = [];
       
       for (final image in generatedImages) {
-        final savedImage = await imageManagerProvider.addImageFromFile(
-          File(image.localPath),
-          metadata: image.metadata,
-        );
+        AppImage? savedImage;
+        
+        if (!kIsWeb) {
+          // On non-web platforms, we can use File
+          savedImage = await imageManagerProvider.addImageFromFile(
+            File(image.localPath),
+            metadata: image.metadata,
+          );
+        } else {
+          // On web, we can't use File, so we'll just use the existing image
+          savedImage = image;
+        }
         
         if (savedImage != null) {
           savedImages.add(savedImage);

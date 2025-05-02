@@ -1087,6 +1087,28 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
   
+  // Update OpenAI model setting
+  Future<void> updateOpenAiModel(String model) async {
+    if (_currentGame == null) {
+      throw Exception('No game selected');
+    }
+    
+    LoggingService().info(
+      'Updating OpenAI model to: $model',
+      tag: 'GameProvider'
+    );
+    
+    _currentGame!.setOpenAiModel(model);
+    
+    LoggingService().debug(
+      'OpenAI model was set successfully to: $model',
+      tag: 'GameProvider'
+    );
+    
+    await _saveGames();
+    notifyListeners();
+  }
+  
   // Update API key for a specific provider
   Future<void> updateAiApiKey(String provider, String apiKey) async {
     if (_currentGame == null) {

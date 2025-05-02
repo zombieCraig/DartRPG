@@ -22,6 +22,20 @@ This work enhances the overall architecture of the application, making it more m
 
 ## Recent Changes
 
+### Web Image Handling Fix (May 2025)
+- ✅ Fixed issue with image selection on web platforms:
+  - Created a platform-agnostic approach for handling images:
+    - Added a new `ImageUtils` class with different implementations for web and native platforms
+    - Updated the image storage service to handle web platforms differently, using in-memory storage
+    - Modified the image manager provider to skip file existence checks on web platforms
+  - Updated the image picker dialog to properly handle web platforms:
+    - Added a `_selectedImageUrl` field to store the blob URL for web platforms
+    - Modified the `_pickImage` method to store the blob URL when on web
+    - Updated the `_buildImagePreview` method to use `Image.network` with the blob URL on web
+  - Updated the app image widget to use `Image.network` instead of `Image.file` on web platforms
+  - Created comprehensive documentation in `docs/web_image_handling.md` and `lib/utils/README_web_images.md`
+  - This fix ensures that images can be properly selected and displayed on web platforms without causing exceptions
+
 ### AI Image Generation Feature Implementation (April 2025)
 - ✅ Implemented AI image generation for character portraits and other game assets:
   - Created `AiImageProvider` to handle generating images using AI services

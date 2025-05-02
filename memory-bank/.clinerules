@@ -2,6 +2,15 @@
 
 ## Project Patterns
 
+### Web Platform Compatibility
+- **Always check for web platform before using platform-specific APIs**: Use `kIsWeb` from `package:flutter/foundation.dart` to check if the app is running on web
+- **Never use `Image.file` on web platforms**: Use `Image.network` instead with URLs or blob URLs
+- **Handle file operations differently on web**: Web browsers don't have direct access to the file system
+- **Use platform-agnostic interfaces**: Create abstract classes with platform-specific implementations
+- **Store URLs instead of file paths on web**: For uploaded images, use the blob URL provided by the image picker
+- **Provide error handling for web-specific operations**: Always include error builders for network images
+- **Document web-specific implementations**: Create clear documentation for web platform handling
+
 ### Component Organization
 - **Break down complex features into specialized components**: When a feature becomes too complex or a file becomes too large, break it down into smaller, specialized components
 - **Create dedicated dialog classes**: For complex dialogs that handle significant logic, create a dedicated class (e.g., `MoveDialog`, `OracleDialog`)
@@ -92,6 +101,15 @@ color: Colors.blue.withAlpha(((animationValue * 0.5) * 255).toInt())
 - Include stack traces for debugging purposes
 
 ## Implementation Paths
+
+### Web Image Handling
+1. **Check Platform**: Always check `kIsWeb` before using platform-specific APIs
+2. **Use Appropriate Widget**: Use `Image.network` on web, `Image.file` on native platforms
+3. **Handle Blob URLs**: When using the image picker on web, store and use the blob URL
+4. **Provide Error Handling**: Always include error builders for network images
+5. **Use In-Memory Storage**: For web platforms, use in-memory storage instead of file system
+6. **Skip File Existence Checks**: On web platforms, skip file existence checks
+7. **Document Web-Specific Code**: Add comments explaining web-specific handling
 
 ### Adding a New Screen
 1. Create a new file in `lib/screens/` directory

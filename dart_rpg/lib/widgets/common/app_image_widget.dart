@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/image_manager_provider.dart';
@@ -66,15 +67,54 @@ class AppImageWidget extends StatelessWidget {
           final image = imageManager.getImageById(imageId!);
 
           if (image != null) {
-            return Image.file(
-              File(image.localPath),
-              width: width,
-              height: height,
-              fit: fit,
-              errorBuilder: (context, error, stackTrace) {
+            // On web, we can't use Image.file
+            if (kIsWeb) {
+              // If the image has an original URL, use that
+              if (image.originalUrl != null && image.originalUrl!.isNotEmpty) {
+                return Image.network(
+                  image.originalUrl!,
+                  width: width,
+                  height: height,
+                  fit: fit,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return placeholder ?? defaultPlaceholder;
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return errorWidget ?? defaultErrorWidget;
+                  },
+                );
+              } else if (image.localPath.startsWith('http') || image.localPath.startsWith('blob:')) {
+                // If the localPath is actually a URL (which happens on web), use that
+                return Image.network(
+                  image.localPath,
+                  width: width,
+                  height: height,
+                  fit: fit,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return placeholder ?? defaultPlaceholder;
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return errorWidget ?? defaultErrorWidget;
+                  },
+                );
+              } else {
+                // No valid URL available
                 return errorWidget ?? defaultErrorWidget;
-              },
-            );
+              }
+            } else {
+              // On native platforms, we can use Image.file
+              return Image.file(
+                File(image.localPath),
+                width: width,
+                height: height,
+                fit: fit,
+                errorBuilder: (context, error, stackTrace) {
+                  return errorWidget ?? defaultErrorWidget;
+                },
+              );
+            }
           }
 
           // Fallback to URL if available

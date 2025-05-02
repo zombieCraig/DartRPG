@@ -30,7 +30,7 @@ class AiImageGenerationSettingsWidget extends StatefulWidget {
   final bool isNewGame;
   
   /// Callback for when settings change in new game mode
-  final Function(bool enabled, String? provider, Map<String, String>? apiKeys, Map<String, String>? artisticDirections)? 
+  final Function(bool enabled, String? provider, String? openaiModel, Map<String, String>? apiKeys, Map<String, String>? artisticDirections)? 
       onNewGameSettingsChanged;
 
   const AiImageGenerationSettingsWidget({
@@ -58,12 +58,21 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
   // For new game mode, we need to track the settings locally
   bool _aiImageGenerationEnabled = false;
   String? _aiImageProvider;
+  String? _openaiModel = 'dall-e-2'; // Default OpenAI model
   Map<String, String> _aiApiKeys = {};
   Map<String, String> _aiArtisticDirections = {};
   
   // List of supported AI providers
   final List<Map<String, String>> _supportedProviders = [
     {'id': 'minimax', 'name': 'Minimax'},
+    {'id': 'openai', 'name': 'OpenAI'},
+  ];
+  
+  // List of supported OpenAI models
+  final List<Map<String, String>> _openaiModels = [
+    {'id': 'dall-e-2', 'name': 'DALL-E 2'},
+    {'id': 'dall-e-3', 'name': 'DALL-E 3'},
+    {'id': 'gpt-image-1', 'name': 'GPT-Image-1'},
   ];
   
   @override
@@ -237,6 +246,45 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                 ),
               ),
               
+              // OpenAI model selection
+              if (aiImageProvider == 'openai')
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      labelText: 'OpenAI Model',
+                      border: OutlineInputBorder(),
+                    ),
+                    value: widget.isNewGame ? 
+                        (_aiImageProvider == 'openai' ? 'dall-e-2' : null) : 
+                        widget.game.openaiModel ?? 'dall-e-2',
+                    hint: const Text('Select OpenAI Model'),
+                    isExpanded: true,
+                    onChanged: (value) {
+                      if (widget.isNewGame) {
+                        setState(() {
+                          _openaiModel = value;
+                        });
+                        _notifyNewGameSettingsChanged();
+                      } else {
+                        if (value != null) {
+                          widget.gameProvider.updateOpenAiModel(value);
+                          
+                          if (widget.onSettingsChanged != null) {
+                            widget.onSettingsChanged!();
+                          }
+                        }
+                      }
+                    },
+                    items: _openaiModels.map((model) => 
+                      DropdownMenuItem<String>(
+                        value: model['id'],
+                        child: Text(model['name']!),
+                      ),
+                    ).toList(),
+                  ),
+                ),
+              
               // API key input
               if (aiImageProvider != null)
                 Padding(
@@ -269,38 +317,37 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                           }
                         });
                         _notifyNewGameSettingsChanged();
-                      } else if (aiImageProvider != null) {
-                        if (value.isNotEmpty) {
-                          // Log the API key length before updating
+                      } else                      if (value.isNotEmpty) {
+                        // Log the API key length before updating
+                        LoggingService().debug(
+                          'Setting API key for $aiImageProvider with length: ${value.length}',
+                          tag: 'AiImageGenerationSettingsWidget'
+                        );
+                        
+                        // Update the API key in the game provider
+                        widget.gameProvider.updateAiApiKey(aiImageProvider, value);
+                        
+                        // Verify the API key was set correctly in the game object
+                        final apiKey = widget.game.getAiApiKey(aiImageProvider);
+                        if (apiKey != null) {
                           LoggingService().debug(
-                            'Setting API key for $aiImageProvider with length: ${value.length}',
+                            'API key for $aiImageProvider was set successfully with length: ${apiKey.length}',
                             tag: 'AiImageGenerationSettingsWidget'
                           );
-                          
-                          // Update the API key in the game provider
-                          widget.gameProvider.updateAiApiKey(aiImageProvider, value);
-                          
-                          // Verify the API key was set correctly in the game object
-                          final apiKey = widget.game.getAiApiKey(aiImageProvider);
-                          if (apiKey != null) {
-                            LoggingService().debug(
-                              'API key for $aiImageProvider was set successfully with length: ${apiKey.length}',
-                              tag: 'AiImageGenerationSettingsWidget'
-                            );
-                          } else {
-                            LoggingService().warning(
-                              'Failed to set API key for $aiImageProvider',
-                              tag: 'AiImageGenerationSettingsWidget'
-                            );
-                          }
                         } else {
-                          widget.gameProvider.removeAiApiKey(aiImageProvider);
+                          LoggingService().warning(
+                            'Failed to set API key for $aiImageProvider',
+                            tag: 'AiImageGenerationSettingsWidget'
+                          );
                         }
-                        
-                        if (widget.onSettingsChanged != null) {
-                          widget.onSettingsChanged!();
-                        }
+                      } else {
+                        widget.gameProvider.removeAiApiKey(aiImageProvider);
                       }
+                      
+                      if (widget.onSettingsChanged != null) {
+                        widget.onSettingsChanged!();
+                      }
+                    
                     },
                   ),
                 ),
@@ -327,36 +374,35 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                           }
                         });
                         _notifyNewGameSettingsChanged();
-                      } else if (aiImageProvider != null) {
-                        if (value.isNotEmpty) {
-                          // Log the artistic direction before updating
+                      } else                      if (value.isNotEmpty) {
+                        // Log the artistic direction before updating
+                        LoggingService().debug(
+                          'Setting artistic direction for $aiImageProvider',
+                          tag: 'AiImageGenerationSettingsWidget'
+                        );
+                        
+                        // Update the artistic direction in the game provider
+                        widget.gameProvider.updateAiArtisticDirection(aiImageProvider, value);
+                        
+                        // Verify the artistic direction was set correctly in the game object
+                        final artisticDirection = widget.game.getAiArtisticDirection(aiImageProvider);
+                        if (artisticDirection != null) {
                           LoggingService().debug(
-                            'Setting artistic direction for $aiImageProvider',
+                            'Artistic direction for $aiImageProvider was set successfully',
                             tag: 'AiImageGenerationSettingsWidget'
                           );
-                          
-                          // Update the artistic direction in the game provider
-                          widget.gameProvider.updateAiArtisticDirection(aiImageProvider, value);
-                          
-                          // Verify the artistic direction was set correctly in the game object
-                          final artisticDirection = widget.game.getAiArtisticDirection(aiImageProvider);
-                          if (artisticDirection != null) {
-                            LoggingService().debug(
-                              'Artistic direction for $aiImageProvider was set successfully',
-                              tag: 'AiImageGenerationSettingsWidget'
-                            );
-                          } else {
-                            LoggingService().warning(
-                              'Failed to set artistic direction for $aiImageProvider',
-                              tag: 'AiImageGenerationSettingsWidget'
-                            );
-                          }
-                        }
-                        
-                        if (widget.onSettingsChanged != null) {
-                          widget.onSettingsChanged!();
+                        } else {
+                          LoggingService().warning(
+                            'Failed to set artistic direction for $aiImageProvider',
+                            tag: 'AiImageGenerationSettingsWidget'
+                          );
                         }
                       }
+                      
+                      if (widget.onSettingsChanged != null) {
+                        widget.onSettingsChanged!();
+                      }
+                    
                     },
                   ),
                 ),
@@ -461,6 +507,81 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                             ],
                           ),
                         ),
+                      
+                      if (aiImageProvider == 'openai')
+                        Container(
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'OpenAI API',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16.0,
+                                ),
+                              ),
+                              const SizedBox(height: 8.0),
+                              const Text(
+                                'To use OpenAI, you need to sign up for an account, obtain an API key, and ensure you have credits in your account.',
+                                style: TextStyle(fontSize: 14.0),
+                              ),
+                              const SizedBox(height: 8.0),
+                              Row(
+                                children: [
+                                  InkWell(
+                                    onTap: () async {
+                                      final Uri url = Uri.parse('https://platform.openai.com/api-keys');
+                                      if (!await launchUrl(url)) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Could not open the URL'),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    child: const Text(
+                                      'Get your API key here',
+                                      style: TextStyle(
+                                        fontSize: 14.0,
+                                        color: Colors.blue,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8.0),
+                              const Text(
+                                'Available Models:',
+                                style: TextStyle(
+                                  fontSize: 14.0,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4.0),
+                              const Text(
+                                '• DALL-E 2: Older model, more affordable\n'
+                                '• DALL-E 3: Higher quality images, more expensive\n'
+                                '• GPT-Image-1: Latest model with advanced capabilities',
+                                style: TextStyle(fontSize: 14.0),
+                              ),
+                              const SizedBox(height: 8.0),
+                              const Text(
+                                'Note: You need to have credits in your OpenAI account to generate images. Pricing varies by model.',
+                                style: TextStyle(
+                                  fontSize: 14.0,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -479,6 +600,7 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
       widget.onNewGameSettingsChanged!(
         _aiImageGenerationEnabled,
         _aiImageProvider,
+        _openaiModel,
         _aiApiKeys,
         _aiArtisticDirections,
       );

@@ -314,6 +314,7 @@ The DartRPG application is in active development with core functionality impleme
 - **Tablet Support**: UI not fully optimized for tablet screens
 
 ### Recently Fixed Issues
+- ✅ **Web Image Handling**: Fixed issue with image selection on web platforms by implementing a platform-agnostic approach for handling images, updating the image picker dialog to use blob URLs, and ensuring proper display of images on web platforms
 - ✅ **AI Image Generation**: Fixed issue with AI-generated images not being properly saved to permanent storage and not refreshing in the character screen after editing
 - ✅ **Image Handling System**: Implemented a robust system for uploading, saving, and displaying images from both URLs and local storage, with support for custom image markdown syntax
 - ✅ **Journal Editor Linked Items**: Added a Linked Items feature to the journal editor that allows viewing and interacting with linked characters, locations, move rolls, and oracle rolls while editing
@@ -345,6 +346,20 @@ The DartRPG application is in active development with core functionality impleme
 - ✅ **Journal Navigation**: Added "Jump to last entry" button on journal screen when entries are scrollable
 
 ## Recent Milestones
+
+### Milestone: Web Image Handling Fix (May 2025)
+- ✅ Fixed issue with image selection on web platforms:
+  - ✅ Created a platform-agnostic approach for handling images:
+    - ✅ Added a new `ImageUtils` class with different implementations for web and native platforms
+    - ✅ Updated the image storage service to handle web platforms differently, using in-memory storage
+    - ✅ Modified the image manager provider to skip file existence checks on web platforms
+  - ✅ Updated the image picker dialog to properly handle web platforms:
+    - ✅ Added a `_selectedImageUrl` field to store the blob URL for web platforms
+    - ✅ Modified the `_pickImage` method to store the blob URL when on web
+    - ✅ Updated the `_buildImagePreview` method to use `Image.network` with the blob URL on web
+  - ✅ Updated the app image widget to use `Image.network` instead of `Image.file` on web platforms
+  - ✅ Created comprehensive documentation in `docs/web_image_handling.md` and `lib/utils/README_web_images.md`
+  - ✅ This fix ensures that images can be properly selected and displayed on web platforms without causing exceptions
 
 ### Milestone: AI Image Generation Feature Implementation (April 2025)
 - ✅ Implemented AI image generation for character portraits and other game assets:

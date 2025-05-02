@@ -233,6 +233,9 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   
   @override
   Future<void> updateAiArtisticDirection(String provider, String artisticDirection) async {}
+  
+  @override
+  Future<void> updateOpenAiModel(String model) async {}
 }
 
 void main() {

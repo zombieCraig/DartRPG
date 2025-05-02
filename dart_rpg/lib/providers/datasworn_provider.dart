@@ -3,6 +3,7 @@ import '../models/move.dart';
 import '../models/oracle.dart';
 import '../models/character.dart';
 import '../models/node_type_info.dart';
+import '../models/truth.dart';
 import '../utils/datasworn_parser.dart';
 import '../utils/logging_service.dart';
 
@@ -10,6 +11,7 @@ class DataswornProvider extends ChangeNotifier {
   List<Move> _moves = [];
   List<OracleCategory> _oracles = [];
   List<Asset> _assets = [];
+  List<Truth> _truths = [];
   bool _isLoading = false;
   String? _error;
   String? _currentSource;
@@ -18,6 +20,7 @@ class DataswornProvider extends ChangeNotifier {
   List<Move> get moves => _moves;
   List<OracleCategory> get oracles => _oracles;
   List<Asset> get assets => _assets;
+  List<Truth> get truths => _truths;
   bool get isLoading => _isLoading;
   String? get error => _error;
   String? get currentSource => _currentSource;
@@ -64,6 +67,9 @@ class DataswornProvider extends ChangeNotifier {
       
       _assets = DataswornParser.parseAssets(datasworn);
       loggingService.debug('Parsed ${_assets.length} assets', tag: 'DataswornProvider');
+      
+      _truths = DataswornParser.parseTruths(datasworn);
+      loggingService.debug('Parsed ${_truths.length} truths', tag: 'DataswornProvider');
       
       _currentSource = assetPath;
       
@@ -266,6 +272,15 @@ class DataswornProvider extends ChangeNotifier {
   Asset? findAssetById(String id) {
     try {
       return _assets.firstWhere((asset) => asset.id == id);
+    } catch (e) {
+      return null;
+    }
+  }
+  
+  // Find a truth by ID
+  Truth? findTruthById(String id) {
+    try {
+      return _truths.firstWhere((truth) => truth.id == id);
     } catch (e) {
       return null;
     }

@@ -29,6 +29,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
   // AI Image Generation settings
   bool _aiImageGenerationEnabled = false;
   String? _aiImageProvider;
+  String? _openaiModel = 'dall-e-2'; // Default OpenAI model
   Map<String, String> _aiApiKeys = {};
   Map<String, String> _aiArtisticDirections = {};
 
@@ -57,12 +58,14 @@ class _NewGameScreenState extends State<NewGameScreen> {
   void _onAiImageGenerationSettingsChanged(
     bool enabled,
     String? provider,
+    String? openaiModel,
     Map<String, String>? apiKeys,
     Map<String, String>? artisticDirections,
   ) {
     setState(() {
       _aiImageGenerationEnabled = enabled;
       _aiImageProvider = provider;
+      _openaiModel = openaiModel;
       _aiApiKeys = apiKeys ?? {};
       _aiArtisticDirections = artisticDirections ?? {};
     });
@@ -85,6 +88,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
             sentientAiImagePath: _sentientAiImagePath,
             aiImageGenerationEnabled: _aiImageGenerationEnabled,
             aiImageProvider: _aiImageProvider,
+            openaiModel: _openaiModel,
           );
           
           // Add API keys to the temp game
@@ -210,6 +214,11 @@ class _NewGameScreenState extends State<NewGameScreen> {
           
           if (_aiImageProvider != null) {
             await gameProvider.updateAiImageProvider(_aiImageProvider);
+            
+            // Set OpenAI model if OpenAI is selected
+            if (_aiImageProvider == 'openai' && _openaiModel != null) {
+              await gameProvider.updateOpenAiModel(_openaiModel!);
+            }
             
             // Set API keys
             for (final entry in _aiApiKeys.entries) {

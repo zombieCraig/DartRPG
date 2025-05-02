@@ -1,8 +1,8 @@
 {
   "versions": [
     {
-      "version": "0.0.9",
-      "date": "2025-04-24",
+      "version": "0.1.0",
+      "date": "2025-05-02",
       "changes": [
         "**Features**",
         "Implemented AI image generation for character portraits and other game assets with 14 related improvements",

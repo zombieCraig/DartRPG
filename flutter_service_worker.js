@@ -3,11 +3,12 @@ const MANIFEST = 'flutter-app-manifest';
 const TEMP = 'flutter-temp-cache';
 const CACHE_NAME = 'flutter-app-cache';
 
-const RESOURCES = {"assets/AssetManifest.json": "b79f118319bc6117c54bcc00c1419ec0",
-"assets/AssetManifest.bin": "319fc2649d9ad0bc3dd041acddaf478d",
-"assets/assets/data/changelog.json": "b688eabf3d8044aea54ed83b2f3846f5",
+const RESOURCES = {"assets/AssetManifest.json": "1559f05f77e9ca560ef3682f1fe4409e",
+"assets/AssetManifest.bin": "345263cba24d6592b23e1c3d83065d7c",
+"assets/assets/data/changelog.json": "d1633e2067ab04eaf1198663dea0b279",
 "assets/assets/data/custom_oracles.json": "9cfa269de22df2448dc53942bfe1f869",
 "assets/assets/data/fe_runners.json": "6a447679e60e5a24f7958f16f06aaa2b",
+"assets/assets/docs/overview.md": "a3ebd9abbe198942031d64f200787fc2",
 "assets/assets/images/saved/README.md": "fb64407bbf21d35ffcacbec7e1392f5c",
 "assets/assets/images/sentient_ai/the_archivist.webp": "5adcc7a8a631eac0a3afabf72b0dd7c2",
 "assets/assets/images/sentient_ai/the_broken_doll.webp": "ee9d1d6106e372483a1a5d0073e8cc0c",
@@ -20,14 +21,14 @@ const RESOURCES = {"assets/AssetManifest.json": "b79f118319bc6117c54bcc00c1419ec
 "assets/assets/images/sentient_ai/the_virus.webp": "f41434ee1798efd0fe5c60fdc4ae7dd1",
 "assets/assets/images/sentient_ai/the_ghost.webp": "603b3da4997898fe9c1460621e227783",
 "assets/FontManifest.json": "dc3d03800ccca4601324923c0b1d6d57",
-"assets/fonts/MaterialIcons-Regular.otf": "b7f747cdf3e6e37e750fb50a241ac26b",
-"assets/AssetManifest.bin.json": "f7e0c20373d559e2f04ba3c10d3c87d1",
+"assets/fonts/MaterialIcons-Regular.otf": "3a6c6b89420d2db496812ca33a47e80b",
+"assets/AssetManifest.bin.json": "b7d54416872e1f3616bf54e633aa6d07",
 "assets/shaders/ink_sparkle.frag": "ecc85a2e95f5e9f53123dcaf8cb9b6ce",
 "assets/NOTICES": "bd3a3ed583f8a15712f432ae8db6703f",
 "assets/packages/quill_native_bridge_linux/assets/xclip": "d37b0dbbc8341839cde83d351f96279e",
 "assets/packages/cupertino_icons/assets/CupertinoIcons.ttf": "33b7d9392238c04c131b6ce224e13711",
 "manifest.json": "589e037b1ef77d2fb7405cec9d168530",
-"version.json": "2323237a5cb882f5b2b403fea4ceae88",
+"version.json": "ad38c684c089b4aea4d2a98d5f9b6b33",
 "flutter.js": "76f08d47ff9f5715220992f993002504",
 "canvaskit/chromium/canvaskit.js": "34beda9f39eb7d992d46125ca868dc61",
 "canvaskit/chromium/canvaskit.wasm": "64a386c87532ae52ae041d18a32a3635",
@@ -43,7 +44,7 @@ const RESOURCES = {"assets/AssetManifest.json": "b79f118319bc6117c54bcc00c1419ec
 "canvaskit/skwasm_st.js.symbols": "c7e7aac7cd8b612defd62b43e3050bdd",
 "index.html": "1300938921caa0d761a01f1e397fe142",
 "/": "1300938921caa0d761a01f1e397fe142",
-"flutter_bootstrap.js": "a2a0291ca1cd6e92d7858a21f39e3a14",
+"flutter_bootstrap.js": "a000b28a168f11a5dee59c07f75f24ba",
 "icons/site.webmanifest": "053100cb84a50d2ae7f5492f7dd7f25e",
 "icons/favicon.ico": "26ab35cafea81aabee7f7c4a7914129b",
 "icons/android-chrome-512x512.png": "5f73aa68c27fefe7ac6ebbe9a71f8158",
@@ -56,7 +57,7 @@ const RESOURCES = {"assets/AssetManifest.json": "b79f118319bc6117c54bcc00c1419ec
 "icons/Icon-512.png": "64f77c06076f003627a2b8a467013ff3",
 "icons/android-chrome-192x192.png": "d3376fb72f5e0bcf1e760e8f4b78ce72",
 "favicon.png": "28369c8aed711b77bada4e0633150228",
-"main.dart.js": "a144743820d8bb519763236e02f1dcce"};
+"main.dart.js": "7af061d4e7f9dae6917c0517ab784ccb"};
 // The application shell files that are downloaded before a service worker can
 // start.
 const CORE = ["main.dart.js",

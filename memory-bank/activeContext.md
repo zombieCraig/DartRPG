@@ -22,6 +22,18 @@ This work enhances the overall architecture of the application, making it more m
 
 ## Recent Changes
 
+### Windows GitHub Actions Workflow Fix (May 2025)
+- ✅ Fixed issue with Windows artifact packaging in the GitHub Actions workflow:
+  - Updated the PowerShell command to use absolute paths instead of relative paths
+  - Added detailed logging throughout the packaging process to improve debugging
+  - Implemented robust verification to ensure the artifact is created successfully
+  - Added explicit error handling for each step of the packaging process
+  - Modified the following files:
+    - `.github/workflows/multi-platform-release.yml`: Updated Windows packaging section
+    - `MULTI_PLATFORM_RELEASE.md`: Updated documentation to reflect the changes
+  - This fix ensures that Windows builds are properly packaged and uploaded as release artifacts
+  - Improved the reliability of the multi-platform release process
+
 ### Web Image Handling Fix (May 2025)
 - ✅ Fixed issue with image selection on web platforms:
   - Created a platform-agnostic approach for handling images:

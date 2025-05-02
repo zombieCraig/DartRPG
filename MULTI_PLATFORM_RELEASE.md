@@ -87,10 +87,14 @@ The multi-platform release workflow has been updated to address several issues:
    - Replaced the deprecated `actions/upload-release-asset@v1` action with the modern `softprops/action-gh-release@v1`
    - This resolves the warning about the deprecated `set-output` command
 
-4. **Windows Build Path Fix**:
+4. **Windows Build Path and Packaging Fix**:
    - Updated the Windows build path to include the `x64` directory: `build/windows/x64/runner/Release`
    - Added directory verification to provide better error messages if the path is incorrect
    - Added directory listing to help diagnose path issues
+   - Fixed PowerShell packaging command to use absolute paths instead of relative paths
+   - Added detailed logging throughout the packaging process
+   - Implemented robust verification to ensure the artifact is created successfully
+   - Added explicit error handling for each step of the packaging process
 
 3. **macOS Build Verification and Packaging**:
    - Added file existence verification after creating the macOS zip file

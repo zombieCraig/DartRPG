@@ -191,9 +191,6 @@ The world of Fe-Runner is customizable, allowing players to set their games in d
 * Malicious entities are programs that oppose the player.
 * They are randomly generated using oracles.
 
-###   Hanging Out
-
-* Hanging out with other characters can build relationships.
 
 ###   Campaign Clocks
 

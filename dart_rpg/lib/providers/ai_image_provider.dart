@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:http_parser/http_parser.dart';
 import '../models/app_image.dart';
 import '../models/location.dart';
 import '../utils/logging_service.dart';
@@ -402,5 +403,460 @@ class AiImageProvider extends ChangeNotifier {
       return game.getAiArtisticDirectionOrDefault();
     }
     return "cyberpunk digital scene, detailed illustration, digital art";
+  }
+  
+  /// Generate images using the OpenAI API.
+  /// 
+  /// [prompt] - The text prompt to generate images from
+  /// [apiKey] - The API key for the OpenAI service
+  /// [model] - The OpenAI model to use (dall-e-2, dall-e-3, or gpt-image-1)
+  /// [size] - The size of the generated images (default depends on model)
+  /// [count] - The number of images to generate (default: 1)
+  /// [metadata] - Additional metadata to store with the images
+  /// [referenceImage] - Optional reference image for image editing (for journal entries with character reference)
+  /// 
+  /// Returns a list of AppImage objects representing the generated images.
+  Future<List<AppImage>> generateImagesWithOpenAI({
+    required String prompt,
+    required String apiKey,
+    required String model,
+    String? size,
+    int count = 1,
+    String? moderationLevel,
+    Map<String, dynamic>? metadata,
+    File? referenceImage,
+  }) async {
+    try {
+      // Validate and normalize model name
+      final String normalizedModel = model.toLowerCase().trim();
+      
+      // Validate model name
+      if (!['dall-e-2', 'dall-e-3', 'gpt-image-1'].contains(normalizedModel)) {
+        throw Exception('Invalid OpenAI model: $normalizedModel. Supported models are: dall-e-2, dall-e-3, gpt-image-1');
+      }
+      
+      // Log the request
+      _loggingService.info(
+        'Generating images with OpenAI: model=$normalizedModel, prompt="${prompt.substring(0, prompt.length > 50 ? 50 : prompt.length)}..."',
+        tag: 'AiImageProvider',
+      );
+      
+      // Determine if we're using the standard generation endpoint or the edit endpoint
+      final bool useEditEndpoint = referenceImage != null && await referenceImage.exists();
+      
+      // Set default size based on model if not provided
+      String effectiveSize = size ?? _getDefaultSizeForModel(normalizedModel);
+      
+      // Validate size parameter for each model
+      if (normalizedModel == 'dall-e-2') {
+        // DALL-E 2 supports 256x256, 512x512, or 1024x1024
+        if (!['256x256', '512x512', '1024x1024'].contains(effectiveSize)) {
+          _loggingService.warning(
+            'Invalid size for DALL-E 2: $effectiveSize. Using default: 1024x1024',
+            tag: 'AiImageProvider',
+          );
+          effectiveSize = '1024x1024';
+        }
+      } else if (normalizedModel == 'dall-e-3') {
+        // DALL-E 3 supports 1024x1024, 1792x1024, or 1024x1792
+        if (!['1024x1024', '1792x1024', '1024x1792'].contains(effectiveSize)) {
+          _loggingService.warning(
+            'Invalid size for DALL-E 3: $effectiveSize. Using default: 1024x1024',
+            tag: 'AiImageProvider',
+          );
+          effectiveSize = '1024x1024';
+        }
+      } else if (normalizedModel == 'gpt-image-1') {
+        // GPT-Image-1 only supports "auto" size
+        effectiveSize = 'auto';
+      }
+      
+      // Adjust count based on model limitations
+      int effectiveCount = count;
+      if (normalizedModel == 'dall-e-3' && effectiveCount > 1) {
+        _loggingService.warning(
+          'DALL-E 3 only supports generating 1 image at a time. Adjusting count from $effectiveCount to 1.',
+          tag: 'AiImageProvider',
+        );
+        effectiveCount = 1;
+      } else if (normalizedModel == 'dall-e-2' && effectiveCount > 10) {
+        _loggingService.warning(
+          'DALL-E 2 supports up to 10 images at a time. Adjusting count from $effectiveCount to 10.',
+          tag: 'AiImageProvider',
+        );
+        effectiveCount = 10;
+      } else if (normalizedModel == 'gpt-image-1' && effectiveCount > 4) {
+        _loggingService.warning(
+          'GPT-Image-1 supports up to 4 images at a time. Adjusting count from $effectiveCount to 4.',
+          tag: 'AiImageProvider',
+        );
+        effectiveCount = 4;
+      }
+      
+      // Prepare headers
+      final Map<String, String> headers = {
+        'Authorization': 'Bearer $apiKey',
+      };
+      
+      List<dynamic> imageUrls = [];
+      List<String> base64Images = [];
+      
+      if (useEditEndpoint) {
+        // Use the image edit endpoint
+        _loggingService.debug(
+          'Using OpenAI image edit endpoint with reference image',
+          tag: 'AiImageProvider',
+        );
+        
+        // Create a multipart request
+        final request = http.MultipartRequest(
+          'POST',
+          Uri.parse('https://api.openai.com/v1/images/edits'),
+        );
+        
+        // Add headers
+        request.headers.addAll(headers);
+        
+        // Add fields
+        request.fields['model'] = normalizedModel;
+        request.fields['prompt'] = prompt;
+        request.fields['n'] = effectiveCount.toString();
+        
+        // Only add size for models that support it
+        if (normalizedModel != 'gpt-image-1') {
+          request.fields['size'] = effectiveSize;
+        }
+        
+        // Add moderation only for gpt-image-1
+        if (normalizedModel == 'gpt-image-1' && moderationLevel != null) {
+          request.fields['moderation'] = moderationLevel;
+        }
+        
+        // Add the image file
+        final imageBytes = await referenceImage!.readAsBytes();
+        final imageField = http.MultipartFile.fromBytes(
+          'image',
+          imageBytes,
+          filename: 'reference.png',
+          contentType: MediaType('image', 'png'),
+        );
+        request.files.add(imageField);
+        
+        // Send the request
+        final streamedResponse = await request.send();
+        final response = await http.Response.fromStream(streamedResponse);
+        
+        // Parse the response
+        if (response.statusCode != 200) {
+          _loggingService.error(
+            'Failed to generate images with OpenAI: ${response.statusCode} ${response.body}',
+            tag: 'AiImageProvider',
+          );
+          
+          // Check for specific error conditions
+          final responseData = jsonDecode(response.body);
+          if (responseData.containsKey('error')) {
+            final error = responseData['error'];
+            if (error.containsKey('code') && error['code'] == 'insufficient_quota') {
+              throw Exception('Insufficient credits in your OpenAI account. Please add credits to your account to generate images.');
+            }
+          }
+          
+          throw Exception('Failed to generate images: ${response.statusCode} ${response.body}');
+        }
+        
+        // Parse the response
+        final responseData = jsonDecode(response.body);
+        
+        // Log the full response for debugging
+        _loggingService.debug(
+          'OpenAI API response: ${response.body}',
+          tag: 'AiImageProvider',
+        );
+        
+        // Extract the image data
+        if (responseData.containsKey('data') && responseData['data'] != null) {
+          final data = responseData['data'];
+          
+          if (data is List) {
+            // Check if the response contains URLs or base64 data
+            if (data.isNotEmpty && data[0].containsKey('url')) {
+              imageUrls = data.map((item) => item['url']).toList();
+            } else if (data.isNotEmpty && data[0].containsKey('b64_json')) {
+              base64Images = data.map((item) => item['b64_json'] as String).toList();
+            } else {
+              _loggingService.error(
+                'Unexpected response format: neither url nor b64_json found in data',
+                tag: 'AiImageProvider',
+              );
+              throw Exception('Unexpected response format: neither url nor b64_json found in data');
+            }
+          } else {
+            _loggingService.error(
+              'Unexpected response format: data is not a list',
+              tag: 'AiImageProvider',
+            );
+            throw Exception('Unexpected response format: data is not a list');
+          }
+        } else {
+          _loggingService.error(
+            'Unexpected response format: data field is null or missing',
+            tag: 'AiImageProvider',
+          );
+          throw Exception('Unexpected response format: data field is null or missing');
+        }
+      } else {
+        // Use the standard image generation endpoint
+        _loggingService.debug(
+          'Using OpenAI standard image generation endpoint',
+          tag: 'AiImageProvider',
+        );
+        
+        // Prepare the request body
+        final Map<String, dynamic> requestBody = {
+          'model': normalizedModel,
+          'prompt': prompt,
+          'n': effectiveCount,
+        };
+        
+        // Only add size for models that support it
+        if (normalizedModel != 'gpt-image-1') {
+          requestBody['size'] = effectiveSize;
+        }
+        
+        // Add moderation level for gpt-image-1 if provided
+        if (normalizedModel == 'gpt-image-1' && moderationLevel != null) {
+          requestBody['moderation'] = moderationLevel;
+        }
+        
+        // Log the request body for debugging
+        _loggingService.debug(
+          'OpenAI request body: ${jsonEncode(requestBody)}',
+          tag: 'AiImageProvider',
+        );
+        
+        // Add content type header for JSON request
+        headers['Content-Type'] = 'application/json';
+        
+        // Make the API request
+        final response = await http.post(
+          Uri.parse('https://api.openai.com/v1/images/generations'),
+          headers: headers,
+          body: jsonEncode(requestBody),
+        );
+        
+        // Parse the response
+        if (response.statusCode != 200) {
+          _loggingService.error(
+            'Failed to generate images with OpenAI: ${response.statusCode} ${response.body}',
+            tag: 'AiImageProvider',
+          );
+          
+          // Check for specific error conditions
+          final responseData = jsonDecode(response.body);
+          if (responseData.containsKey('error')) {
+            final error = responseData['error'];
+            if (error.containsKey('code') && error['code'] == 'insufficient_quota') {
+              throw Exception('Insufficient credits in your OpenAI account. Please add credits to your account to generate images.');
+            }
+          }
+          
+          throw Exception('Failed to generate images: ${response.statusCode} ${response.body}');
+        }
+        
+        // Parse the response
+        final responseData = jsonDecode(response.body);
+        
+        // Log the full response for debugging
+        _loggingService.debug(
+          'OpenAI API response: ${response.body}',
+          tag: 'AiImageProvider',
+        );
+        
+        // Extract the image data
+        if (responseData.containsKey('data') && responseData['data'] != null) {
+          final data = responseData['data'];
+          
+          if (data is List) {
+            // Check if the response contains URLs or base64 data
+            if (data.isNotEmpty && data[0].containsKey('url')) {
+              imageUrls = data.map((item) => item['url']).toList();
+            } else if (data.isNotEmpty && data[0].containsKey('b64_json')) {
+              base64Images = data.map((item) => item['b64_json'] as String).toList();
+            } else {
+              _loggingService.error(
+                'Unexpected response format: neither url nor b64_json found in data',
+                tag: 'AiImageProvider',
+              );
+              throw Exception('Unexpected response format: neither url nor b64_json found in data');
+            }
+          } else {
+            _loggingService.error(
+              'Unexpected response format: data is not a list',
+              tag: 'AiImageProvider',
+            );
+            throw Exception('Unexpected response format: data is not a list');
+          }
+        } else {
+          _loggingService.error(
+            'Unexpected response format: data field is null or missing',
+            tag: 'AiImageProvider',
+          );
+          throw Exception('Unexpected response format: data field is null or missing');
+        }
+      }
+      
+      _loggingService.debug(
+        'Generated ${imageUrls.length} URL images and ${base64Images.length} base64 images with OpenAI',
+        tag: 'AiImageProvider',
+      );
+      
+      // Download and save the images
+      final List<AppImage> appImages = [];
+      
+      // Process URL-based images
+      for (int i = 0; i < imageUrls.length; i++) {
+        final imageUrl = imageUrls[i];
+        
+        try {
+          // Download the image
+          final imageResponse = await http.get(Uri.parse(imageUrl));
+          
+          if (imageResponse.statusCode != 200) {
+            _loggingService.error(
+              'Failed to download image from $imageUrl: ${imageResponse.statusCode}',
+              tag: 'AiImageProvider',
+            );
+            continue;
+          }
+          
+          // Save the image to a permanent file in the app's documents directory
+          final appDir = await getApplicationDocumentsDirectory();
+          final imagesDir = Directory('${appDir.path}/images');
+          if (!await imagesDir.exists()) {
+            await imagesDir.create(recursive: true);
+          }
+          
+          final imageId = const Uuid().v4();
+          final imagePath = path.join(imagesDir.path, '$imageId.jpg');
+          
+          final imageFile = File(imagePath);
+          await imageFile.writeAsBytes(imageResponse.bodyBytes);
+          
+          // Create an AppImage object
+          final appImage = AppImage(
+            id: imageId,
+            localPath: imagePath,
+            originalUrl: imageUrl,
+            metadata: {
+              'source': 'openai',
+              'model': normalizedModel,
+              'prompt': prompt,
+              'size': effectiveSize,
+              'generatedAt': DateTime.now().toIso8601String(),
+              ...?metadata,
+            },
+          );
+          
+          appImages.add(appImage);
+          
+          _loggingService.debug(
+            'Saved generated image to $imagePath',
+            tag: 'AiImageProvider',
+          );
+        } catch (e) {
+          _loggingService.error(
+            'Failed to process image from $imageUrl: $e',
+            tag: 'AiImageProvider',
+            error: e,
+          );
+        }
+      }
+      
+      // Process base64-encoded images
+      for (int i = 0; i < base64Images.length; i++) {
+        try {
+          // Decode the base64 image
+          final imageBytes = base64Decode(base64Images[i]);
+          
+          // Save the image to a permanent file in the app's documents directory
+          final appDir = await getApplicationDocumentsDirectory();
+          final imagesDir = Directory('${appDir.path}/images');
+          if (!await imagesDir.exists()) {
+            await imagesDir.create(recursive: true);
+          }
+          
+          final imageId = const Uuid().v4();
+          final imagePath = path.join(imagesDir.path, '$imageId.jpg');
+          
+          final imageFile = File(imagePath);
+          await imageFile.writeAsBytes(imageBytes);
+          
+          // Create an AppImage object
+          final appImage = AppImage(
+            id: imageId,
+            localPath: imagePath,
+            metadata: {
+              'source': 'openai',
+              'model': normalizedModel,
+              'prompt': prompt,
+              'size': effectiveSize,
+              'generatedAt': DateTime.now().toIso8601String(),
+              ...?metadata,
+            },
+          );
+          
+          appImages.add(appImage);
+          
+          _loggingService.debug(
+            'Saved generated base64 image to $imagePath',
+            tag: 'AiImageProvider',
+          );
+        } catch (e) {
+          _loggingService.error(
+            'Failed to process base64 image: $e',
+            tag: 'AiImageProvider',
+            error: e,
+          );
+        }
+      }
+      
+      return appImages;
+    } catch (e) {
+      _loggingService.error(
+        'Failed to generate images with OpenAI: $e',
+        tag: 'AiImageProvider',
+        error: e,
+      );
+      rethrow;
+    }
+  }
+  
+  /// Get the default size for the specified OpenAI model.
+  String _getDefaultSizeForModel(String model) {
+    switch (model) {
+      case 'dall-e-2':
+        return '1024x1024';
+      case 'dall-e-3':
+        return '1024x1024';
+      case 'gpt-image-1':
+        return 'auto';
+      default:
+        return '1024x1024';
+    }
+  }
+  
+  /// Get the maximum number of images that can be generated for the specified OpenAI model.
+  int _getMaxImagesForModel(String model) {
+    switch (model) {
+      case 'dall-e-2':
+        return 10;
+      case 'dall-e-3':
+        return 1;
+      case 'gpt-image-1':
+        return 4;
+      default:
+        return 1;
+    }
   }
 }

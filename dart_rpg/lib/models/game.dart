@@ -30,7 +30,8 @@ class Game {
   
   // AI Image Generation settings
   bool aiImageGenerationEnabled;
-  String? aiImageProvider; // e.g., "minimax"
+  String? aiImageProvider; // e.g., "minimax" or "openai"
+  String? openaiModel; // e.g., "dall-e-2", "dall-e-3", or "gpt-image-1"
   Map<String, String> aiApiKeys = {}; // Store keys for different providers
   Map<String, String> aiArtisticDirections = {}; // Store artistic directions for different providers
 
@@ -54,6 +55,7 @@ class Game {
     this.sentientAiImagePath,
     this.aiImageGenerationEnabled = false,
     this.aiImageProvider,
+    this.openaiModel = 'dall-e-2',
     Map<String, String>? aiApiKeys,
     Map<String, String>? aiArtisticDirections,
   })  : id = id ?? const Uuid().v4(),
@@ -164,6 +166,7 @@ class Game {
       'sentientAiImagePath': sentientAiImagePath,
       'aiImageGenerationEnabled': aiImageGenerationEnabled,
       'aiImageProvider': aiImageProvider,
+      'openaiModel': openaiModel,
       'aiApiKeys': apiKeysJson,
       'aiArtisticDirections': artisticDirectionsJson,
     };
@@ -276,6 +279,7 @@ class Game {
       sentientAiImagePath: json['sentientAiImagePath'],
       aiImageGenerationEnabled: json['aiImageGenerationEnabled'] ?? false,
       aiImageProvider: json['aiImageProvider'],
+      openaiModel: json['openaiModel'] ?? 'dall-e-2',
       aiApiKeys: _parseApiKeys(json['aiApiKeys']),
       aiArtisticDirections: _parseArtisticDirections(json['aiArtisticDirections']),
     );
@@ -533,6 +537,16 @@ class Game {
   // Set the AI image provider
   void setAiImageProvider(String? provider) {
     aiImageProvider = provider;
+  }
+  
+  // Set the OpenAI model
+  void setOpenAiModel(String model) {
+    openaiModel = model;
+  }
+  
+  // Get the OpenAI model or default
+  String getOpenAiModelOrDefault() {
+    return openaiModel ?? 'dall-e-2';
   }
   
   // Set an API key for a specific provider

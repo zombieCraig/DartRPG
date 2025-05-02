@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/app_image.dart';
@@ -26,14 +27,16 @@ class ImageManagerProvider extends ChangeNotifier {
         final List<dynamic> decoded = jsonDecode(imagesJson);
         _images = decoded.map((json) => AppImage.fromJson(json)).toList();
         
-        // Verify that all image files still exist
-        _images = _images.where((image) {
-          final file = File(image.localPath);
-          return file.existsSync();
-        }).toList();
-        
-        // Save the cleaned list
-        await _saveImagesToPrefs();
+        if (!kIsWeb) {
+          // On native platforms, verify that all image files still exist
+          _images = _images.where((image) {
+            final file = File(image.localPath);
+            return file.existsSync();
+          }).toList();
+          
+          // Save the cleaned list
+          await _saveImagesToPrefs();
+        }
       }
       
       notifyListeners();

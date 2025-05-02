@@ -533,7 +533,7 @@ class AiImageProvider extends ChangeNotifier {
         }
         
         // Add the image file
-        final imageBytes = await referenceImage!.readAsBytes();
+        final imageBytes = await referenceImage.readAsBytes();
         final imageField = http.MultipartFile.fromBytes(
           'image',
           imageBytes,

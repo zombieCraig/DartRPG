@@ -317,38 +317,37 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                           }
                         });
                         _notifyNewGameSettingsChanged();
-                      } else if (aiImageProvider != null) {
-                        if (value.isNotEmpty) {
-                          // Log the API key length before updating
+                      } else                      if (value.isNotEmpty) {
+                        // Log the API key length before updating
+                        LoggingService().debug(
+                          'Setting API key for $aiImageProvider with length: ${value.length}',
+                          tag: 'AiImageGenerationSettingsWidget'
+                        );
+                        
+                        // Update the API key in the game provider
+                        widget.gameProvider.updateAiApiKey(aiImageProvider, value);
+                        
+                        // Verify the API key was set correctly in the game object
+                        final apiKey = widget.game.getAiApiKey(aiImageProvider);
+                        if (apiKey != null) {
                           LoggingService().debug(
-                            'Setting API key for $aiImageProvider with length: ${value.length}',
+                            'API key for $aiImageProvider was set successfully with length: ${apiKey.length}',
                             tag: 'AiImageGenerationSettingsWidget'
                           );
-                          
-                          // Update the API key in the game provider
-                          widget.gameProvider.updateAiApiKey(aiImageProvider, value);
-                          
-                          // Verify the API key was set correctly in the game object
-                          final apiKey = widget.game.getAiApiKey(aiImageProvider);
-                          if (apiKey != null) {
-                            LoggingService().debug(
-                              'API key for $aiImageProvider was set successfully with length: ${apiKey.length}',
-                              tag: 'AiImageGenerationSettingsWidget'
-                            );
-                          } else {
-                            LoggingService().warning(
-                              'Failed to set API key for $aiImageProvider',
-                              tag: 'AiImageGenerationSettingsWidget'
-                            );
-                          }
                         } else {
-                          widget.gameProvider.removeAiApiKey(aiImageProvider);
+                          LoggingService().warning(
+                            'Failed to set API key for $aiImageProvider',
+                            tag: 'AiImageGenerationSettingsWidget'
+                          );
                         }
-                        
-                        if (widget.onSettingsChanged != null) {
-                          widget.onSettingsChanged!();
-                        }
+                      } else {
+                        widget.gameProvider.removeAiApiKey(aiImageProvider);
                       }
+                      
+                      if (widget.onSettingsChanged != null) {
+                        widget.onSettingsChanged!();
+                      }
+                    
                     },
                   ),
                 ),
@@ -375,36 +374,35 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                           }
                         });
                         _notifyNewGameSettingsChanged();
-                      } else if (aiImageProvider != null) {
-                        if (value.isNotEmpty) {
-                          // Log the artistic direction before updating
+                      } else                      if (value.isNotEmpty) {
+                        // Log the artistic direction before updating
+                        LoggingService().debug(
+                          'Setting artistic direction for $aiImageProvider',
+                          tag: 'AiImageGenerationSettingsWidget'
+                        );
+                        
+                        // Update the artistic direction in the game provider
+                        widget.gameProvider.updateAiArtisticDirection(aiImageProvider, value);
+                        
+                        // Verify the artistic direction was set correctly in the game object
+                        final artisticDirection = widget.game.getAiArtisticDirection(aiImageProvider);
+                        if (artisticDirection != null) {
                           LoggingService().debug(
-                            'Setting artistic direction for $aiImageProvider',
+                            'Artistic direction for $aiImageProvider was set successfully',
                             tag: 'AiImageGenerationSettingsWidget'
                           );
-                          
-                          // Update the artistic direction in the game provider
-                          widget.gameProvider.updateAiArtisticDirection(aiImageProvider, value);
-                          
-                          // Verify the artistic direction was set correctly in the game object
-                          final artisticDirection = widget.game.getAiArtisticDirection(aiImageProvider);
-                          if (artisticDirection != null) {
-                            LoggingService().debug(
-                              'Artistic direction for $aiImageProvider was set successfully',
-                              tag: 'AiImageGenerationSettingsWidget'
-                            );
-                          } else {
-                            LoggingService().warning(
-                              'Failed to set artistic direction for $aiImageProvider',
-                              tag: 'AiImageGenerationSettingsWidget'
-                            );
-                          }
-                        }
-                        
-                        if (widget.onSettingsChanged != null) {
-                          widget.onSettingsChanged!();
+                        } else {
+                          LoggingService().warning(
+                            'Failed to set artistic direction for $aiImageProvider',
+                            tag: 'AiImageGenerationSettingsWidget'
+                          );
                         }
                       }
+                      
+                      if (widget.onSettingsChanged != null) {
+                        widget.onSettingsChanged!();
+                      }
+                    
                     },
                   ),
                 ),

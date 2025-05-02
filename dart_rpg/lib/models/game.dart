@@ -34,6 +34,9 @@ class Game {
   String? openaiModel; // e.g., "dall-e-2", "dall-e-3", or "gpt-image-1"
   Map<String, String> aiApiKeys = {}; // Store keys for different providers
   Map<String, String> aiArtisticDirections = {}; // Store artistic directions for different providers
+  
+  // World Truths settings
+  Map<String, String?> selectedTruths = {}; // Maps truth ID to selected option ID (or null if none selected)
 
   Game({
     String? id,
@@ -58,6 +61,7 @@ class Game {
     this.openaiModel = 'dall-e-2',
     Map<String, String>? aiApiKeys,
     Map<String, String>? aiArtisticDirections,
+    Map<String, String?>? selectedTruths,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now(),
         lastPlayedAt = lastPlayedAt ?? DateTime.now(),
@@ -80,6 +84,15 @@ class Game {
       this.aiArtisticDirections = Map<String, String>.from(aiArtisticDirections);
       LoggingService().debug(
         'Initialized Game with artistic directions: ${this.aiArtisticDirections.keys.join(", ")}',
+        tag: 'Game'
+      );
+    }
+    
+    // Initialize selectedTruths if provided
+    if (selectedTruths != null) {
+      this.selectedTruths = Map<String, String?>.from(selectedTruths);
+      LoggingService().debug(
+        'Initialized Game with ${this.selectedTruths.length} selected truths',
         tag: 'Game'
       );
     }
@@ -169,6 +182,7 @@ class Game {
       'openaiModel': openaiModel,
       'aiApiKeys': apiKeysJson,
       'aiArtisticDirections': artisticDirectionsJson,
+      'selectedTruths': selectedTruths,
     };
     
     // Verify aiApiKeys is in the JSON
@@ -213,6 +227,38 @@ class Game {
     } catch (e) {
       loggingService.error(
         'Failed to parse artistic directions from JSON',
+        tag: 'Game',
+        error: e,
+        stackTrace: StackTrace.current
+      );
+      return {};
+    }
+  }
+  
+  // Helper method to parse selected truths from JSON
+  static Map<String, String?> _parseSelectedTruths(dynamic selectedTruthsJson) {
+    final loggingService = LoggingService();
+    
+    if (selectedTruthsJson == null) {
+      loggingService.debug('No selected truths found in JSON', tag: 'Game');
+      return {};
+    }
+    
+    try {
+      // First, convert to a Map<String, dynamic>
+      final Map<String, dynamic> dynamicMap = Map<String, dynamic>.from(selectedTruthsJson);
+      
+      // Then, convert to a Map<String, String?>
+      final Map<String, String?> truthsMap = {};
+      dynamicMap.forEach((key, value) {
+        truthsMap[key] = value as String?;
+        loggingService.debug('Parsed selected truth: $key -> $value', tag: 'Game');
+      });
+      
+      return truthsMap;
+    } catch (e) {
+      loggingService.error(
+        'Failed to parse selected truths from JSON',
         tag: 'Game',
         error: e,
         stackTrace: StackTrace.current
@@ -282,6 +328,7 @@ class Game {
       openaiModel: json['openaiModel'] ?? 'dall-e-2',
       aiApiKeys: _parseApiKeys(json['aiApiKeys']),
       aiArtisticDirections: _parseArtisticDirections(json['aiArtisticDirections']),
+      selectedTruths: _parseSelectedTruths(json['selectedTruths']),
     );
   }
 
@@ -643,5 +690,28 @@ class Game {
       return aiArtisticDirections[aiImageProvider!]!;
     }
     return "cyberpunk scene, digital art, detailed illustration";
+  }
+  
+  // Truth-related methods
+  
+  // Set a truth option
+  void setTruth(String truthId, String? optionId) {
+    final loggingService = LoggingService();
+    loggingService.debug(
+      'Setting truth $truthId to option $optionId',
+      tag: 'Game'
+    );
+    
+    selectedTruths[truthId] = optionId;
+  }
+  
+  // Get the selected option for a truth
+  String? getSelectedTruthOption(String truthId) {
+    return selectedTruths[truthId];
+  }
+  
+  // Clear all selected truths
+  void clearAllTruths() {
+    selectedTruths.clear();
   }
 }

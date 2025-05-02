@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../models/move.dart';
 import '../models/oracle.dart';
 import '../models/character.dart';
+import '../models/truth.dart';
 import '../utils/logging_service.dart';
 
 class DataswornParser {
@@ -377,6 +378,40 @@ class DataswornParser {
     });
       
     return controls;
+  }
+
+  // Parse truths from the Datasworn JSON
+  static List<Truth> parseTruths(Map<String, dynamic> datasworn) {
+    final loggingService = LoggingService();
+    final List<Truth> truths = [];
+    
+    if (datasworn.containsKey('truths')) {
+      loggingService.debug('Found truths section in JSON', tag: 'DataswornParser');
+      final truthsJson = datasworn['truths'] as Map<String, dynamic>;
+      
+      truthsJson.forEach((truthId, truthJson) {
+        if (truthJson['type'] == 'truth') {
+          try {
+            final truth = Truth.fromJson(truthId, truthJson);
+            truths.add(truth);
+            loggingService.debug('Parsed truth: ${truth.name} with ${truth.options.length} options', tag: 'DataswornParser');
+          } catch (e) {
+            loggingService.error(
+              'Failed to parse truth "$truthId": ${e.toString()}',
+              tag: 'DataswornParser',
+              error: e,
+              stackTrace: StackTrace.current
+            );
+          }
+        }
+      });
+      
+      loggingService.debug('Parsed ${truths.length} truths', tag: 'DataswornParser');
+    } else {
+      loggingService.debug('No truths section found in JSON', tag: 'DataswornParser');
+    }
+    
+    return truths;
   }
 
   // Parse assets from the Datasworn JSON

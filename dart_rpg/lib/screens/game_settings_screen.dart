@@ -4,6 +4,7 @@ import '../providers/game_provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../widgets/sentient_ai_settings_widget.dart';
 import '../widgets/ai_image_generation_settings_widget.dart';
+import '../widgets/truths_widget.dart';
 
 class GameSettingsScreen extends StatefulWidget {
   const GameSettingsScreen({super.key});
@@ -38,12 +39,22 @@ class _GameSettingsScreenState extends State<GameSettingsScreen> {
                 subtitle: Text(game.name),
               ),
               
+              // World Truths settings
+              TruthsWidget(
+                game: game,
+                gameProvider: gameProvider,
+                truths: dataswornProvider.truths,
+                initiallyExpanded: true,
+                showDividers: true,
+                showHelpText: true,
+              ),
+              
               // Sentient AI settings
               SentientAiSettingsWidget(
                 game: game,
                 gameProvider: gameProvider,
                 dataswornProvider: dataswornProvider,
-                initiallyExpanded: true,
+                initiallyExpanded: false,
                 showDividers: true,
                 showHelpText: true,
               ),

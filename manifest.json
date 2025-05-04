@@ -8,6 +8,7 @@
     "description": "A digital companion for the Fe-Runners hacking-themed RPG.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
+    "offline_enabled": true,
     "icons": [
         {
             "src": "icons/Icon-192.png",

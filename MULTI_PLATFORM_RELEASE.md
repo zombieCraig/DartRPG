@@ -91,7 +91,8 @@ The multi-platform release workflow has been updated to address several issues:
    - Updated the Windows build path to include the `x64` directory: `build/windows/x64/runner/Release`
    - Added directory verification to provide better error messages if the path is incorrect
    - Added directory listing to help diagnose path issues
-   - Fixed PowerShell packaging command to use absolute paths instead of relative paths
+   - Fixed PowerShell packaging command to use environment variables for paths (`$env:GITHUB_WORKSPACE`)
+   - Improved path handling to ensure compatibility across different GitHub runner environments
    - Added detailed logging throughout the packaging process
    - Implemented robust verification to ensure the artifact is created successfully
    - Added explicit error handling for each step of the packaging process

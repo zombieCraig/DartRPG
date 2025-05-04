@@ -22,6 +22,19 @@ This work enhances the overall architecture of the application, making it more m
 
 ## Recent Changes
 
+### Windows GitHub Actions Workflow Fix (May 2025)
+- ✅ Fixed issue with Windows artifact packaging in the GitHub Actions workflow:
+  - Updated the PowerShell command to use environment variables for paths (`$env:GITHUB_WORKSPACE`)
+  - Improved path handling to ensure compatibility across different GitHub runner environments
+  - Added detailed logging throughout the packaging process to improve debugging
+  - Implemented robust verification to ensure the artifact is created successfully
+  - Added explicit error handling for each step of the packaging process
+  - Modified the following files:
+    - `.github/workflows/multi-platform-release.yml`: Updated Windows packaging section
+    - `MULTI_PLATFORM_RELEASE.md`: Updated documentation to reflect the changes
+  - This fix ensures that Windows builds are properly packaged and uploaded as release artifacts
+  - Improved the reliability of the multi-platform release process
+
 ### Offline Support Implementation (May 2025)
 - ✅ Implemented comprehensive offline support for the web application:
   - Created a service worker (service-worker.js) to cache essential assets and data files

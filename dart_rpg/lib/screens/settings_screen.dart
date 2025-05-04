@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../providers/settings_provider.dart';
 import '../utils/logging_service.dart';
 import '../services/tutorial_service.dart';
@@ -11,8 +12,36 @@ import 'log_viewer_screen.dart';
 import 'changelog_screen.dart';
 import 'book_overview_screen.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  String _appVersion = '';
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadAppInfo();
+  }
+  
+  Future<void> _loadAppInfo() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      setState(() {
+        // Extract version without build number (e.g., "1.2.3+45" -> "1.2.3")
+        _appVersion = packageInfo.version.split('+')[0];
+      });
+    } catch (e) {
+      LoggingService().error('Failed to load app info: $e', tag: 'SettingsScreen');
+      setState(() {
+        _appVersion = '0.0.2'; // Fallback to a default version if loading fails
+      });
+    }
+  }
   
   // Method to show a preview of the selected transition
   static void _showTransitionPreview(BuildContext context, TransitionType type) {
@@ -350,9 +379,9 @@ class SettingsScreen extends StatelessWidget {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              const ListTile(
-                title: Text('Fe-Runners Solo RPG'),
-                subtitle: Text('Version 0.0.2'),
+              ListTile(
+                title: const Text('Fe-Runners Solo RPG'),
+                subtitle: Text('Version $_appVersion'),
               ),
               ListTile(
                 title: const Text('Changelog'),

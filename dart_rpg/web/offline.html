@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fe-Runners RPG - Offline</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #00FFFF;
+      font-family: 'Courier New', monospace;
+      text-align: center;
+      padding: 20px;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    p {
+      font-size: 16px;
+      line-height: 1.5;
+      margin-bottom: 15px;
+    }
+    .icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+    .retry-button {
+      background-color: #00FFFF;
+      color: #121212;
+      border: none;
+      padding: 10px 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">⚠️</div>
+    <h1>OFFLINE MODE ACTIVATED</h1>
+    <p>You are currently offline. Fe-Runners RPG will use cached data to continue functioning.</p>
+    <p>Some features may be limited until you reconnect to the network.</p>
+    <button class="retry-button" onclick="window.location.reload()">RETRY CONNECTION</button>
+  </div>
+</body>
+</html>

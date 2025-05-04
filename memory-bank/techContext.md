@@ -58,7 +58,7 @@
 
 ### Platform Limitations
 - **Mobile-First Design**: Optimized for mobile devices, may require adjustments for desktop/web
-- **Offline-First**: Designed to work without internet connectivity
+- **Offline-First**: Designed to work without internet connectivity, with comprehensive service worker implementation for web
 - **Storage Limits**: SharedPreferences has size limitations for storing large datasets
 
 ### Performance Considerations

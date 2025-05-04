@@ -15,14 +15,14 @@ class TruthsWidget extends StatefulWidget {
   final bool showHelpText;
 
   const TruthsWidget({
-    Key? key,
+    super.key,
     required this.game,
     required this.gameProvider,
     required this.truths,
     this.initiallyExpanded = false,
     this.showDividers = true,
     this.showHelpText = true,
-  }) : super(key: key);
+  });
 
   @override
   State<TruthsWidget> createState() => _TruthsWidgetState();

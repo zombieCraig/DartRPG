@@ -127,11 +127,46 @@ jobs:
           elif [ "${{ matrix.platform }}" == "Windows" ]; then
             # Verify the directory exists before accessing it
             if [ -d "dart_rpg/${{ matrix.build_path }}" ]; then
+              # Save the absolute path to the repository root
+              REPO_ROOT="$(pwd)"
+              echo "Repository root: ${REPO_ROOT}"
+              
               cd dart_rpg/${{ matrix.build_path }}
-              # Use a more robust PowerShell command with proper quoting to handle multiple files
-              powershell "New-Item -ItemType Directory -Path temp_dir; Copy-Item -Path * -Destination temp_dir -Recurse -Exclude 'temp_dir'; Compress-Archive -Path temp_dir -DestinationPath '../../../../${ARTIFACT_NAME}'; Remove-Item -Path temp_dir -Recurse -Force"
-
-              cd ../../../../
+              echo "Build directory: $(pwd)"
+              
+              # Use a more robust PowerShell command with absolute paths
+              powershell -Command "
+                Write-Host 'Creating temp directory for packaging...'
+                New-Item -ItemType Directory -Path temp_dir -Force
+                
+                Write-Host 'Copying files to temp directory...'
+                Copy-Item -Path * -Destination temp_dir -Recurse -Exclude 'temp_dir'
+                
+                Write-Host 'Creating zip archive...'
+                \$ArtifactPath = Join-Path -Path '${REPO_ROOT}' -ChildPath '${ARTIFACT_NAME}'
+                Write-Host 'Artifact will be created at: ' \$ArtifactPath
+                
+                Compress-Archive -Path temp_dir/* -DestinationPath \$ArtifactPath -Force
+                
+                Write-Host 'Cleaning up temp directory...'
+                Remove-Item -Path temp_dir -Recurse -Force
+                
+                Write-Host 'Verifying artifact was created...'
+                if (Test-Path \$ArtifactPath) {
+                    Write-Host 'Artifact created successfully: ' \$ArtifactPath
+                    Get-Item \$ArtifactPath | Format-List
+                } else {
+                    Write-Host 'ERROR: Artifact was not created: ' \$ArtifactPath
+                    exit 1
+                }
+              "
+              
+              # Return to repository root
+              cd "${REPO_ROOT}"
+              
+              # Additional verification from bash
+              echo "Checking for artifact at: ${REPO_ROOT}/${ARTIFACT_NAME}"
+              ls -la "${ARTIFACT_NAME}" || { echo "File not found: ${ARTIFACT_NAME}"; exit 1; }
             else
               echo "Error: Directory dart_rpg/${{ matrix.build_path }} does not exist"
               echo "Listing available directories:"

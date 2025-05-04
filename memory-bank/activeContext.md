@@ -22,6 +22,42 @@ This work enhances the overall architecture of the application, making it more m
 
 ## Recent Changes
 
+### Offline Support Implementation (May 2025)
+- ✅ Implemented comprehensive offline support for the web application:
+  - Created a service worker (service-worker.js) to cache essential assets and data files
+  - Updated web/index.html to register the service worker during page load
+  - Enhanced manifest.json with offline_enabled: true to properly support PWA installation
+  - Created an offline.html fallback page with Fe-Runners styling
+  - Ensured all critical game data files are properly cached, including:
+    - fe_runners.json (the main datasworn source)
+    - custom_oracles.json
+    - changelog.json
+    - overview.md
+    - All sentient AI images
+  - Implemented different caching strategies based on request type:
+    - Cache-first for critical data files
+    - Network-first with cache fallback for regular requests
+    - Offline page fallback when network is unavailable and content isn't cached
+  - Fixed issue where users who install the app as a PWA couldn't use it offline
+  - Modified the following files:
+    - `dart_rpg/web/service-worker.js`: Created new file for offline caching
+    - `dart_rpg/web/index.html`: Updated to register the service worker
+    - `dart_rpg/web/manifest.json`: Enhanced with offline support
+    - `dart_rpg/web/offline.html`: Created new file for offline fallback
+  - This implementation ensures that users can continue using the Fe-Runners RPG app even without an internet connection
+
+### Windows GitHub Actions Workflow Fix (May 2025)
+- ✅ Fixed issue with Windows artifact packaging in the GitHub Actions workflow:
+  - Updated the PowerShell command to use absolute paths instead of relative paths
+  - Added detailed logging throughout the packaging process to improve debugging
+  - Implemented robust verification to ensure the artifact is created successfully
+  - Added explicit error handling for each step of the packaging process
+  - Modified the following files:
+    - `.github/workflows/multi-platform-release.yml`: Updated Windows packaging section
+    - `MULTI_PLATFORM_RELEASE.md`: Updated documentation to reflect the changes
+  - This fix ensures that Windows builds are properly packaged and uploaded as release artifacts
+  - Improved the reliability of the multi-platform release process
+
 ### Web Image Handling Fix (May 2025)
 - ✅ Fixed issue with image selection on web platforms:
   - Created a platform-agnostic approach for handling images:

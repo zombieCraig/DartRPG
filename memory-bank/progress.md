@@ -297,6 +297,7 @@ The DartRPG application is in active development with core functionality impleme
 - None currently identified
 
 ### High Priority
+- ✅ **Offline Support**: Fixed issue where users who install the app as a PWA couldn't use it offline by implementing a comprehensive service worker solution
 - **Graph Performance**: Large networks may experience performance issues
 - **Position Persistence**: Position saving may not work perfectly in all scenarios
 - **Data Size Limitations**: SharedPreferences may have issues with very large game datasets

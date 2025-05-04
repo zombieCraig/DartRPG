@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:file_picker/file_picker.dart';
 import '../providers/game_provider.dart';
 import '../models/journal_entry.dart';
 import '../models/session.dart';
@@ -157,15 +160,28 @@ class _JournalScreenState extends State<JournalScreen> {
                     )
                   : Column(
                       children: [
-                        // Add new entry button
+                        // Add new entry and export buttons
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: ElevatedButton.icon(
-                            icon: const Icon(Icons.add),
-                            label: const Text('New Journal Entry'),
-                            onPressed: () {
-                              _navigateToNewEntry(context, gameProvider);
-                            },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ElevatedButton.icon(
+                                icon: const Icon(Icons.add),
+                                label: const Text('New Journal Entry'),
+                                onPressed: () {
+                                  _navigateToNewEntry(context, gameProvider);
+                                },
+                              ),
+                              const SizedBox(width: 8.0),
+                              IconButton(
+                                icon: const Icon(Icons.ios_share),
+                                tooltip: 'Export Session',
+                                onPressed: () {
+                                  _showExportDialog(context, gameProvider);
+                                },
+                              ),
+                            ],
                           ),
                         ),
                         
@@ -434,5 +450,254 @@ class _JournalScreenState extends State<JournalScreen> {
         ),
       ),
     );
+  }
+  
+  void _showExportDialog(BuildContext context, GameProvider gameProvider) {
+    final currentSession = gameProvider.currentSession;
+    if (currentSession == null || currentSession.entries.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No entries to export'),
+        ),
+      );
+      return;
+    }
+
+    String selectedFormat = 'Markdown';
+    bool includeLinkedItems = false;
+    bool exportToClipboard = false;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Export Session'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Format dropdown
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      labelText: 'Export Format',
+                    ),
+                    value: selectedFormat,
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          selectedFormat = newValue;
+                        });
+                      }
+                    },
+                    items: ['Markdown'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Include linked items checkbox
+                  CheckboxListTile(
+                    title: const Text('Include Embedded Linked Items'),
+                    value: includeLinkedItems,
+                    onChanged: (bool? value) {
+                      setState(() {
+                        includeLinkedItems = value ?? false;
+                      });
+                    },
+                    controlAffinity: ListTileControlAffinity.leading,
+                  ),
+                  
+                  // Export to clipboard checkbox (only for Markdown)
+                  if (selectedFormat == 'Markdown')
+                    CheckboxListTile(
+                      title: const Text('Export to Clipboard'),
+                      value: exportToClipboard,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          exportToClipboard = value ?? false;
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                    ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _exportSession(
+                      context,
+                      gameProvider,
+                      format: selectedFormat,
+                      includeLinkedItems: includeLinkedItems,
+                      exportToClipboard: exportToClipboard,
+                    );
+                  },
+                  child: const Text('Export'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+  
+  Future<void> _exportSession(
+    BuildContext context,
+    GameProvider gameProvider, {
+    required String format,
+    required bool includeLinkedItems,
+    required bool exportToClipboard,
+  }) async {
+    final currentSession = gameProvider.currentSession;
+    if (currentSession == null || currentSession.entries.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No entries to export'),
+        ),
+      );
+      return;
+    }
+
+    try {
+      // Generate markdown content
+      final markdown = _generateMarkdownContent(
+        gameProvider,
+        currentSession,
+        includeLinkedItems: includeLinkedItems,
+      );
+
+      if (exportToClipboard) {
+        // Export to clipboard
+        await Clipboard.setData(ClipboardData(text: markdown));
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Session exported to clipboard'),
+            ),
+          );
+        }
+      } else {
+        // Export to file
+        final result = await FilePicker.platform.saveFile(
+          dialogTitle: 'Save Markdown File',
+          fileName: '${currentSession.title.replaceAll(' ', '_')}.md',
+        );
+        
+        if (result != null) {
+          final file = File(result);
+          await file.writeAsString(markdown);
+          
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Session exported to: $result'),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to export session: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  String _generateMarkdownContent(
+    GameProvider gameProvider,
+    Session session, {
+    required bool includeLinkedItems,
+  }) {
+    final currentGame = gameProvider.currentGame!;
+    final buffer = StringBuffer();
+    
+    // Add title
+    buffer.writeln('# ${session.title}');
+    buffer.writeln();
+    
+    // Add entries
+    for (final entry in session.entries) {
+      buffer.writeln(entry.content);
+      buffer.writeln();
+      
+      // Add linked items if requested
+      if (includeLinkedItems) {
+        // Add linked characters
+        if (entry.linkedCharacterIds.isNotEmpty) {
+          buffer.writeln('**Characters:**');
+          for (final characterId in entry.linkedCharacterIds) {
+            try {
+              final character = currentGame.characters.firstWhere(
+                (c) => c.id == characterId,
+              );
+              buffer.writeln('- ${character.name}');
+            } catch (_) {
+              // Character not found, skip
+            }
+          }
+          buffer.writeln();
+        }
+        
+        // Add linked locations
+        if (entry.linkedLocationIds.isNotEmpty) {
+          buffer.writeln('**Locations:**');
+          for (final locationId in entry.linkedLocationIds) {
+            try {
+              final location = currentGame.locations.firstWhere(
+                (l) => l.id == locationId,
+              );
+              buffer.writeln('- ${location.name}');
+            } catch (_) {
+              // Location not found, skip
+            }
+          }
+          buffer.writeln();
+        }
+        
+        // Add move rolls
+        if (entry.moveRolls.isNotEmpty) {
+          buffer.writeln('**Moves:**');
+          for (final moveRoll in entry.moveRolls) {
+            buffer.writeln('- ${moveRoll.moveName}: ${moveRoll.outcome}');
+          }
+          buffer.writeln();
+        }
+        
+        // Add oracle rolls
+        if (entry.oracleRolls.isNotEmpty) {
+          buffer.writeln('**Oracles:**');
+          for (final oracleRoll in entry.oracleRolls) {
+            buffer.writeln('- ${oracleRoll.oracleName}: ${oracleRoll.result}');
+          }
+          buffer.writeln();
+        }
+      }
+      
+      // Add separator between entries
+      buffer.writeln('---');
+      buffer.writeln();
+    }
+    
+    return buffer.toString();
   }
 }

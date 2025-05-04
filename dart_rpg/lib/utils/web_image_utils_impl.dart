@@ -1,11 +1,8 @@
 // This file contains the web-specific implementation of image utilities
 // It's only imported and used on web platforms
 
-import 'dart:async';
 import 'dart:html' as html;
 import 'dart:typed_data';
-import 'package:image_picker/image_picker.dart' as picker;
-import '../models/app_image.dart';
 import '../utils/logging_service.dart';
 import 'image_utils.dart';
 

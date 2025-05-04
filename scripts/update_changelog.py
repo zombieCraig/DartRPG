@@ -3,6 +3,7 @@ import re
 import json
 import os
 import sys
+import argparse
 from datetime import datetime
 from collections import defaultdict
 
@@ -245,6 +246,35 @@ def update_changelog(changes, version):
     
     print(f"Updated changelog with {len(summarized_changes)} changes for version {version}")
 
+def show_detailed_help():
+    """Display detailed information about how the script works."""
+    help_text = """
+DETAILED INFORMATION
+
+This script automates the process of updating the changelog.json file with changes
+extracted from memory-bank files. It performs the following steps:
+
+1. Extracts recent changes from:
+   - memory-bank/activeContext.md (from the "Recent Changes" section)
+   - memory-bank/progress.md (from the "Recently Completed" section)
+
+2. Processes and summarizes these changes:
+   - Categorizes changes into Features, Improvements, Bug Fixes, etc.
+   - Groups related changes together
+   - Formats them for the changelog
+
+3. Updates the changelog.json file:
+   - Located at dart_rpg/assets/data/changelog.json
+   - Adds a new version entry with the current date
+   - Preserves existing changelog entries
+
+4. Can also extract formatted changelog content for GitHub release descriptions
+
+The script looks for completed items marked with checkmarks (✅) in the memory-bank
+files and processes them into a structured changelog format.
+"""
+    print(help_text)
+
 def extract_changelog_for_release(version):
     """Extract changelog content for GitHub release description."""
     changelog_path = 'dart_rpg/assets/data/changelog.json'
@@ -276,17 +306,71 @@ def extract_changelog_for_release(version):
     except Exception as e:
         return f"## Version {version}\n\nError extracting changelog: {e}"
 
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: update_changelog.py <version> [--extract-only]")
-        sys.exit(1)
+def main():
+    """Main function to handle command line arguments and execute the script."""
+    parser = argparse.ArgumentParser(
+        description="Update the changelog.json file with changes extracted from memory-bank files.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Update changelog with version 1.2.0
+  python update_changelog.py 1.2.0
+  
+  # Extract changelog for version 1.2.0 (for GitHub release)
+  python update_changelog.py 1.2.0 --extract-only
+  
+  # Show what would be added without updating the file
+  python update_changelog.py 1.2.0 --dry-run
+  
+  # Show detailed information about how the script works
+  python update_changelog.py --info
+  
+  # Show this help message
+  python update_changelog.py --help
+        """
+    )
     
-    version = sys.argv[1]
-    extract_only = len(sys.argv) > 2 and sys.argv[2] == "--extract-only"
+    # Add an optional group for the info flag
+    info_group = parser.add_mutually_exclusive_group()
+    info_group.add_argument(
+        "--info",
+        action="store_true",
+        help="Display detailed information about how the script works"
+    )
     
-    if extract_only:
+    # Make version optional if --info is used
+    parser.add_argument(
+        "version", 
+        nargs="?",  # Make it optional
+        help="Version number to use for the changelog entry (e.g., 1.2.0)"
+    )
+    
+    parser.add_argument(
+        "--extract-only", 
+        action="store_true",
+        help="Extract and print the changelog for the specified version (for GitHub release descriptions)"
+    )
+    
+    parser.add_argument(
+        "--dry-run", 
+        action="store_true",
+        help="Process changes but don't write to changelog.json file"
+    )
+    
+    args = parser.parse_args()
+    
+    # Handle the info flag first
+    if args.info:
+        show_detailed_help()
+        return
+    
+    # Check if version is provided for other operations
+    if not args.version:
+        parser.error("the following arguments are required: version")
+    
+    if args.extract_only:
         # Just extract and print the changelog for the release description
-        print(extract_changelog_for_release(version))
+        print(extract_changelog_for_release(args.version))
     else:
         # Update the changelog with new changes
         changes = extract_changes_from_memory_bank()
@@ -296,4 +380,14 @@ if __name__ == "__main__":
             # Create a minimal change entry instead of exiting with error
             changes = ["Maintenance update"]
         
-        update_changelog(changes, version)
+        if args.dry_run:
+            # Just show what would be added without updating the file
+            summarized_changes = summarize_changes(changes)
+            print(f"Would update changelog with {len(summarized_changes)} changes for version {args.version}:")
+            for change in summarized_changes:
+                print(f"  {change}")
+        else:
+            update_changelog(changes, args.version)
+
+if __name__ == "__main__":
+    main()

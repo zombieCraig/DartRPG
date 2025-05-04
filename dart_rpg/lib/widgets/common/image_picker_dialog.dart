@@ -9,7 +9,6 @@ import '../../providers/ai_image_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/image_manager_provider.dart';
 import '../../utils/logging_service.dart';
-import '../../utils/image_utils.dart';
 
 /// A dialog for picking images from different sources.
 class ImagePickerDialog extends StatefulWidget {

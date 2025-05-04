@@ -237,6 +237,68 @@ The Quest and Clock system follows these key architectural patterns:
 - JSON serialization for complex objects
 - Structured storage keys for organizing data
 - Quest data is serialized as part of the Game object
+- Service worker implementation for web offline support
+
+### Web Offline Support Architecture
+The application implements a comprehensive offline support solution for web using a service worker:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   Service Worker                        │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              Install Event Handler               │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ Cache Core Assets│  │ Cache Critical Data │   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  └──────────────────────────────────────────────────┘   │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              Activate Event Handler              │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ Clean Old Caches│  │ Claim Clients       │   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  └──────────────────────────────────────────────────┘   │
+│                                                         │
+│  ┌─────────────────────────────────────────────────┐   │
+│  │              Fetch Event Handler                 │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ Request Routing │  │ Caching Strategies  │   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  │  ┌─────────────────┐  ┌─────────────────────┐   │   │
+│  │  │ Offline Fallback│  │ Error Handling      │   │   │
+│  │  └─────────────────┘  └─────────────────────┘   │   │
+│  └──────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────┘
+```
+
+1. **Component Responsibilities**:
+   - `Install Event Handler`: Caches core assets and critical data files when the service worker is installed
+   - `Activate Event Handler`: Cleans up old caches and claims clients when the service worker is activated
+   - `Fetch Event Handler`: Intercepts network requests and applies appropriate caching strategies
+
+2. **Caching Strategies**:
+   - `Cache-First`: For critical data files, check the cache first and only fetch from network if not found
+   - `Network-First`: For regular requests, try the network first and fall back to cache if offline
+   - `Offline Fallback`: Serve a custom offline page when network is unavailable and content isn't cached
+
+3. **Key Files**:
+   - `service-worker.js`: The main service worker implementation
+   - `index.html`: Contains the service worker registration script
+   - `manifest.json`: Includes offline_enabled: true for proper PWA support
+   - `offline.html`: Custom offline fallback page
+
+4. **Process Flow**:
+   - When the app is first loaded online, the service worker is registered and installed
+   - During installation, core assets and critical data files are cached
+   - When the user goes offline, the service worker intercepts requests and serves cached content
+   - If a requested resource isn't cached, the offline fallback page is shown
+
+5. **Benefits**:
+   - **Complete Offline Support**: Users can use the app even without internet connection
+   - **Improved Performance**: Cached resources load faster than network requests
+   - **Better User Experience**: Custom offline page instead of browser's default offline message
+   - **Resilience**: App continues to function during intermittent connectivity issues
 
 ### Error Handling and Logging Approach
 - Comprehensive logging system with different log levels (debug, info, warning, error)

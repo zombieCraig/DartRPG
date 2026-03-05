@@ -372,44 +372,32 @@ class _OraclesScreenState extends State<OraclesScreen> {
     super.dispose();
   }
   
+  List<OracleTable> _filterOracleTables(List<OracleCategory> categories, String query) {
+    if (query.isEmpty) return [];
+    bool matches(OracleTable table) =>
+        table.name.toLowerCase().contains(query) ||
+        (table.description?.toLowerCase().contains(query) ?? false);
+
+    return categories
+        .expand((cat) => [...cat.tables, ...cat.subcategories.expand((sub) => sub.tables)])
+        .where(matches)
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer2<DataswornProvider, GameProvider>(
       builder: (context, dataswornProvider, gameProvider, _) {
         final categories = dataswornProvider.oracles;
-        
+
         if (categories.isEmpty) {
           return const Center(
             child: Text('No oracle categories available'),
           );
         }
-        
-        // Filter oracles by search query if provided
-        List<OracleTable> filteredTables = [];
-        if (_searchQuery.isNotEmpty) {
-          for (final category in categories) {
-            // Add tables from this category
-            filteredTables.addAll(
-              category.tables.where((table) => 
-                table.name.toLowerCase().contains(_searchQuery) ||
-                (table.description?.toLowerCase().contains(_searchQuery) ?? false)
-              )
-            );
-            
-            // Add tables from subcategories
-            if (category.subcategories.isNotEmpty) {
-              for (final subcategory in category.subcategories) {
-                filteredTables.addAll(
-                  subcategory.tables.where((table) => 
-                    table.name.toLowerCase().contains(_searchQuery) ||
-                    (table.description?.toLowerCase().contains(_searchQuery) ?? false)
-                  )
-                );
-              }
-            }
-          }
-        }
-        
+
+        final filteredTables = _filterOracleTables(categories, _searchQuery);
+
         return Column(
           children: [
             // Search bar

@@ -73,7 +73,17 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
     _tabController.dispose();
     super.dispose();
   }
-  
+
+  Map<QuestStatus, List<Quest>> _getQuestsByStatus(game) {
+    final characterQuests = _selectedCharacterId != null
+        ? game.getQuestsForCharacter(_selectedCharacterId!)
+        : <Quest>[];
+    return {
+      for (final status in QuestStatus.values)
+        status: characterQuests.where((q) => q.status == status).toList(),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<GameProvider>(
@@ -92,21 +102,7 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
           _selectedCharacterId = charactersWithStats.first.id;
         }
         
-        // Get quests for the selected character
-        final characterQuests = _selectedCharacterId != null
-            ? game.getQuestsForCharacter(_selectedCharacterId!)
-            : <Quest>[];
-        
-        // Filter quests by status
-        final ongoingQuests = characterQuests
-            .where((q) => q.status == QuestStatus.ongoing)
-            .toList();
-        final completedQuests = characterQuests
-            .where((q) => q.status == QuestStatus.completed)
-            .toList();
-        final forsakenQuests = characterQuests
-            .where((q) => q.status == QuestStatus.forsaken)
-            .toList();
+        final questsByStatus = _getQuestsByStatus(game);
         
         // Ensure the services are initialized
         _questService = QuestService(gameProvider: gameProvider);
@@ -159,23 +155,23 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
                   children: [
                     // Ongoing quests tab
                     QuestTabList(
-                      quests: ongoingQuests,
+                      quests: questsByStatus[QuestStatus.ongoing]!,
                       characters: charactersWithStats,
                       questService: _questService,
                       status: QuestStatus.ongoing,
                     ),
-                    
+
                     // Completed quests tab
                     QuestTabList(
-                      quests: completedQuests,
+                      quests: questsByStatus[QuestStatus.completed]!,
                       characters: charactersWithStats,
                       questService: _questService,
                       status: QuestStatus.completed,
                     ),
-                    
+
                     // Forsaken quests tab
                     QuestTabList(
-                      quests: forsakenQuests,
+                      quests: questsByStatus[QuestStatus.forsaken]!,
                       characters: charactersWithStats,
                       questService: _questService,
                       status: QuestStatus.forsaken,

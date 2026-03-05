@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:collection/collection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
@@ -209,14 +210,11 @@ class GameProvider extends ChangeNotifier {
       // Load last played game
       final lastPlayedId = prefs.getString('lastPlayedGameId');
       if (lastPlayedId != null) {
-        try {
-          _currentGame = _games.firstWhere(
-            (game) => game.id == lastPlayedId,
-          );
-        } catch (e) {
-          if (_games.isNotEmpty) {
-            _currentGame = _games.first;
-          }
+        _currentGame = _games.firstWhereOrNull(
+          (game) => game.id == lastPlayedId,
+        );
+        if (_currentGame == null && _games.isNotEmpty) {
+          _currentGame = _games.first;
         }
         
         // Load last played session
@@ -360,8 +358,12 @@ class GameProvider extends ChangeNotifier {
 
   // Switch to a different game
   Future<void> switchGame(String gameId) async {
-    final game = _games.firstWhere((g) => g.id == gameId);
-    
+    final game = _games.firstWhereOrNull((g) => g.id == gameId);
+    if (game == null) {
+      LoggingService().warning('Game not found: $gameId', tag: 'GameProvider');
+      return;
+    }
+
     _currentGame = game;
     _currentGame!.updateLastPlayed();
     
@@ -371,23 +373,16 @@ class GameProvider extends ChangeNotifier {
       final lastSessionId = prefs.getString('lastSessionId_${_currentGame!.id}');
       
       if (lastSessionId != null) {
-        // Try to find the last selected session
-        try {
-          _currentSession = _currentGame!.sessions.firstWhere(
-            (session) => session.id == lastSessionId,
-          );
-        } catch (_) {
-          // If the last session can't be found, use the first session
-          _currentSession = _currentGame!.sessions.first;
-        }
+        _currentSession = _currentGame!.sessions.firstWhereOrNull(
+          (session) => session.id == lastSessionId,
+        ) ?? _currentGame!.sessions.first;
       } else {
-        // If no last session is saved, use the first session
         _currentSession = _currentGame!.sessions.first;
       }
     } else {
       _currentSession = null;
     }
-    
+
     await _saveGames();
     notifyListeners();
   }
@@ -395,27 +390,20 @@ class GameProvider extends ChangeNotifier {
   // Delete a game
   Future<void> deleteGame(String gameId) async {
     _games.removeWhere((g) => g.id == gameId);
-    
+
     if (_currentGame?.id == gameId) {
       _currentGame = _games.isNotEmpty ? _games.first : null;
-      
+
       // Try to load the last selected session for the new current game
       if (_currentGame != null && _currentGame!.sessions.isNotEmpty) {
         final prefs = await SharedPreferences.getInstance();
         final lastSessionId = prefs.getString('lastSessionId_${_currentGame!.id}');
-        
+
         if (lastSessionId != null) {
-          // Try to find the last selected session
-          try {
-            _currentSession = _currentGame!.sessions.firstWhere(
-              (session) => session.id == lastSessionId,
-            );
-          } catch (_) {
-            // If the last session can't be found, use the first session
-            _currentSession = _currentGame!.sessions.first;
-          }
+          _currentSession = _currentGame!.sessions.firstWhereOrNull(
+            (session) => session.id == lastSessionId,
+          ) ?? _currentGame!.sessions.first;
         } else {
-          // If no last session is saved, use the first session
           _currentSession = _currentGame!.sessions.first;
         }
       } else {
@@ -458,17 +446,17 @@ class GameProvider extends ChangeNotifier {
             if (assetsByCategory.containsKey('rig')) {
               final rigAssets = assetsByCategory['rig'];
               if (rigAssets != null && rigAssets.isNotEmpty) {
-                try {
-                  baseRig = rigAssets.firstWhere(
-                    (a) => a.id == "base_rig"
-                  );
+                baseRig = rigAssets.firstWhereOrNull(
+                  (a) => a.id == "base_rig"
+                );
+                if (baseRig != null) {
                   loggingService.debug(
                     'Found Base Rig asset in rig category: ${baseRig.name} (ID: ${baseRig.id})',
                     tag: 'GameProvider',
                   );
-                } catch (e) {
+                } else {
                   loggingService.warning(
-                    'Base Rig asset not found in rig category: ${e.toString()}',
+                    'Base Rig asset not found in rig category',
                     tag: 'GameProvider',
                   );
                 }
@@ -742,8 +730,13 @@ class GameProvider extends ChangeNotifier {
       throw Exception('No game selected');
     }
     
-    _currentSession = _currentGame!.sessions.firstWhere((s) => s.id == sessionId);
-    
+    final session = _currentGame!.sessions.firstWhereOrNull((s) => s.id == sessionId);
+    if (session == null) {
+      LoggingService().warning('Session not found: $sessionId', tag: 'GameProvider');
+      return;
+    }
+    _currentSession = session;
+
     await _saveGames();
     notifyListeners();
   }
@@ -768,7 +761,11 @@ class GameProvider extends ChangeNotifier {
       throw Exception('No game or session selected');
     }
     
-    final entry = _currentSession!.entries.firstWhere((e) => e.id == entryId);
+    final entry = _currentSession!.entries.firstWhereOrNull((e) => e.id == entryId);
+    if (entry == null) {
+      LoggingService().warning('Journal entry not found: $entryId', tag: 'GameProvider');
+      return;
+    }
     entry.update(content);
     
     await _saveGames();

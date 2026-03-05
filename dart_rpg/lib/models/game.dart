@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:collection/collection.dart';
 import 'package:uuid/uuid.dart';
 import '../utils/logging_service.dart';
 import 'character.dart';
@@ -290,13 +291,9 @@ class Game {
     Location? rigLoc;
     
     if (rigLocationId != null && locations.isNotEmpty) {
-      try {
-        rigLoc = locations.firstWhere(
-          (l) => l.id == rigLocationId,
-        );
-      } catch (_) {
-        // If rig location not found, don't set it
-      }
+      rigLoc = locations.firstWhereOrNull(
+        (l) => l.id == rigLocationId,
+      );
     }
 
     return Game(
@@ -457,16 +454,12 @@ class Game {
   // Connect two locations by their IDs
   void connectLocations(String sourceId, String targetId) {
     if (sourceId == targetId) return; // Can't connect to self
-    
-    final sourceLocation = locations.firstWhere(
-      (loc) => loc.id == sourceId,
-      orElse: () => throw Exception('Source location not found'),
-    );
-    
-    final targetLocation = locations.firstWhere(
-      (loc) => loc.id == targetId,
-      orElse: () => throw Exception('Target location not found'),
-    );
+
+    final sourceLocation = locations.firstWhereOrNull((loc) => loc.id == sourceId);
+    if (sourceLocation == null) throw Exception('Source location not found');
+
+    final targetLocation = locations.firstWhereOrNull((loc) => loc.id == targetId);
+    if (targetLocation == null) throw Exception('Target location not found');
     
     // Check if segments are adjacent
     if (!areSegmentsAdjacent(sourceLocation.segment, targetLocation.segment)) {
@@ -481,16 +474,12 @@ class Game {
   // Disconnect two locations by their IDs
   void disconnectLocations(String sourceId, String targetId) {
     if (sourceId == targetId) return; // Can't disconnect from self
-    
-    final sourceLocation = locations.firstWhere(
-      (loc) => loc.id == sourceId,
-      orElse: () => throw Exception('Source location not found'),
-    );
-    
-    final targetLocation = locations.firstWhere(
-      (loc) => loc.id == targetId,
-      orElse: () => throw Exception('Target location not found'),
-    );
+
+    final sourceLocation = locations.firstWhereOrNull((loc) => loc.id == sourceId);
+    if (sourceLocation == null) throw Exception('Source location not found');
+
+    final targetLocation = locations.firstWhereOrNull((loc) => loc.id == targetId);
+    if (targetLocation == null) throw Exception('Target location not found');
     
     // Remove bidirectional connection
     sourceLocation.removeConnection(targetId);
@@ -515,10 +504,8 @@ class Game {
   
   // Get all locations that can be connected to the given location based on segment rules
   List<Location> getValidConnectionsForLocation(String locationId) {
-    final location = locations.firstWhere(
-      (loc) => loc.id == locationId,
-      orElse: () => throw Exception('Location not found'),
-    );
+    final location = locations.firstWhereOrNull((loc) => loc.id == locationId);
+    if (location == null) throw Exception('Location not found');
     
     return locations.where((loc) => 
       loc.id != locationId && // Not the same location

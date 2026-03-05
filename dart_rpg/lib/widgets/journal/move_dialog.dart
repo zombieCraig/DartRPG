@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/move.dart';
@@ -680,11 +681,10 @@ class MoveDialog {
       final result = await gameProvider.makeQuestProgressRoll(questId);
       
       // Get the quest to include in the journal entry
-      final quest = gameProvider.currentGame?.quests.firstWhere(
+      final quest = gameProvider.currentGame?.quests.firstWhereOrNull(
         (q) => q.id == questId,
-        orElse: () => throw Exception('Quest not found'),
       );
-      
+
       if (quest == null) {
         throw Exception('Quest not found');
       }

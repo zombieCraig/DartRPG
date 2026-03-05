@@ -64,15 +64,11 @@ class SettingsProvider extends ChangeNotifier {
     // Load transition type
     final transitionTypeStr = prefs.getString('transitionType');
     if (transitionTypeStr != null) {
-      try {
-        final enumStr = transitionTypeStr.split('.').last;
-        _transitionType = TransitionType.values.firstWhere(
-          (t) => t.name == enumStr,
-          orElse: () => TransitionType.cyberSlide,
-        );
-      } catch (_) {
-        _transitionType = TransitionType.cyberSlide;
-      }
+      final enumStr = transitionTypeStr.split('.').last;
+      _transitionType = TransitionType.values.firstWhere(
+        (t) => t.name == enumStr,
+        orElse: () => TransitionType.cyberSlide,
+      );
     }
     
     // Apply log level to the logging service

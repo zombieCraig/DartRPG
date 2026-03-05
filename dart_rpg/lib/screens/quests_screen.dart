@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/quest.dart';
@@ -50,10 +51,10 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
       _questService = QuestService(gameProvider: gameProvider);
       _clockService = ClockService(gameProvider: gameProvider);
       
-      final game = gameProvider.games.firstWhere(
+      final game = gameProvider.games.firstWhereOrNull(
         (g) => g.id == widget.gameId,
-        orElse: () => throw Exception('Game not found'),
       );
+      if (game == null) return;
       
       if (game.mainCharacter != null) {
         setState(() {
@@ -77,11 +78,13 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Consumer<GameProvider>(
       builder: (context, gameProvider, _) {
-        final game = gameProvider.games.firstWhere(
+        final game = gameProvider.games.firstWhereOrNull(
           (g) => g.id == widget.gameId,
-          orElse: () => throw Exception('Game not found'),
         );
-        
+        if (game == null) {
+          return const Center(child: Text('Game not found'));
+        }
+
         final charactersWithStats = game.getCharactersWithStats();
         
         // If no character is selected yet, select the first one

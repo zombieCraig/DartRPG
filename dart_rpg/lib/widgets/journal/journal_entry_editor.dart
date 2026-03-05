@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -904,13 +905,13 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
                       journalEntry: tempEntry,
                       onCharacterTap: (characterId) {
                         final character = gameProvider.currentGame!.characters
-                            .firstWhere((c) => c.id == characterId);
-                        _showCharacterDetailsDialog(context, character);
+                            .firstWhereOrNull((c) => c.id == characterId);
+                        if (character != null) _showCharacterDetailsDialog(context, character);
                       },
                       onLocationTap: (locationId) {
                         final location = gameProvider.currentGame!.locations
-                            .firstWhere((l) => l.id == locationId);
-                        _showLocationDetailsDialog(context, location);
+                            .firstWhereOrNull((l) => l.id == locationId);
+                        if (location != null) _showLocationDetailsDialog(context, location);
                       },
                       onMoveRollTap: (moveRoll) {
                         _showMoveRollDetailsDialog(context, moveRoll);

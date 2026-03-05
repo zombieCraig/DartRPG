@@ -69,7 +69,13 @@ jobs:
         run: |
           cd dart_rpg
           flutter pub get
-          
+
+      - name: Run tests
+        shell: bash
+        run: |
+          cd dart_rpg
+          flutter test
+
       # Linux-specific setup
       - name: Linux setup
         if: matrix.platform == 'Linux'

@@ -1,14 +1,13 @@
 import 'dart:io';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import '../providers/game_provider.dart';
 import '../models/journal_entry.dart';
 import '../models/session.dart';
-import '../models/character.dart';
-import '../models/location.dart';
 import '../services/tutorial_service.dart';
 import 'journal_entry_screen.dart';
 
@@ -246,25 +245,15 @@ class _JournalScreenState extends State<JournalScreen> {
     if (currentGame == null) return const SizedBox.shrink();
 
     // Get linked characters and locations
-    final linkedCharacters = <Character>[];
-    for (final id in entry.linkedCharacterIds) {
-      try {
-        final character = currentGame.characters.firstWhere((c) => c.id == id);
-        linkedCharacters.add(character);
-      } catch (_) {
-        // Character not found, skip
-      }
-    }
+    final linkedCharacters = entry.linkedCharacterIds
+        .map((id) => currentGame.characters.firstWhereOrNull((c) => c.id == id))
+        .nonNulls
+        .toList();
 
-    final linkedLocations = <Location>[];
-    for (final id in entry.linkedLocationIds) {
-      try {
-        final location = currentGame.locations.firstWhere((l) => l.id == id);
-        linkedLocations.add(location);
-      } catch (_) {
-        // Location not found, skip
-      }
-    }
+    final linkedLocations = entry.linkedLocationIds
+        .map((id) => currentGame.locations.firstWhereOrNull((l) => l.id == id))
+        .nonNulls
+        .toList();
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
@@ -646,29 +635,25 @@ class _JournalScreenState extends State<JournalScreen> {
         if (entry.linkedCharacterIds.isNotEmpty) {
           buffer.writeln('**Characters:**');
           for (final characterId in entry.linkedCharacterIds) {
-            try {
-              final character = currentGame.characters.firstWhere(
-                (c) => c.id == characterId,
-              );
+            final character = currentGame.characters.firstWhereOrNull(
+              (c) => c.id == characterId,
+            );
+            if (character != null) {
               buffer.writeln('- ${character.name}');
-            } catch (_) {
-              // Character not found, skip
             }
           }
           buffer.writeln();
         }
-        
+
         // Add linked locations
         if (entry.linkedLocationIds.isNotEmpty) {
           buffer.writeln('**Locations:**');
           for (final locationId in entry.linkedLocationIds) {
-            try {
-              final location = currentGame.locations.firstWhere(
-                (l) => l.id == locationId,
-              );
+            final location = currentGame.locations.firstWhereOrNull(
+              (l) => l.id == locationId,
+            );
+            if (location != null) {
               buffer.writeln('- ${location.name}');
-            } catch (_) {
-              // Location not found, skip
             }
           }
           buffer.writeln();

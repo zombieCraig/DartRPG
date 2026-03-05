@@ -83,7 +83,7 @@ class _SentientAiSettingsWidgetState extends State<SentientAiSettingsWidget> {
       _sentientAiPersona = null;
       _sentientAiImagePath = null;
     } else {
-      _aiNameController.text = widget.game.sentientAiName ?? '';
+      _aiNameController.text = widget.game.aiConfig.sentientAiName ?? '';
     }
   }
   
@@ -99,9 +99,9 @@ class _SentientAiSettingsWidgetState extends State<SentientAiSettingsWidget> {
     final aiPersonas = widget.gameProvider.getAiPersonas(widget.dataswornProvider);
     
     // Use either the game's values or the local values depending on mode
-    final sentientAiEnabled = widget.isNewGame ? _sentientAiEnabled : widget.game.sentientAiEnabled;
-    final sentientAiPersona = widget.isNewGame ? _sentientAiPersona : widget.game.sentientAiPersona;
-    final sentientAiImagePath = widget.isNewGame ? _sentientAiImagePath : widget.game.sentientAiImagePath;
+    final sentientAiEnabled = widget.isNewGame ? _sentientAiEnabled : widget.game.aiConfig.sentientAiEnabled;
+    final sentientAiPersona = widget.isNewGame ? _sentientAiPersona : widget.game.aiConfig.sentientAiPersona;
+    final sentientAiImagePath = widget.isNewGame ? _sentientAiImagePath : widget.game.aiConfig.sentientAiImagePath;
     
     return Column(
       children: [

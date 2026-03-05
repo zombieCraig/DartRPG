@@ -700,8 +700,8 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
     }
     
     // Get the API key and provider
-    final provider = gameProvider.currentGame!.aiImageProvider;
-    final apiKey = gameProvider.currentGame!.getAiApiKey(provider!);
+    final provider = gameProvider.currentGame!.aiConfig.aiImageProvider;
+    final apiKey = gameProvider.currentGame!.aiConfig.getAiApiKey(provider!);
     
     if (apiKey == null) {
       setState(() {
@@ -793,7 +793,7 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
         );
       } else if (provider == 'openai') {
         // Get the OpenAI model from the game settings
-        final openaiModel = gameProvider.currentGame!.openaiModel ?? 'dall-e-2';
+        final openaiModel = gameProvider.currentGame!.aiConfig.openaiModel ?? 'dall-e-2';
         
         // Add model to metadata
         metadata['model'] = openaiModel;

@@ -93,12 +93,12 @@ class _NewGameScreenState extends State<NewGameScreen> {
           
           // Add API keys to the temp game
           for (final entry in _aiApiKeys.entries) {
-            tempGame.setAiApiKey(entry.key, entry.value);
+            tempGame.aiConfig.setAiApiKey(entry.key, entry.value);
           }
           
           // Add artistic directions to the temp game
           for (final entry in _aiArtisticDirections.entries) {
-            tempGame.setAiArtisticDirection(entry.key, entry.value);
+            tempGame.aiConfig.setAiArtisticDirection(entry.key, entry.value);
           }
           
           return Padding(

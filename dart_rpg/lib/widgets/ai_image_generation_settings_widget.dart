@@ -91,15 +91,15 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
       _artisticDirectionController.text = "cyberpunk scene, digital art, detailed illustration";
     } else {
       // Initialize the API key controller with the current value if available
-      if (widget.game.aiImageProvider != null && 
-          widget.game.aiApiKeys.containsKey(widget.game.aiImageProvider!)) {
-        _apiKeyController.text = widget.game.aiApiKeys[widget.game.aiImageProvider!]!;
+      if (widget.game.aiConfig.aiImageProvider != null && 
+          widget.game.aiConfig.aiApiKeys.containsKey(widget.game.aiConfig.aiImageProvider!)) {
+        _apiKeyController.text = widget.game.aiConfig.aiApiKeys[widget.game.aiConfig.aiImageProvider!]!;
       }
       
       // Initialize the artistic direction controller with the current value if available
-      if (widget.game.aiImageProvider != null && 
-          widget.game.aiArtisticDirections.containsKey(widget.game.aiImageProvider!)) {
-        _artisticDirectionController.text = widget.game.aiArtisticDirections[widget.game.aiImageProvider!]!;
+      if (widget.game.aiConfig.aiImageProvider != null && 
+          widget.game.aiConfig.aiArtisticDirections.containsKey(widget.game.aiConfig.aiImageProvider!)) {
+        _artisticDirectionController.text = widget.game.aiConfig.aiArtisticDirections[widget.game.aiConfig.aiImageProvider!]!;
       } else {
         _artisticDirectionController.text = "cyberpunk scene, digital art, detailed illustration";
       }
@@ -119,19 +119,19 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
     
     // Update the API key controller when the provider changes
     if (!widget.isNewGame && 
-        widget.game.aiImageProvider != null && 
-        widget.game.aiApiKeys.containsKey(widget.game.aiImageProvider!)) {
-      _apiKeyController.text = widget.game.aiApiKeys[widget.game.aiImageProvider!]!;
-    } else if (!widget.isNewGame && widget.game.aiImageProvider != null) {
+        widget.game.aiConfig.aiImageProvider != null && 
+        widget.game.aiConfig.aiApiKeys.containsKey(widget.game.aiConfig.aiImageProvider!)) {
+      _apiKeyController.text = widget.game.aiConfig.aiApiKeys[widget.game.aiConfig.aiImageProvider!]!;
+    } else if (!widget.isNewGame && widget.game.aiConfig.aiImageProvider != null) {
       _apiKeyController.text = '';
     }
     
     // Update the artistic direction controller when the provider changes
     if (!widget.isNewGame && 
-        widget.game.aiImageProvider != null && 
-        widget.game.aiArtisticDirections.containsKey(widget.game.aiImageProvider!)) {
-      _artisticDirectionController.text = widget.game.aiArtisticDirections[widget.game.aiImageProvider!]!;
-    } else if (!widget.isNewGame && widget.game.aiImageProvider != null) {
+        widget.game.aiConfig.aiImageProvider != null && 
+        widget.game.aiConfig.aiArtisticDirections.containsKey(widget.game.aiConfig.aiImageProvider!)) {
+      _artisticDirectionController.text = widget.game.aiConfig.aiArtisticDirections[widget.game.aiConfig.aiImageProvider!]!;
+    } else if (!widget.isNewGame && widget.game.aiConfig.aiImageProvider != null) {
       _artisticDirectionController.text = "cyberpunk scene, digital art, detailed illustration";
     }
   }
@@ -140,13 +140,13 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
   Widget build(BuildContext context) {
     // Use either the game's values or the local values depending on mode
     final aiImageGenerationEnabled = widget.isNewGame ? 
-        _aiImageGenerationEnabled : widget.game.aiImageGenerationEnabled;
+        _aiImageGenerationEnabled : widget.game.aiConfig.aiImageGenerationEnabled;
     final aiImageProvider = widget.isNewGame ? 
-        _aiImageProvider : widget.game.aiImageProvider;
+        _aiImageProvider : widget.game.aiConfig.aiImageProvider;
     final aiApiKeys = widget.isNewGame ? 
-        _aiApiKeys : widget.game.aiApiKeys;
+        _aiApiKeys : widget.game.aiConfig.aiApiKeys;
     final aiArtisticDirections = widget.isNewGame ?
-        _aiArtisticDirections : widget.game.aiArtisticDirections;
+        _aiArtisticDirections : widget.game.aiConfig.aiArtisticDirections;
     
     return Column(
       children: [
@@ -220,8 +220,8 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                       widget.gameProvider.updateAiImageProvider(value);
                       
                       // Update the API key controller
-                      if (value != null && widget.game.aiApiKeys.containsKey(value)) {
-                        _apiKeyController.text = widget.game.aiApiKeys[value]!;
+                      if (value != null && widget.game.aiConfig.aiApiKeys.containsKey(value)) {
+                        _apiKeyController.text = widget.game.aiConfig.aiApiKeys[value]!;
                       } else {
                         _apiKeyController.text = '';
                       }
@@ -257,7 +257,7 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                     ),
                     value: widget.isNewGame ? 
                         (_aiImageProvider == 'openai' ? 'dall-e-2' : null) : 
-                        widget.game.openaiModel ?? 'dall-e-2',
+                        widget.game.aiConfig.openaiModel ?? 'dall-e-2',
                     hint: const Text('Select OpenAI Model'),
                     isExpanded: true,
                     onChanged: (value) {
@@ -328,7 +328,7 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                         widget.gameProvider.updateAiApiKey(aiImageProvider, value);
                         
                         // Verify the API key was set correctly in the game object
-                        final apiKey = widget.game.getAiApiKey(aiImageProvider);
+                        final apiKey = widget.game.aiConfig.getAiApiKey(aiImageProvider);
                         if (apiKey != null) {
                           LoggingService().debug(
                             'API key for $aiImageProvider was set successfully with length: ${apiKey.length}',
@@ -385,7 +385,7 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                         widget.gameProvider.updateAiArtisticDirection(aiImageProvider, value);
                         
                         // Verify the artistic direction was set correctly in the game object
-                        final artisticDirection = widget.game.getAiArtisticDirection(aiImageProvider);
+                        final artisticDirection = widget.game.aiConfig.getAiArtisticDirection(aiImageProvider);
                         if (artisticDirection != null) {
                           LoggingService().debug(
                             'Artistic direction for $aiImageProvider was set successfully',

@@ -306,12 +306,12 @@ class MoveDialog {
     final sentientAiTriggered = result['sentientAiTriggered'] as bool? ?? false;
     
     // If Sentient AI was triggered, show the dialog
-    if (sentientAiTriggered && game != null && game.sentientAiEnabled) {
+    if (sentientAiTriggered && game != null && game.aiConfig.sentientAiEnabled) {
       // Check if we need to randomly select a persona
       final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
       
       // If both name and persona are null, randomly select a persona
-      if (game.sentientAiName == null && game.sentientAiPersona == null) {
+      if (game.aiConfig.sentientAiName == null && game.aiConfig.sentientAiPersona == null) {
         final randomPersona = gameProvider.getRandomAiPersona(dataswornProvider);
         if (randomPersona != null) {
           // Save the randomly selected persona
@@ -322,9 +322,9 @@ class MoveDialog {
       // Show the Sentient AI dialog with the updated persona
       SentientAiDialog.show(
         context: context,
-        aiName: game.sentientAiName,
-        aiPersona: game.sentientAiPersona,
-        aiImagePath: game.sentientAiImagePath,
+        aiName: game.aiConfig.sentientAiName,
+        aiPersona: game.aiConfig.sentientAiPersona,
+        aiImagePath: game.aiConfig.sentientAiImagePath,
         onOracleSelected: (oracleKey, dataswornProvider) async {
           // Roll on the selected oracle - dataswornProvider is now passed from the dialog
           final oracleResult = await SentientAiDialog.rollOnAiOracle(
@@ -521,12 +521,12 @@ class MoveDialog {
     final sentientAiTriggered = result['sentientAiTriggered'] as bool? ?? false;
     
     // If Sentient AI was triggered, show the dialog
-    if (sentientAiTriggered && game != null && game.sentientAiEnabled) {
+    if (sentientAiTriggered && game != null && game.aiConfig.sentientAiEnabled) {
       // Check if we need to randomly select a persona
       final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
       
       // If both name and persona are null, randomly select a persona
-      if (game.sentientAiName == null && game.sentientAiPersona == null) {
+      if (game.aiConfig.sentientAiName == null && game.aiConfig.sentientAiPersona == null) {
         final randomPersona = gameProvider.getRandomAiPersona(dataswornProvider);
         if (randomPersona != null) {
           // Save the randomly selected persona
@@ -537,9 +537,9 @@ class MoveDialog {
       // Show the Sentient AI dialog with the updated persona
       SentientAiDialog.show(
         context: context,
-        aiName: game.sentientAiName,
-        aiPersona: game.sentientAiPersona,
-        aiImagePath: game.sentientAiImagePath,
+        aiName: game.aiConfig.sentientAiName,
+        aiPersona: game.aiConfig.sentientAiPersona,
+        aiImagePath: game.aiConfig.sentientAiImagePath,
         onOracleSelected: (oracleKey, dataswornProvider) async {
           // Roll on the selected oracle - dataswornProvider is now passed from the dialog
           final oracleResult = await SentientAiDialog.rollOnAiOracle(

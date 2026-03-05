@@ -17,8 +17,8 @@ void main() {
       expect(restored.name, 'Test');
       expect(restored.id, game.id);
       expect(restored.tutorialsEnabled, true);
-      expect(restored.sentientAiEnabled, false);
-      expect(restored.aiImageGenerationEnabled, false);
+      expect(restored.aiConfig.sentientAiEnabled, false);
+      expect(restored.aiConfig.aiImageGenerationEnabled, false);
     });
 
     test('game with characters roundtrips', () {
@@ -111,14 +111,14 @@ void main() {
 
       final restored = Game.fromJsonString(game.toJsonString());
 
-      expect(restored.sentientAiEnabled, true);
-      expect(restored.sentientAiName, 'NEXUS');
-      expect(restored.sentientAiPersona, 'sarcastic');
-      expect(restored.aiImageGenerationEnabled, true);
-      expect(restored.aiImageProvider, 'minimax');
-      expect(restored.openaiModel, 'dall-e-3');
-      expect(restored.aiApiKeys['minimax'], 'key123');
-      expect(restored.aiArtisticDirections['minimax'], 'neon cyberpunk');
+      expect(restored.aiConfig.sentientAiEnabled, true);
+      expect(restored.aiConfig.sentientAiName, 'NEXUS');
+      expect(restored.aiConfig.sentientAiPersona, 'sarcastic');
+      expect(restored.aiConfig.aiImageGenerationEnabled, true);
+      expect(restored.aiConfig.aiImageProvider, 'minimax');
+      expect(restored.aiConfig.openaiModel, 'dall-e-3');
+      expect(restored.aiConfig.aiApiKeys['minimax'], 'key123');
+      expect(restored.aiConfig.aiArtisticDirections['minimax'], 'neon cyberpunk');
     });
 
     test('selected truths roundtrip', () {

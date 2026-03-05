@@ -6,6 +6,7 @@ import '../models/oracle.dart';
 import '../utils/dice_roller.dart';
 import '../utils/logging_service.dart';
 import '../widgets/oracle_result_text.dart';
+import '../widgets/common/search_text_field.dart';
 
 class OracleCategoryScreen extends StatelessWidget {
   final OracleCategory category;
@@ -414,22 +415,10 @@ class _OraclesScreenState extends State<OraclesScreen> {
             // Search bar
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: TextField(
+              child: SearchTextField(
                 controller: _searchController,
-                decoration: InputDecoration(
-                  labelText: 'Search Oracles',
-                  hintText: 'Enter oracle name or description',
-                  prefixIcon: const Icon(Icons.search),
-                  border: const OutlineInputBorder(),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                          },
-                        )
-                      : null,
-                ),
+                labelText: 'Search Oracles',
+                hintText: 'Enter oracle name or description',
               ),
             ),
             

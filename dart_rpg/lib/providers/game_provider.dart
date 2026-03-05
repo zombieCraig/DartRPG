@@ -7,7 +7,6 @@ import 'dart:math' as math;
 
 import '../models/game.dart';
 import '../models/character.dart';
-import '../models/clock.dart';
 import '../models/location.dart';
 import '../models/session.dart';
 import '../models/journal_entry.dart';
@@ -17,8 +16,9 @@ import '../utils/dice_roller.dart';
 import '../services/oracle_service.dart';
 import 'datasworn_provider.dart';
 import 'image_manager_provider.dart';
+import 'clock_operations_mixin.dart';
 
-class GameProvider extends ChangeNotifier {
+class GameProvider extends ChangeNotifier with ClockOperationsMixin {
   
   List<Game> _games = [];
   Game? _currentGame;
@@ -35,6 +35,17 @@ class GameProvider extends ChangeNotifier {
   // Public method to save games
   Future<void> saveGame() async {
     await _saveGames();
+  }
+
+  // Mixin interface for ClockOperationsMixin
+  @override
+  Game? get clockGame => _currentGame;
+  @override
+  Session? get clockSession => _currentSession;
+  @override
+  Future<void> persistAndNotify() async {
+    await _saveGames();
+    notifyListeners();
   }
 
   // Reference to the ImageManagerProvider
@@ -1212,145 +1223,8 @@ class GameProvider extends ChangeNotifier {
     return personas[randomIndex]['id'];
   }
   
-  // Clock-related methods
-  
-  // Create a new clock
-  Future<Clock> createClock(
-    String title,
-    int segments,
-    ClockType type,
-  ) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    // Validate segments (must be 4, 6, 8, or 10)
-    if (![4, 6, 8, 10].contains(segments)) {
-      throw Exception('Invalid number of segments. Must be 4, 6, 8, or 10.');
-    }
-    
-    final clock = Clock(
-      title: title,
-      segments: segments,
-      type: type,
-    );
-    
-    _currentGame!.addClock(clock);
-    
-    await _saveGames();
-    notifyListeners();
-    
-    return clock;
-  }
-  
-  // Update a clock's title
-  Future<void> updateClockTitle(String clockId, String title) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    final clock = _currentGame!.clocks.firstWhere(
-      (c) => c.id == clockId,
-      orElse: () => throw Exception('Clock not found'),
-    );
-    
-    clock.title = title;
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
-  // Advance a clock by one segment
-  Future<void> advanceClock(String clockId) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    final clock = _currentGame!.clocks.firstWhere(
-      (c) => c.id == clockId,
-      orElse: () => throw Exception('Clock not found'),
-    );
-    
-    // Advance the clock
-    clock.advance();
-    
-    // Create a journal entry if the clock is now complete
-    if (clock.isComplete && _currentSession != null) {
-      _currentSession!.createNewEntry(
-        'Clock "${clock.title}" has filled completely.\n'
-        'Type: ${clock.type.displayName}\n'
-        'Segments: ${clock.progress}/${clock.segments}'
-      );
-    }
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
-  // Reset a clock's progress
-  Future<void> resetClock(String clockId) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    final clock = _currentGame!.clocks.firstWhere(
-      (c) => c.id == clockId,
-      orElse: () => throw Exception('Clock not found'),
-    );
-    
-    clock.reset();
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
-  // Delete a clock
-  Future<void> deleteClock(String clockId) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    _currentGame!.clocks.removeWhere((c) => c.id == clockId);
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
-  // Advance all clocks of a specific type
-  Future<void> advanceAllClocksOfType(ClockType type) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    final clocks = _currentGame!.getClocksByType(type);
-    bool anyCompleted = false;
-    
-    for (final clock in clocks) {
-      if (!clock.isComplete) {
-        clock.advance();
-        
-        if (clock.isComplete) {
-          anyCompleted = true;
-        }
-      }
-    }
-    
-    // Create a journal entry if any clocks were completed
-    if (anyCompleted && _currentSession != null) {
-      final completedClocks = clocks.where((c) => c.isComplete && c.completedAt != null);
-      
-      if (completedClocks.isNotEmpty) {
-        final clockNames = completedClocks.map((c) => '"${c.title}"').join(', ');
-        _currentSession!.createNewEntry(
-          'The following ${type.displayName} clocks have filled completely: $clockNames'
-        );
-      }
-    }
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
+  // Clock-related methods are provided by ClockOperationsMixin
+
   // Make a progress roll for a quest
   Future<Map<String, dynamic>> makeQuestProgressRoll(String questId) async {
     if (_currentGame == null) {

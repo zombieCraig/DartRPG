@@ -8,6 +8,7 @@ import '../services/roll_service.dart';
 import '../widgets/moves/move_list.dart';
 import '../widgets/moves/move_details.dart';
 import '../widgets/moves/roll_result_view.dart';
+import '../widgets/common/search_text_field.dart';
 
 class MovesScreen extends StatefulWidget {
   const MovesScreen({super.key});
@@ -78,22 +79,10 @@ class _MovesScreenState extends State<MovesScreen> {
             // Search bar
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: TextField(
+              child: SearchTextField(
                 controller: _searchController,
-                decoration: InputDecoration(
-                  labelText: 'Search Moves',
-                  hintText: 'Enter move title',
-                  prefixIcon: const Icon(Icons.search),
-                  border: const OutlineInputBorder(),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                          },
-                        )
-                      : null,
-                ),
+                labelText: 'Search Moves',
+                hintText: 'Enter move title',
               ),
             ),
             

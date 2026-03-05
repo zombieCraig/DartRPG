@@ -4,6 +4,7 @@ import '../providers/game_provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../widgets/character/character_list_view.dart';
 import '../widgets/character/character_dialog.dart';
+import '../widgets/common/empty_state_widget.dart';
 
 /// A screen for managing characters.
 class CharacterScreen extends StatefulWidget {
@@ -43,27 +44,14 @@ class _CharacterScreenState extends State<CharacterScreen> {
             // Character list/grid
             Expanded(
               child: currentGame.characters.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            'No characters yet',
-                            style: TextStyle(fontSize: 18),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton.icon(
-                            icon: const Icon(Icons.add),
-                            label: const Text('Create Character'),
-                            onPressed: () {
-                              // Show character creation dialog
-                              CharacterDialog.showCreateDialog(context, gameProvider).then((_) {
-                                _refreshScreen();
-                              });
-                            },
-                          ),
-                        ],
-                      ),
+                  ? EmptyStateWidget(
+                      message: 'No characters yet',
+                      actionLabel: 'Create Character',
+                      onAction: () {
+                        CharacterDialog.showCreateDialog(context, gameProvider).then((_) {
+                          _refreshScreen();
+                        });
+                      },
                     )
                   : CharacterListView(
                       characters: currentGame.characters,

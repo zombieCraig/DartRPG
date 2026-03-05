@@ -47,7 +47,7 @@ flutter build windows
 
 The app uses `provider` with `ChangeNotifier`. Five providers are registered in `main.dart` via `MultiProvider`:
 
-- **GameProvider** (`providers/game_provider.dart`) — Central provider managing all game state: games, characters, locations, quests, journal entries, sessions, clocks. Handles persistence via SharedPreferences/LocalStorage.
+- **GameProvider** (`providers/game_provider.dart`) — Central provider managing all game state: games, characters, locations, quests, journal entries, sessions. Clock operations are provided via `ClockOperationsMixin` (`providers/clock_operations_mixin.dart`). Handles persistence via SharedPreferences/LocalStorage.
 - **DataswornProvider** (`providers/datasworn_provider.dart`) — Loads and provides access to Fe-Runners game data (moves, oracles, assets, truths) parsed from `assets/data/fe_runners.json`.
 - **SettingsProvider** (`providers/settings_provider.dart`) — Theme and app settings.
 - **ImageManagerProvider** (`providers/image_manager_provider.dart`) — Manages game images.
@@ -71,6 +71,7 @@ Game data is defined in Datasworn JSON format (`assets/data/fe_runners.json`). T
 
 - **Logging**: Use `LoggingService` singleton instead of `print()` or `dart:developer`. Logs are viewable in-app via `LogViewerScreen`.
 - **Safe list lookups**: Use `firstWhereOrNull` from `package:collection` instead of bare `firstWhere` to avoid `StateError` crashes. Import `package:collection/collection.dart`.
+- **Shared widgets**: Common UI patterns live in `widgets/common/`: `EmptyStateWidget` for empty list states, `SearchTextField` for consistent search bars, `AppImageWidget` for images, `ImagePickerDialog` for image selection.
 - **Widget feature directories**: Complex features (character, journal, locations, clocks, moves, oracles, quests) have their own subdirectories under `widgets/` containing related widgets, dialogs, panels, and service classes.
 - **Game data format**: The app uses the Datasworn format for game content. The main data file is `assets/data/fe_runners.json`, with `custom_oracles.json` for custom oracle tables.
 

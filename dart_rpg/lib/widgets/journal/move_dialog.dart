@@ -10,6 +10,7 @@ import '../sentient_ai_dialog.dart';
 import '../moves/move_list.dart';
 import '../moves/move_details.dart';
 import '../moves/roll_result_view.dart';
+import '../common/search_text_field.dart';
 
 /// A dialog for selecting and rolling moves in the journal entry screen.
 class MoveDialog {
@@ -93,25 +94,10 @@ class MoveDialog {
                         // Search bar
                         Padding(
                           padding: const EdgeInsets.all(16.0),
-                          child: TextField(
+                          child: SearchTextField(
                             controller: searchController,
-                            decoration: InputDecoration(
-                              labelText: 'Search Moves',
-                              hintText: 'Enter move title',
-                              prefixIcon: const Icon(Icons.search),
-                              border: const OutlineInputBorder(),
-                              suffixIcon: searchQuery.isNotEmpty
-                                  ? IconButton(
-                                      icon: const Icon(Icons.clear),
-                                      onPressed: () {
-                                        searchController.clear();
-                                        setState(() {
-                                          searchQuery = '';
-                                        });
-                                      },
-                                    )
-                                  : null,
-                            ),
+                            labelText: 'Search Moves',
+                            hintText: 'Enter move title',
                             onChanged: (value) {
                               setState(() {
                                 searchQuery = value;

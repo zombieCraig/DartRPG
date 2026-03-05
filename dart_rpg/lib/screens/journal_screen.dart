@@ -10,6 +10,7 @@ import '../models/journal_entry.dart';
 import '../models/session.dart';
 import '../services/tutorial_service.dart';
 import 'journal_entry_screen.dart';
+import '../widgets/common/empty_state_widget.dart';
 
 class JournalScreen extends StatefulWidget {
   final String gameId;
@@ -187,21 +188,8 @@ class _JournalScreenState extends State<JournalScreen> {
                         // Journal entries list
                         Expanded(
                           child: currentSession.entries.isEmpty
-                              ? Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      Text(
-                                        'No journal entries yet',
-                                        style: TextStyle(fontSize: 18),
-                                      ),
-                                      SizedBox(height: 16),
-                                      Text(
-                                        'Click the "New Journal Entry" button above to create your first entry',
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                                  ),
+                              ? const EmptyStateWidget(
+                                  message: 'No journal entries yet',
                                 )
                               : Stack(
                                   children: [

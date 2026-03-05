@@ -31,7 +31,14 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   
   @override
   Session? get currentSession => null;
-  
+
+  @override
+  Game? get clockGame => _currentGame;
+  @override
+  Session? get clockSession => null;
+  @override
+  Future<void> persistAndNotify() async {}
+
   // Set the current game for testing
   void setCurrentGameForTest(Game game) {
     _currentGame = game;

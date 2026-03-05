@@ -8,6 +8,7 @@ import '../../utils/logging_service.dart';
 import 'oracle_category_list.dart';
 import 'oracle_table_list.dart';
 import 'oracle_result_view.dart';
+import '../common/search_text_field.dart';
 
 /// A dialog for selecting and rolling on oracle tables.
 class OracleDialog {
@@ -86,25 +87,10 @@ class OracleDialog {
                         // Search bar
                         Padding(
                           padding: const EdgeInsets.only(bottom: 16.0),
-                          child: TextField(
+                          child: SearchTextField(
                             controller: searchController,
-                            decoration: InputDecoration(
-                              labelText: 'Search Oracles',
-                              hintText: 'Enter oracle name or description',
-                              prefixIcon: const Icon(Icons.search),
-                              border: const OutlineInputBorder(),
-                              suffixIcon: searchQuery.isNotEmpty
-                                  ? IconButton(
-                                      icon: const Icon(Icons.clear),
-                                      onPressed: () {
-                                        searchController.clear();
-                                        setState(() {
-                                          searchQuery = '';
-                                        });
-                                      },
-                                    )
-                                  : null,
-                            ),
+                            labelText: 'Search Oracles',
+                            hintText: 'Enter oracle name or description',
                             onChanged: (value) {
                               setState(() {
                                 searchQuery = value;

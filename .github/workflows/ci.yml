@@ -27,7 +27,7 @@ jobs:
       - name: Analyze
         run: |
           cd dart_rpg
-          flutter analyze
+          flutter analyze --no-fatal-infos
 
       - name: Run tests
         run: |

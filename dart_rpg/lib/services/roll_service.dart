@@ -40,7 +40,7 @@ class RollService {
     // Check for Sentient AI trigger
     bool sentientAiTriggered = false;
     if (game != null && 
-        game.sentientAiEnabled && 
+        game.aiConfig.sentientAiEnabled && 
         move.sentientAi && 
         (rollResult['challengeDice'] as List<int>).any((die) => die == 10)) {
       sentientAiTriggered = true;
@@ -78,7 +78,7 @@ class RollService {
     // Check for Sentient AI trigger
     bool sentientAiTriggered = false;
     if (game != null && 
-        game.sentientAiEnabled && 
+        game.aiConfig.sentientAiEnabled && 
         move.sentientAi && 
         (rollResult['challengeDice'] as List<int>).any((die) => die == 10)) {
       sentientAiTriggered = true;

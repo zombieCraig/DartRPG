@@ -6,6 +6,8 @@ import '../widgets/locations/graph/index.dart';
 import '../widgets/locations/location_service.dart';
 import '../widgets/locations/location_dialog.dart';
 import '../widgets/locations/location_list_view.dart';
+import '../widgets/common/empty_state_widget.dart';
+import '../widgets/common/search_text_field.dart';
 
 class LocationScreen extends StatefulWidget {
   final String gameId;
@@ -57,32 +59,14 @@ class LocationScreenState extends State<LocationScreen> {
                 child: Column(
                   children: [
                     // Search bar
-                    TextField(
+                    SearchTextField(
                       controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Search locations...',
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () {
-                                setState(() {
-                                  _searchController.clear();
-                                  _searchQuery = '';
-                                  _focusLocationId = null;
-                                });
-                              },
-                            )
-                          : null,
-                        border: const OutlineInputBorder(),
-                      ),
+                      hintText: 'Search locations...',
                       onChanged: (value) {
                         setState(() {
                           _searchQuery = value;
-                          // If there's exactly one match, focus on it
                           if (value.isNotEmpty) {
                             final matches = locationService.getFilteredLocations(value);
-                            
                             if (matches.length == 1) {
                               _focusLocationId = matches.first.id;
                             }
@@ -170,30 +154,16 @@ class LocationScreenState extends State<LocationScreen> {
               // Location graph/list
               Expanded(
                 child: currentGame.locations.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'No locations yet',
-                              style: TextStyle(fontSize: 18),
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              icon: const Icon(Icons.add),
-                              label: const Text('Create Location'),
-                              onPressed: () async {
-                                await LocationDialog.showCreateDialog(
-                                  context,
-                                  locationService,
-                                );
-                                
-                                // Force a rebuild
-                                setState(() {});
-                              },
-                            ),
-                          ],
-                        ),
+                    ? EmptyStateWidget(
+                        message: 'No locations yet',
+                        actionLabel: 'Create Location',
+                        onAction: () async {
+                          await LocationDialog.showCreateDialog(
+                            context,
+                            locationService,
+                          );
+                          setState(() {});
+                        },
                       )
                     : _showListView
                         ? LocationListView(

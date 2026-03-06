@@ -1,16 +1,16 @@
 import 'dart:io';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import '../providers/game_provider.dart';
 import '../models/journal_entry.dart';
 import '../models/session.dart';
-import '../models/character.dart';
-import '../models/location.dart';
 import '../services/tutorial_service.dart';
 import 'journal_entry_screen.dart';
+import '../widgets/common/empty_state_widget.dart';
 
 class JournalScreen extends StatefulWidget {
   final String gameId;
@@ -56,8 +56,9 @@ class _JournalScreenState extends State<JournalScreen> {
     }
     
     // Tutorial for understanding sessions after creating first one
-    if (currentGame.sessions.length == 1 && currentSession != null && 
+    if (currentGame.sessions.length == 1 && currentSession != null &&
         currentSession.entries.isEmpty) {
+      if (!mounted) return;
       await TutorialService.showTutorialIfNeeded(
         context: context,
         tutorialId: 'journal_session_explanation',
@@ -188,21 +189,8 @@ class _JournalScreenState extends State<JournalScreen> {
                         // Journal entries list
                         Expanded(
                           child: currentSession.entries.isEmpty
-                              ? Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      Text(
-                                        'No journal entries yet',
-                                        style: TextStyle(fontSize: 18),
-                                      ),
-                                      SizedBox(height: 16),
-                                      Text(
-                                        'Click the "New Journal Entry" button above to create your first entry',
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                                  ),
+                              ? const EmptyStateWidget(
+                                  message: 'No journal entries yet',
                                 )
                               : Stack(
                                   children: [
@@ -246,25 +234,15 @@ class _JournalScreenState extends State<JournalScreen> {
     if (currentGame == null) return const SizedBox.shrink();
 
     // Get linked characters and locations
-    final linkedCharacters = <Character>[];
-    for (final id in entry.linkedCharacterIds) {
-      try {
-        final character = currentGame.characters.firstWhere((c) => c.id == id);
-        linkedCharacters.add(character);
-      } catch (_) {
-        // Character not found, skip
-      }
-    }
+    final linkedCharacters = entry.linkedCharacterIds
+        .map((id) => currentGame.characters.firstWhereOrNull((c) => c.id == id))
+        .nonNulls
+        .toList();
 
-    final linkedLocations = <Location>[];
-    for (final id in entry.linkedLocationIds) {
-      try {
-        final location = currentGame.locations.firstWhere((l) => l.id == id);
-        linkedLocations.add(location);
-      } catch (_) {
-        // Location not found, skip
-      }
-    }
+    final linkedLocations = entry.linkedLocationIds
+        .map((id) => currentGame.locations.firstWhereOrNull((l) => l.id == id))
+        .nonNulls
+        .toList();
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
@@ -646,29 +624,25 @@ class _JournalScreenState extends State<JournalScreen> {
         if (entry.linkedCharacterIds.isNotEmpty) {
           buffer.writeln('**Characters:**');
           for (final characterId in entry.linkedCharacterIds) {
-            try {
-              final character = currentGame.characters.firstWhere(
-                (c) => c.id == characterId,
-              );
+            final character = currentGame.characters.firstWhereOrNull(
+              (c) => c.id == characterId,
+            );
+            if (character != null) {
               buffer.writeln('- ${character.name}');
-            } catch (_) {
-              // Character not found, skip
             }
           }
           buffer.writeln();
         }
-        
+
         // Add linked locations
         if (entry.linkedLocationIds.isNotEmpty) {
           buffer.writeln('**Locations:**');
           for (final locationId in entry.linkedLocationIds) {
-            try {
-              final location = currentGame.locations.firstWhere(
-                (l) => l.id == locationId,
-              );
+            final location = currentGame.locations.firstWhereOrNull(
+              (l) => l.id == locationId,
+            );
+            if (location != null) {
               buffer.writeln('- ${location.name}');
-            } catch (_) {
-              // Location not found, skip
             }
           }
           buffer.writeln();

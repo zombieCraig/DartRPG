@@ -1,6 +1,7 @@
 // This file contains the web-specific implementation of image utilities
 // It's only imported and used on web platforms
 
+// ignore: avoid_web_libraries_in_flutter, deprecated_member_use
 import 'dart:html' as html;
 import 'dart:typed_data';
 import '../utils/logging_service.dart';

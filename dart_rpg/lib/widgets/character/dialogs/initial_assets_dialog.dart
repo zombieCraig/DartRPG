@@ -7,7 +7,7 @@ import '../../../providers/game_provider.dart';
 import '../../../utils/asset_utils.dart';
 import '../../../widgets/asset_detail_dialog.dart';
 import '../../../widgets/asset_content_widget.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 
 /// A dialog for selecting initial assets for a new character.
 class InitialAssetsDialog extends StatefulWidget {

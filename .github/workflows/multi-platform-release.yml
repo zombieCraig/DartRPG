@@ -69,7 +69,13 @@ jobs:
         run: |
           cd dart_rpg
           flutter pub get
-          
+
+      - name: Run tests
+        shell: bash
+        run: |
+          cd dart_rpg
+          flutter test
+
       # Linux-specific setup
       - name: Linux setup
         if: matrix.platform == 'Linux'
@@ -134,8 +140,16 @@ jobs:
               cd dart_rpg/${{ matrix.build_path }}
               echo "Build directory: $(pwd)"
               
-              # Use a more robust PowerShell command with absolute paths
+              # Use a more robust PowerShell command with environment variables for paths
               powershell -Command "
+                # Get the artifact name and workspace path
+                \$ArtifactName = '${ARTIFACT_NAME}'
+                \$WorkspacePath = \$env:GITHUB_WORKSPACE
+                \$ArtifactPath = Join-Path -Path \$WorkspacePath -ChildPath \$ArtifactName
+                
+                Write-Host 'Workspace path: ' \$WorkspacePath
+                Write-Host 'Artifact will be created at: ' \$ArtifactPath
+                
                 Write-Host 'Creating temp directory for packaging...'
                 New-Item -ItemType Directory -Path temp_dir -Force
                 
@@ -143,9 +157,6 @@ jobs:
                 Copy-Item -Path * -Destination temp_dir -Recurse -Exclude 'temp_dir'
                 
                 Write-Host 'Creating zip archive...'
-                \$ArtifactPath = Join-Path -Path '${REPO_ROOT}' -ChildPath '${ARTIFACT_NAME}'
-                Write-Host 'Artifact will be created at: ' \$ArtifactPath
-                
                 Compress-Archive -Path temp_dir/* -DestinationPath \$ArtifactPath -Force
                 
                 Write-Host 'Cleaning up temp directory...'

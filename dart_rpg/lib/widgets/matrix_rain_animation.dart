@@ -183,7 +183,7 @@ class MatrixRainPainter extends CustomPainter {
       // Draw each character in the column
       for (int i = 0; i < column.length; i++) {
         final textStyle = TextStyle(
-          color: color.withOpacity(column.opacities[i]),
+          color: color.withValues(alpha: column.opacities[i]),
           fontSize: 14,
           fontFamily: 'monospace',
         );

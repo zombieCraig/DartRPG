@@ -5,6 +5,7 @@ import '../../providers/game_provider.dart';
 import 'clock_card.dart';
 import 'clock_dialog.dart';
 import 'clock_service.dart';
+import '../common/empty_state_widget.dart';
 
 /// A tab view for displaying and managing clocks
 class ClocksTabView extends StatefulWidget {
@@ -119,33 +120,10 @@ class _ClocksTabViewState extends State<ClocksTabView> {
     );
   }
   
-  /// Build the empty state widget
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.timer,
-            size: 64,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No countdown clocks',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Create a new clock using the + button',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Colors.grey[500],
-            ),
-          ),
-        ],
-      ),
+    return const EmptyStateWidget(
+      message: 'No countdown clocks',
+      icon: Icons.timer,
     );
   }
   

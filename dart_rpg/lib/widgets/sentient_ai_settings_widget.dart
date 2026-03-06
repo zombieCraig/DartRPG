@@ -83,7 +83,7 @@ class _SentientAiSettingsWidgetState extends State<SentientAiSettingsWidget> {
       _sentientAiPersona = null;
       _sentientAiImagePath = null;
     } else {
-      _aiNameController.text = widget.game.sentientAiName ?? '';
+      _aiNameController.text = widget.game.aiConfig.sentientAiName ?? '';
     }
   }
   
@@ -99,9 +99,9 @@ class _SentientAiSettingsWidgetState extends State<SentientAiSettingsWidget> {
     final aiPersonas = widget.gameProvider.getAiPersonas(widget.dataswornProvider);
     
     // Use either the game's values or the local values depending on mode
-    final sentientAiEnabled = widget.isNewGame ? _sentientAiEnabled : widget.game.sentientAiEnabled;
-    final sentientAiPersona = widget.isNewGame ? _sentientAiPersona : widget.game.sentientAiPersona;
-    final sentientAiImagePath = widget.isNewGame ? _sentientAiImagePath : widget.game.sentientAiImagePath;
+    final sentientAiEnabled = widget.isNewGame ? _sentientAiEnabled : widget.game.aiConfig.sentientAiEnabled;
+    final sentientAiPersona = widget.isNewGame ? _sentientAiPersona : widget.game.aiConfig.sentientAiPersona;
+    final sentientAiImagePath = widget.isNewGame ? _sentientAiImagePath : widget.game.aiConfig.sentientAiImagePath;
     
     return Column(
       children: [
@@ -182,9 +182,9 @@ class _SentientAiSettingsWidgetState extends State<SentientAiSettingsWidget> {
                   child: Container(
                     padding: const EdgeInsets.all(12.0),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
+                      color: Colors.blue.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8.0),
-                      border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                      border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,7 +402,8 @@ class _SentientAiSettingsWidgetState extends State<SentientAiSettingsWidget> {
         error: e,
         stackTrace: StackTrace.current,
       );
-      
+
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to select image: ${e.toString()}'),

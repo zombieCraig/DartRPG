@@ -2,24 +2,20 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import '../providers/game_provider.dart';
 import '../models/journal_entry.dart';
 import '../models/character.dart';
 import '../models/location.dart';
 import '../utils/logging_service.dart';
-import '../utils/leet_speak_converter.dart';
-import '../providers/datasworn_provider.dart';
-import '../services/oracle_service.dart';
 import '../widgets/journal/journal_entry_editor.dart';
 import '../widgets/journal/linked_items_summary.dart';
 import '../widgets/journal/journal_entry_viewer.dart';
+import '../widgets/journal/journal_detail_dialogs.dart';
+import '../widgets/journal/quick_add_dialogs.dart';
 import '../widgets/journal/move_dialog.dart';
 import '../widgets/journal/linked_items_manager.dart';
 import '../widgets/journal/autocomplete_system.dart';
 import '../widgets/oracles/oracle_dialog.dart';
-import '../widgets/locations/location_service.dart';
-import '../widgets/locations/location_dialog.dart';
 import '../widgets/character/dialogs/character_edit_dialog.dart';
 import 'game_screen.dart';
 
@@ -124,36 +120,38 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
           
           // Save the entry
           await _saveEntry();
-          
+
           // Clear any existing snackbars
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).clearSnackBars();
         } catch (e) {
           // Show error if saving fails
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error saving journal entry: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error saving journal entry: ${e.toString()}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
           // Still navigate even if save fails
         }
       }
-      
+
       // Use pushReplacement to ensure we go directly to the Quests screen
-      if (context.mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => GameScreen(
-              gameId: gameProvider.currentGame!.id,
-              initialTabIndex: 3, // Quests tab index
-            ),
+      if (!context.mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => GameScreen(
+            gameId: gameProvider.currentGame!.id,
+            initialTabIndex: 3, // Quests tab index
           ),
-        );
-      }
+        ),
+      );
     }
   }
-  
+
   // Navigate to the Moves screen
   Future<void> _navigateToMoves(BuildContext context) async {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
@@ -171,36 +169,38 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
           
           // Save the entry
           await _saveEntry();
-          
+
           // Clear any existing snackbars
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).clearSnackBars();
         } catch (e) {
           // Show error if saving fails
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error saving journal entry: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error saving journal entry: ${e.toString()}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
           // Still navigate even if save fails
         }
       }
-      
+
       // Use pushReplacement to ensure we go directly to the Moves screen
-      if (context.mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => GameScreen(
-              gameId: gameProvider.currentGame!.id,
-              initialTabIndex: 4, // Moves tab index
-            ),
+      if (!context.mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => GameScreen(
+            gameId: gameProvider.currentGame!.id,
+            initialTabIndex: 4, // Moves tab index
           ),
-        );
-      }
+        ),
+      );
     }
   }
-  
+
   void _startAutoSaveTimer() {
     // Cancel any existing timer
     _autoSaveTimer?.cancel();
@@ -219,9 +219,6 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   
   // Focus node for the editor
   final FocusNode _editorFocusNode = FocusNode();
-  
-  // Performance metrics
-  int _lastAutoSaveDuration = 0;
   
   void _autoSave() async {
     // Skip autosave for very short content
@@ -326,8 +323,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
       );
     } finally {
       _isAutoSaving = false;
-      _lastAutoSaveDuration = stopwatch.elapsedMilliseconds;
-      
+
       // Log performance metrics
       LoggingService().debug(
         'Journal entry autosave completed in ${stopwatch.elapsedMilliseconds}ms',
@@ -413,11 +409,12 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         
         // Save the game to persist the changes
         await gameProvider.saveGame();
-        
+
         setState(() {
           _isEditing = false;
         });
-        
+
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Journal entry updated'),
@@ -452,11 +449,10 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         setState(() {
           _isEditing = false;
         });
-        
+
         // Navigate back to journal screen
-        if (context.mounted) {
-          Navigator.pop(context);
-        }
+        if (!mounted) return;
+        Navigator.pop(context);
       } else {
         // Create new entry
         final entry = await gameProvider.createJournalEntry(_content);
@@ -476,13 +472,13 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
           _createdEntryId = entry.id;
           _isEditing = false;
         });
-        
+
         // Navigate back to journal screen
-        if (context.mounted) {
-          Navigator.pop(context);
-        }
+        if (!mounted) return;
+        Navigator.pop(context);
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error saving journal entry: ${e.toString()}'),
@@ -492,607 +488,57 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     }
   }
 
-  void _showMoveRollDetailsDialog(BuildContext context, MoveRoll moveRoll) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('${moveRoll.moveName} Roll'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (moveRoll.moveDescription != null) ...[
-                  MarkdownBody(
-                    data: moveRoll.moveDescription!,
-                    styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                      p: Theme.of(context).textTheme.bodyMedium,
-                      textAlign: WrapAlignment.start,
-                    ),
-                    softLineBreak: true,
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                
-                if (moveRoll.rollType == 'action_roll') ...[
-                  Text('Action Die: ${moveRoll.actionDie}'),
-                  
-                  if (moveRoll.statValue != null) ...[
-                    const SizedBox(height: 4),
-                    Text('Stat: ${moveRoll.stat} (${moveRoll.statValue})'),
-                    const SizedBox(height: 4),
-                    Text('Total Action Value: ${moveRoll.actionDie + moveRoll.statValue!}'),
-                  ],
-                  
-                  if (moveRoll.modifier != null && moveRoll.modifier != 0) ...[
-                    const SizedBox(height: 4),
-                    Text('Modifier: ${moveRoll.modifier! > 0 ? '+' : ''}${moveRoll.modifier}'),
-                  ],
-                ],
-                
-                if (moveRoll.rollType == 'progress_roll' && moveRoll.progressValue != null) ...[
-                  Text('Progress Value: ${moveRoll.progressValue}'),
-                ],
-                
-                if (moveRoll.challengeDice.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text('Challenge Dice: ${moveRoll.challengeDice.join(' and ')}'),
-                ],
-                
-                if (moveRoll.outcome != 'performed') ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    'Outcome: ${moveRoll.outcome.toUpperCase()}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: _getOutcomeColor(moveRoll.outcome),
-                    ),
-                  ),
-                  
-                  // Add Momentum Burned indicator
-                  if (moveRoll.momentumBurned) ...[
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Momentum Burned',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.purple,
-                      ),
-                    ),
-                  ],
-                ] else ...[
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Move performed successfully',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
-                  ),
-                  
-                  // Show oracle result if this is an oracle roll
-                  if (moveRoll.rollType == 'oracle_roll' && 
-                      moveRoll.moveData != null && 
-                      moveRoll.moveData!.containsKey('oracleResult')) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      'Oracle Result: ${moveRoll.moveData!['oracleResult']}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-  
-  void _showOracleRollDetailsDialog(BuildContext context, OracleRoll oracleRoll) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('${oracleRoll.oracleName} Result'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (oracleRoll.oracleTable != null) ...[
-                  Text('Table: ${oracleRoll.oracleTable}'),
-                  const SizedBox(height: 8),
-                ],
-                
-                Text('Roll: ${oracleRoll.dice.join(', ')}'),
-                const SizedBox(height: 16),
-                
-                Text(
-                  'Result: ${oracleRoll.result}',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-  
-  Color _getOutcomeColor(String outcome) {
-    switch (outcome.toLowerCase()) {
-      case 'strong hit':
-        return Colors.green;
-      case 'weak hit':
-        return Colors.orange;
-      case 'miss':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-  
-  void _showCharacterDetailsDialog(BuildContext context, Character character) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(character.name),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (character.bio != null && character.bio!.isNotEmpty) ...[
-                  const Text(
-                    'Bio:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(character.bio!),
-                  const SizedBox(height: 16),
-                ],
-                
-                // Stats
-                if (character.stats.isNotEmpty) ...[
-                  const Text(
-                    'Stats:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 8,
-                    children: character.stats.map((stat) => 
-                      Chip(
-                        label: Text('${stat.name}: ${stat.value}'),
-                        backgroundColor: Colors.grey[200],
-                      )
-                    ).toList(),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                
-                // Notes
-                if (character.notes.isNotEmpty) ...[
-                  const Text(
-                    'Notes:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  ...character.notes.map((note) => 
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4.0),
-                      child: Text('• $note'),
-                    )
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-  
-  void _showLocationDetailsDialog(BuildContext context, Location location) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(location.name),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (location.description != null && location.description!.isNotEmpty) ...[
-                  const Text(
-                    'Description:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(location.description!),
-                  const SizedBox(height: 16),
-                ],
-                
-                if (location.notes.isNotEmpty) ...[
-                  const Text(
-                    'Notes:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  ...location.notes.map((note) => 
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4.0),
-                      child: Text('• $note'),
-                    )
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  void _showMoveRollDetailsDialog(BuildContext context, MoveRoll moveRoll) =>
+      JournalDetailDialogs.showMoveRollDetails(context, moveRoll);
+
+  void _showOracleRollDetailsDialog(BuildContext context, OracleRoll oracleRoll) =>
+      JournalDetailDialogs.showOracleRollDetails(context, oracleRoll);
+
+  void _showCharacterDetailsDialog(BuildContext context, Character character) =>
+      JournalDetailDialogs.showCharacterDetails(context, character);
+
+  void _showLocationDetailsDialog(BuildContext context, Location location) =>
+      JournalDetailDialogs.showLocationDetails(context, location);
   
   void _showQuickAddCharacterDialog(BuildContext context) {
-    final TextEditingController nameController = TextEditingController();
-    final TextEditingController handleController = TextEditingController();
-    final FocusNode handleFocusNode = FocusNode();
-    final LoggingService loggingService = LoggingService();
-    
-    // Handle focus change for the handle field
-    handleFocusNode.addListener(() {
-      if (handleFocusNode.hasFocus && 
-          handleController.text.isEmpty && 
-          nameController.text.isNotEmpty) {
-        // Generate handle from name
-        final character = Character(name: nameController.text);
-        handleController.text = character.getHandle();
-        loggingService.debug(
-          'Auto-generated handle: ${handleController.text}',
-          tag: 'JournalEntryScreen',
-        );
-      }
-    });
-    
-    // Generate a random name from the first_names and surnames oracles
-    Future<void> generateRandomName() async {
-      final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
-      
-      // Get first name from oracle
-      final firstNameTable = OracleService.findOracleTableByKeyAnywhere('first_names', dataswornProvider);
-      if (firstNameTable == null) {
-        loggingService.warning(
-          'Could not find first_names oracle table',
-          tag: 'JournalEntryScreen',
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not find first_names oracle table'),
-          ),
-        );
-        return;
-      }
-      
-      // Get surname from oracle
-      final surnameTable = OracleService.findOracleTableByKeyAnywhere('surnames', dataswornProvider);
-      if (surnameTable == null) {
-        loggingService.warning(
-          'Could not find surnames oracle table',
-          tag: 'JournalEntryScreen',
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not find surnames oracle table'),
-          ),
-        );
-        return;
-      }
-      
-      // Roll on both tables
-      final firstNameResult = OracleService.rollOnOracleTable(firstNameTable);
-      final surnameResult = OracleService.rollOnOracleTable(surnameTable);
-      
-      if (firstNameResult['success'] == true && surnameResult['success'] == true) {
-        final firstName = firstNameResult['oracleRoll'].result;
-        final surname = surnameResult['oracleRoll'].result;
-        
-        // Combine the results
-        nameController.text = '$firstName $surname';
-        
-        loggingService.debug(
-          'Generated random name: ${nameController.text}',
-          tag: 'JournalEntryScreen',
-        );
-      } else {
-        loggingService.warning(
-          'Failed to generate random name',
-          tag: 'JournalEntryScreen',
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to generate random name'),
-          ),
-        );
-      }
-    }
-    
-    // Generate a random handle from the fe_runner_handles oracle
-    Future<void> generateRandomHandle() async {
-      final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
-      
-      // Try to find the fe_runner_handles oracle table
-      final oracleTable = OracleService.findOracleTableByKeyAnywhere('fe_runner_handles', dataswornProvider);
-      
-      if (oracleTable == null) {
-        loggingService.warning(
-          'Could not find fe_runner_handles oracle table',
-          tag: 'JournalEntryScreen',
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not find runner handles oracle table'),
-          ),
-        );
-        return;
-      }
-      
-      // Roll on the oracle table
-      final rollResult = OracleService.rollOnOracleTable(oracleTable);
-      
-      if (rollResult['success'] == true) {
-        final oracleRoll = rollResult['oracleRoll'];
-        final initialResult = oracleRoll.result;
-        
-        // Process any oracle references in the result
-        loggingService.debug(
-          'Processing oracle references in handle result: $initialResult',
-          tag: 'JournalEntryScreen',
-        );
-        
-        // Process the references
-        final processResult = await OracleService.processOracleReferences(initialResult, dataswornProvider);
-        
-        String finalResult;
-        if (processResult['success'] == true) {
-          finalResult = processResult['processedText'] as String;
-          loggingService.debug(
-            'Processed result: $finalResult',
-            tag: 'JournalEntryScreen',
-          );
-        } else {
-          // If processing fails, use the initial result
-          finalResult = initialResult;
-          loggingService.warning(
-            'Failed to process oracle references: ${processResult['error']}',
-            tag: 'JournalEntryScreen',
-          );
-        }
-        
-        // Append the result to the current handle
-        final currentHandle = handleController.text;
-        if (currentHandle.isNotEmpty) {
-          handleController.text = '$currentHandle$finalResult';
-        } else {
-          handleController.text = finalResult;
-        }
-        
-        loggingService.debug(
-          'Generated random handle: ${handleController.text}',
-          tag: 'JournalEntryScreen',
-        );
-      } else {
-        loggingService.warning(
-          'Failed to roll on fe_runner_handles oracle table: ${rollResult['error']}',
-          tag: 'JournalEntryScreen',
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to generate random handle: ${rollResult['error']}'),
-          ),
-        );
-      }
-    }
-    
-    // Convert the current handle to leet speak
-    void convertToLeetSpeak() {
-      final currentHandle = handleController.text;
-      if (currentHandle.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please enter a handle first'),
-          ),
-        );
-        return;
-      }
-      
-      // Convert to leet speak
-      final leetHandle = LeetSpeakConverter.convert(currentHandle);
-      handleController.text = leetHandle;
-      
-      loggingService.debug(
-        'Converted handle to leet speak: $leetHandle',
-        tag: 'JournalEntryScreen',
-      );
-    }
-    
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Add Character'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Character Name',
-                          border: OutlineInputBorder(),
-                        ),
-                        autofocus: true,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.casino),
-                      tooltip: 'Random Name',
-                      onPressed: () async => await generateRandomName(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: handleController,
-                        focusNode: handleFocusNode,
-                        decoration: const InputDecoration(
-                          labelText: 'Short Name or Handle',
-                          helperText: 'No spaces, @, #, or brackets. Will default to first name if blank.',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.casino),
-                      tooltip: 'Random Handle',
-                      onPressed: () async => await generateRandomHandle(),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.terminal),
-                      tooltip: 'Make l33t',
-                      onPressed: convertToLeetSpeak,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () async {
-                // If name is empty but handle is not, use handle as name
-                if (nameController.text.isEmpty && handleController.text.isNotEmpty) {
-                  nameController.text = handleController.text;
-                }
-                
-                if (nameController.text.isNotEmpty) {
-                  final gameProvider = Provider.of<GameProvider>(context, listen: false);
-                  final character = await gameProvider.createCharacter(
-                    nameController.text,
-                    handle: handleController.text.isEmpty ? null : handleController.text,
-                  );
-                  
-                  setState(() {
-                    _linkedCharacterIds.add(character.id);
-                  });
-                  
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                  }
-                } else {
-                  // Show error if both name and handle are empty
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter a name or handle'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        );
+    QuickAddDialogs.showAddCharacter(
+      context,
+      onCharacterCreated: (characterId) {
+        setState(() {
+          _linkedCharacterIds.add(characterId);
+        });
       },
     );
   }
   
   void _showQuickAddLocationDialog(BuildContext context) {
-    final gameProvider = Provider.of<GameProvider>(context, listen: false);
-    
-    // Create a LocationService instance
-    final locationService = LocationService(gameProvider: gameProvider);
-    
-    // Show the comprehensive location creation dialog
-    LocationDialog.showCreateDialog(
+    QuickAddDialogs.showAddLocation(
       context,
-      locationService,
-    ).then((location) {
-      if (location != null) {
+      onLocationCreated: (location) {
         setState(() {
           _linkedLocationIds.add(location.id);
         });
-        
-        // Insert a mention of the location in the editor if we're in editing mode
+
         if (_isEditing && _editorController.text.isNotEmpty) {
           final result = _autocompleteSystem.insertMention(
             location,
             _editorController.text,
             _editorController.selection.baseOffset,
           );
-          
-          // Update the text
+
           _editorController.value = TextEditingValue(
             text: result['text'],
             selection: TextSelection.collapsed(offset: result['cursorPosition']),
           );
-          
-          // Notify parent about the change
+
           setState(() {
             _content = _editorController.text;
           });
-          
-          // Start auto-save timer
+
           _startAutoSaveTimer();
         }
-      }
-    });
+      },
+    );
   }
   
   // Move-related methods have been moved to the MoveDialog class
@@ -1270,17 +716,19 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
       });
       
       // Show confirmation
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Entry saved. Started new entry.'),
           backgroundColor: Colors.green,
         ),
       );
-      
+
       // Focus the editor
       _editorFocusNode.requestFocus();
-      
+
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error saving journal entry: ${e.toString()}'),
@@ -1314,8 +762,6 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   
   @override
   Widget build(BuildContext context) {
-    final buildStopwatch = Stopwatch()..start();
-    
     final gameProvider = Provider.of<GameProvider>(context);
     final currentGame = gameProvider.currentGame;
     

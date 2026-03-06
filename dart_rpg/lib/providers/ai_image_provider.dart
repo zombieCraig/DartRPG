@@ -289,9 +289,9 @@ class AiImageProvider extends ChangeNotifier {
     // Add artistic direction from game settings
     String artisticDirection = "detailed portrait, cyberpunk style, digital art";
     if (game != null && 
-        game.aiImageProvider != null && 
-        game.aiArtisticDirections.containsKey(game.aiImageProvider)) {
-      artisticDirection = game.getAiArtisticDirectionOrDefault();
+        game.aiConfig.aiImageProvider != null && 
+        game.aiConfig.aiArtisticDirections.containsKey(game.aiConfig.aiImageProvider)) {
+      artisticDirection = game.aiConfig.getAiArtisticDirectionOrDefault();
     }
     promptParts.add(artisticDirection);
     
@@ -328,9 +328,9 @@ class AiImageProvider extends ChangeNotifier {
     // Add artistic direction from game settings
     String artisticDirection = "cyberpunk digital location, detailed illustration";
     if (game != null && 
-        game.aiImageProvider != null && 
-        game.aiArtisticDirections.containsKey(game.aiImageProvider)) {
-      artisticDirection = game.getAiArtisticDirectionOrDefault();
+        game.aiConfig.aiImageProvider != null && 
+        game.aiConfig.aiArtisticDirections.containsKey(game.aiConfig.aiImageProvider)) {
+      artisticDirection = game.aiConfig.getAiArtisticDirectionOrDefault();
     }
     promptParts.add(artisticDirection);
     
@@ -386,9 +386,9 @@ class AiImageProvider extends ChangeNotifier {
     // Add artistic direction from game settings
     String artisticDirection = "cyberpunk scene, digital art, detailed illustration";
     if (game != null && 
-        game.aiImageProvider != null && 
-        game.aiArtisticDirections.containsKey(game.aiImageProvider)) {
-      artisticDirection = game.getAiArtisticDirectionOrDefault();
+        game.aiConfig.aiImageProvider != null && 
+        game.aiConfig.aiArtisticDirections.containsKey(game.aiConfig.aiImageProvider)) {
+      artisticDirection = game.aiConfig.getAiArtisticDirectionOrDefault();
     }
     promptParts.add(artisticDirection);
     
@@ -398,9 +398,9 @@ class AiImageProvider extends ChangeNotifier {
   /// Generate a generic prompt.
   String _generateGenericPrompt(dynamic game) {
     if (game != null && 
-        game.aiImageProvider != null && 
-        game.aiArtisticDirections.containsKey(game.aiImageProvider)) {
-      return game.getAiArtisticDirectionOrDefault();
+        game.aiConfig.aiImageProvider != null && 
+        game.aiConfig.aiArtisticDirections.containsKey(game.aiConfig.aiImageProvider)) {
+      return game.aiConfig.getAiArtisticDirectionOrDefault();
     }
     return "cyberpunk digital scene, detailed illustration, digital art";
   }
@@ -846,17 +846,4 @@ class AiImageProvider extends ChangeNotifier {
     }
   }
   
-  /// Get the maximum number of images that can be generated for the specified OpenAI model.
-  int _getMaxImagesForModel(String model) {
-    switch (model) {
-      case 'dall-e-2':
-        return 10;
-      case 'dall-e-3':
-        return 1;
-      case 'gpt-image-1':
-        return 4;
-      default:
-        return 1;
-    }
-  }
 }

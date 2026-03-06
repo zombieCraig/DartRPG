@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../utils/logging_service.dart';
+import '../widgets/common/search_text_field.dart';
 
 class LogViewerScreen extends StatefulWidget {
   const LogViewerScreen({super.key});
@@ -73,21 +74,9 @@ class _LogViewerScreenState extends State<LogViewerScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: TextField(
+            child: SearchTextField(
               controller: _searchController,
-              decoration: InputDecoration(
-                labelText: 'Search Logs',
-                prefixIcon: const Icon(Icons.search),
-                border: const OutlineInputBorder(),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                        },
-                      )
-                    : null,
-              ),
+              labelText: 'Search Logs',
             ),
           ),
           Padding(

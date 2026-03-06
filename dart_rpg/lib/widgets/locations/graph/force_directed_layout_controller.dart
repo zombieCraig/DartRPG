@@ -399,23 +399,6 @@ class ForceDirectedLayoutController {
     }
   }
   
-  /// Adds a small random jitter force to each node
-  void _addRandomJitter({double strength = 10.0}) {
-    final random = math.Random();
-    for (final node in nodes.values) {
-      // Create a random force in a random direction
-      final angle = random.nextDouble() * 2 * math.pi;
-      final magnitude = random.nextDouble() * strength;
-      final jitterForce = Offset(
-        math.cos(angle) * magnitude,
-        math.sin(angle) * magnitude
-      );
-      
-      // Apply the jitter force
-      node.applyForce(jitterForce);
-    }
-  }
-  
   /// Whether the simulation is currently running
   bool get isSimulating => _isSimulating;
   

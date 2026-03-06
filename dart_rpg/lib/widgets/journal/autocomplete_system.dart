@@ -24,9 +24,6 @@ class AutocompleteSystem {
   /// Cache for the last search text to avoid redundant filtering
   String _lastSearchText = '';
   
-  /// Cache for the filtered suggestions
-  List<dynamic> _cachedSuggestions = [];
-  
   /// Performance metrics
   int _lastCheckDuration = 0;
   
@@ -55,7 +52,6 @@ class AutocompleteSystem {
     
     // Quick check if we're potentially in a mention context
     // Only proceed with more expensive operations if we might be in a mention
-    final charAtCursor = cursorPosition < text.length ? text[cursorPosition] : '';
     final charBeforeCursor = cursorPosition > 0 ? text[cursorPosition - 1] : '';
     
     // Special case: If we just typed @ or #, we always want to check for mentions
@@ -201,8 +197,6 @@ class AutocompleteSystem {
       _inlineSuggestion = completionText;
     }
     
-    // Cache the results
-    _cachedSuggestions = List.from(_filteredSuggestions);
   }
   
   /// Inserts a mention at the current cursor position.

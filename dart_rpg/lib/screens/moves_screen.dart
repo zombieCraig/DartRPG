@@ -8,6 +8,7 @@ import '../services/roll_service.dart';
 import '../widgets/moves/move_list.dart';
 import '../widgets/moves/move_details.dart';
 import '../widgets/moves/roll_result_view.dart';
+import '../widgets/common/search_text_field.dart';
 
 class MovesScreen extends StatefulWidget {
   const MovesScreen({super.key});
@@ -38,62 +39,41 @@ class _MovesScreenState extends State<MovesScreen> {
     super.dispose();
   }
   
+  Map<String, List<Move>> _groupMovesByCategory(List<Move> moves) {
+    final movesByCategory = <String, List<Move>>{};
+    for (final move in moves) {
+      final category = move.moveCategory ?? move.category ?? 'Uncategorized';
+      (movesByCategory[category] ??= []).add(move);
+    }
+    return movesByCategory;
+  }
+
+  List<Move> _filterMoves(Map<String, List<Move>> movesByCategory, String query) {
+    if (query.isEmpty) return [];
+    return movesByCategory.values
+        .expand((moves) => moves)
+        .where((move) => move.name.toLowerCase().contains(query))
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer2<DataswornProvider, GameProvider>(
       builder: (context, dataswornProvider, gameProvider, _) {
         final moves = dataswornProvider.moves;
-        
-        // Group moves by move_category instead of category
-        final categories = <String>{};
-        final movesByCategory = <String, List<Move>>{};
-        
-        for (final move in moves) {
-          final category = move.moveCategory ?? move.category ?? 'Uncategorized';
-          categories.add(category);
-          
-          if (!movesByCategory.containsKey(category)) {
-            movesByCategory[category] = [];
-          }
-          
-          movesByCategory[category]!.add(move);
-        }
-        
-        final sortedCategories = categories.toList()..sort();
-        
-        // Filter moves by search query if provided
-        List<Move> filteredMoves = [];
-        if (_searchQuery.isNotEmpty) {
-          for (final category in movesByCategory.keys) {
-          filteredMoves.addAll(
-            movesByCategory[category]!.where((move) => 
-              move.name.toLowerCase().contains(_searchQuery)
-            )
-          );
-          }
-        }
-        
+        final movesByCategory = _groupMovesByCategory(moves);
+        final sortedCategories = movesByCategory.keys.toList()..sort();
+        final filteredMoves = _filterMoves(movesByCategory, _searchQuery);
+
         return Column(
           children: [
             // Search bar
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: TextField(
+              child: SearchTextField(
                 controller: _searchController,
-                decoration: InputDecoration(
-                  labelText: 'Search Moves',
-                  hintText: 'Enter move title',
-                  prefixIcon: const Icon(Icons.search),
-                  border: const OutlineInputBorder(),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                          },
-                        )
-                      : null,
-                ),
+                labelText: 'Search Moves',
+                hintText: 'Enter move title',
               ),
             ),
             

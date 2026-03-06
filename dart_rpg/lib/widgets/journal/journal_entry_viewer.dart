@@ -1,7 +1,8 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import '../../providers/game_provider.dart';
 import '../../models/character.dart';
 import '../../models/location.dart';
@@ -619,43 +620,27 @@ class JournalEntryViewer extends StatelessWidget {
   }
   
   Character? _findCharacterByHandle(Game game, String handle) {
-    try {
-      return game.characters.firstWhere(
-        (c) => (c.handle ?? c.getHandle()).toLowerCase() == handle.toLowerCase(),
-      );
-    } catch (e) {
-      return null;
-    }
+    return game.characters.firstWhereOrNull(
+      (c) => (c.handle ?? c.getHandle()).toLowerCase() == handle.toLowerCase(),
+    );
   }
-  
+
   Location? _findLocationByName(Game game, String name) {
-    try {
-      return game.locations.firstWhere(
-        (l) => l.name.toLowerCase() == name.toLowerCase(),
-      );
-    } catch (e) {
-      return null;
-    }
+    return game.locations.firstWhereOrNull(
+      (l) => l.name.toLowerCase() == name.toLowerCase(),
+    );
   }
-  
+
   MoveRoll? _findMoveRoll(String moveName, String outcome) {
-    try {
-      return moveRolls.firstWhere(
-        (m) => m.moveName == moveName && m.outcome.toLowerCase().contains(outcome.toLowerCase()),
-      );
-    } catch (e) {
-      return null;
-    }
+    return moveRolls.firstWhereOrNull(
+      (m) => m.moveName == moveName && m.outcome.toLowerCase().contains(outcome.toLowerCase()),
+    );
   }
-  
+
   OracleRoll? _findOracleRoll(String oracleName, String result) {
-    try {
-      return oracleRolls.firstWhere(
-        (o) => o.oracleName == oracleName && o.result == result,
-      );
-    } catch (e) {
-      return null;
-    }
+    return oracleRolls.firstWhereOrNull(
+      (o) => o.oracleName == oracleName && o.result == result,
+    );
   }
   
   // Helper method to parse formatted text with HTML-like tags

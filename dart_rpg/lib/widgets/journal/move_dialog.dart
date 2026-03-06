@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/move.dart';
@@ -5,10 +6,12 @@ import '../../models/journal_entry.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../services/roll_service.dart';
+import '../../screens/game_screen.dart';
 import '../sentient_ai_dialog.dart';
 import '../moves/move_list.dart';
 import '../moves/move_details.dart';
 import '../moves/roll_result_view.dart';
+import '../common/search_text_field.dart';
 
 /// A dialog for selecting and rolling moves in the journal entry screen.
 class MoveDialog {
@@ -92,25 +95,10 @@ class MoveDialog {
                         // Search bar
                         Padding(
                           padding: const EdgeInsets.all(16.0),
-                          child: TextField(
+                          child: SearchTextField(
                             controller: searchController,
-                            decoration: InputDecoration(
-                              labelText: 'Search Moves',
-                              hintText: 'Enter move title',
-                              prefixIcon: const Icon(Icons.search),
-                              border: const OutlineInputBorder(),
-                              suffixIcon: searchQuery.isNotEmpty
-                                  ? IconButton(
-                                      icon: const Icon(Icons.clear),
-                                      onPressed: () {
-                                        searchController.clear();
-                                        setState(() {
-                                          searchQuery = '';
-                                        });
-                                      },
-                                    )
-                                  : null,
-                            ),
+                            labelText: 'Search Moves',
+                            hintText: 'Enter move title',
                             onChanged: (value) {
                               setState(() {
                                 searchQuery = value;
@@ -319,12 +307,12 @@ class MoveDialog {
     final sentientAiTriggered = result['sentientAiTriggered'] as bool? ?? false;
     
     // If Sentient AI was triggered, show the dialog
-    if (sentientAiTriggered && game != null && game.sentientAiEnabled) {
+    if (sentientAiTriggered && game != null && game.aiConfig.sentientAiEnabled) {
       // Check if we need to randomly select a persona
       final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
       
       // If both name and persona are null, randomly select a persona
-      if (game.sentientAiName == null && game.sentientAiPersona == null) {
+      if (game.aiConfig.sentientAiName == null && game.aiConfig.sentientAiPersona == null) {
         final randomPersona = gameProvider.getRandomAiPersona(dataswornProvider);
         if (randomPersona != null) {
           // Save the randomly selected persona
@@ -333,28 +321,30 @@ class MoveDialog {
       }
       
       // Show the Sentient AI dialog with the updated persona
+      if (!context.mounted) return;
       SentientAiDialog.show(
         context: context,
-        aiName: game.sentientAiName,
-        aiPersona: game.sentientAiPersona,
-        aiImagePath: game.sentientAiImagePath,
+        aiName: game.aiConfig.sentientAiName,
+        aiPersona: game.aiConfig.sentientAiPersona,
+        aiImagePath: game.aiConfig.sentientAiImagePath,
         onOracleSelected: (oracleKey, dataswornProvider) async {
           // Roll on the selected oracle - dataswornProvider is now passed from the dialog
           final oracleResult = await SentientAiDialog.rollOnAiOracle(
             oracleKey: oracleKey,
             dataswornProvider: dataswornProvider,
           );
-          
+
           if (oracleResult['success'] == true) {
             final oracleRoll = oracleResult['oracleRoll'] as OracleRoll;
-            
+
             // Insert the oracle roll text at the cursor position
             if (isEditing) {
               final formattedText = '\n\n**AI Outcome:** ${oracleRoll.result}\n\n';
               onInsertText(formattedText);
             }
-            
+
             // Show confirmation
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('AI Outcome: ${oracleRoll.result}'),
@@ -363,6 +353,7 @@ class MoveDialog {
             );
           } else {
             // Show error
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Error: ${oracleResult['error']}'),
@@ -374,13 +365,22 @@ class MoveDialog {
         },
         onAskOraclePressed: () {
           // Navigate to the Oracles screen
+          final gameId = Provider.of<GameProvider>(context, listen: false).currentGame?.id;
           Navigator.pop(context);
-          Navigator.pushNamed(context, '/oracles');
+          if (gameId != null && context.mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => GameScreen(gameId: gameId, initialTabIndex: 5),
+              ),
+            );
+          }
         },
       );
     }
-    
+
     // Show the roll result
+    if (!context.mounted) return;
     showDialog(
       context: context,
       builder: (context) {
@@ -534,12 +534,12 @@ class MoveDialog {
     final sentientAiTriggered = result['sentientAiTriggered'] as bool? ?? false;
     
     // If Sentient AI was triggered, show the dialog
-    if (sentientAiTriggered && game != null && game.sentientAiEnabled) {
+    if (sentientAiTriggered && game != null && game.aiConfig.sentientAiEnabled) {
       // Check if we need to randomly select a persona
       final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
       
       // If both name and persona are null, randomly select a persona
-      if (game.sentientAiName == null && game.sentientAiPersona == null) {
+      if (game.aiConfig.sentientAiName == null && game.aiConfig.sentientAiPersona == null) {
         final randomPersona = gameProvider.getRandomAiPersona(dataswornProvider);
         if (randomPersona != null) {
           // Save the randomly selected persona
@@ -548,28 +548,30 @@ class MoveDialog {
       }
       
       // Show the Sentient AI dialog with the updated persona
+      if (!context.mounted) return;
       SentientAiDialog.show(
         context: context,
-        aiName: game.sentientAiName,
-        aiPersona: game.sentientAiPersona,
-        aiImagePath: game.sentientAiImagePath,
+        aiName: game.aiConfig.sentientAiName,
+        aiPersona: game.aiConfig.sentientAiPersona,
+        aiImagePath: game.aiConfig.sentientAiImagePath,
         onOracleSelected: (oracleKey, dataswornProvider) async {
           // Roll on the selected oracle - dataswornProvider is now passed from the dialog
           final oracleResult = await SentientAiDialog.rollOnAiOracle(
             oracleKey: oracleKey,
             dataswornProvider: dataswornProvider,
           );
-          
+
           if (oracleResult['success'] == true) {
             final oracleRoll = oracleResult['oracleRoll'] as OracleRoll;
-            
+
             // Insert the oracle roll text at the cursor position
             if (isEditing) {
               final formattedText = '\n\n**AI Outcome:** ${oracleRoll.result}\n\n';
               onInsertText(formattedText);
             }
-            
+
             // Show confirmation
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('AI Outcome: ${oracleRoll.result}'),
@@ -578,6 +580,7 @@ class MoveDialog {
             );
           } else {
             // Show error
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Error: ${oracleResult['error']}'),
@@ -589,13 +592,22 @@ class MoveDialog {
         },
         onAskOraclePressed: () {
           // Navigate to the Oracles screen
+          final gameId = Provider.of<GameProvider>(context, listen: false).currentGame?.id;
           Navigator.pop(context);
-          Navigator.pushNamed(context, '/oracles');
+          if (gameId != null && context.mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => GameScreen(gameId: gameId, initialTabIndex: 5),
+              ),
+            );
+          }
         },
       );
     }
-    
+
     // Show the roll result
+    if (!context.mounted) return;
     showDialog(
       context: context,
       builder: (context) {
@@ -680,11 +692,10 @@ class MoveDialog {
       final result = await gameProvider.makeQuestProgressRoll(questId);
       
       // Get the quest to include in the journal entry
-      final quest = gameProvider.currentGame?.quests.firstWhere(
+      final quest = gameProvider.currentGame?.quests.firstWhereOrNull(
         (q) => q.id == questId,
-        orElse: () => throw Exception('Quest not found'),
       );
-      
+
       if (quest == null) {
         throw Exception('Quest not found');
       }
@@ -710,6 +721,7 @@ class MoveDialog {
       onMoveRollAdded(moveRoll);
       
       // Show the roll result
+      if (!context.mounted) return;
       showDialog(
         context: context,
         builder: (context) {
@@ -783,6 +795,7 @@ class MoveDialog {
       );
     } catch (e) {
       // Handle errors
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),

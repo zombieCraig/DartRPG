@@ -68,7 +68,7 @@ class LocationGraphController {
     required TickerProvider tickerProvider,
   }) : _tickerProvider = tickerProvider {
     // Initialize with FruchtermanReingoldAlgorithm
-    algorithm = FruchtermanReingoldAlgorithm(iterations: 100);
+    algorithm = FruchtermanReingoldAlgorithm(FruchtermanReingoldConfiguration(iterations: 100));
   }
   
   /// Builds the graph from a list of locations
@@ -141,7 +141,7 @@ class LocationGraphController {
     
     // Update algorithm iterations based on auto-arrange setting
     algorithm = FruchtermanReingoldAlgorithm(
-      iterations: autoArrangeEnabled ? 1000 : 100
+      FruchtermanReingoldConfiguration(iterations: autoArrangeEnabled ? 1000 : 100)
     );
     
     // Initialize force-directed layout controller if auto-arrange is enabled
@@ -238,7 +238,7 @@ class LocationGraphController {
       _initializeForceDirectedLayout(locations);
       
       // Use more iterations for better layout
-      algorithm = FruchtermanReingoldAlgorithm(iterations: 1000);
+      algorithm = FruchtermanReingoldAlgorithm(FruchtermanReingoldConfiguration(iterations: 1000));
     } else {
       // When disabling auto-arrange, stop the force-directed layout
       if (_forceDirectedLayoutController != null) {
@@ -246,7 +246,7 @@ class LocationGraphController {
       }
       
       // Use fewer iterations to avoid major changes
-      algorithm = FruchtermanReingoldAlgorithm(iterations: 100);
+      algorithm = FruchtermanReingoldAlgorithm(FruchtermanReingoldConfiguration(iterations: 100));
     }
   }
   
@@ -661,7 +661,8 @@ class LocationGraphController {
           // Update the location's position directly
           location.x = position.dx;
           location.y = position.dy;
-        } catch (e) {
+        } catch (_) {
+          // Location not found in list; skip position update
         }
       }
     }

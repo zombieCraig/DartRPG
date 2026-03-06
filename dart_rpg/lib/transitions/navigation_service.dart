@@ -227,7 +227,7 @@ class NavigationService {
                       end: Alignment.centerRight,
                       colors: [
                         Colors.white,
-                        Colors.white.withOpacity(0.8),
+                        Colors.white.withValues(alpha: 0.8),
                         Colors.white,
                       ],
                       stops: [

@@ -116,7 +116,7 @@ class DigitalBlocksPainter extends CustomPainter {
           
           // Draw the block with a random opacity
           final double opacity = 0.5 + _random.nextDouble() * 0.5;
-          paint.color = color.withOpacity(opacity);
+          paint.color = color.withValues(alpha: opacity);
           
           canvas.drawRect(
             Rect.fromLTWH(blockX, blockY, actualBlockSize, actualBlockSize),

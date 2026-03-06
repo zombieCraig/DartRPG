@@ -463,8 +463,9 @@ class _CharacterFormState extends State<CharacterForm> {
                       );
                       
                       if (result != null) {
+                        if (!context.mounted) return;
                         final type = result['type'];
-                        
+
                         if (type == 'url') {
                           // URL selected
                           setState(() {
@@ -474,7 +475,7 @@ class _CharacterFormState extends State<CharacterForm> {
                           // File selected
                           final file = result['file'] as File;
                           final imageManager = Provider.of<ImageManagerProvider>(context, listen: false);
-                          
+
                           // Show loading indicator
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(

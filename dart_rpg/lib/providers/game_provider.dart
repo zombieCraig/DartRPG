@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:collection/collection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
@@ -6,18 +7,17 @@ import 'dart:math' as math;
 
 import '../models/game.dart';
 import '../models/character.dart';
-import '../models/clock.dart';
 import '../models/location.dart';
 import '../models/session.dart';
 import '../models/journal_entry.dart';
-import '../models/quest.dart';
 import '../utils/logging_service.dart';
-import '../utils/dice_roller.dart';
 import '../services/oracle_service.dart';
 import 'datasworn_provider.dart';
 import 'image_manager_provider.dart';
+import 'clock_operations_mixin.dart';
+import 'quest_operations_mixin.dart';
 
-class GameProvider extends ChangeNotifier {
+class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperationsMixin {
   
   List<Game> _games = [];
   Game? _currentGame;
@@ -34,6 +34,21 @@ class GameProvider extends ChangeNotifier {
   // Public method to save games
   Future<void> saveGame() async {
     await _saveGames();
+  }
+
+  // Mixin interface for ClockOperationsMixin and QuestOperationsMixin
+  @override
+  Game? get clockGame => _currentGame;
+  @override
+  Session? get clockSession => _currentSession;
+  @override
+  Game? get questGame => _currentGame;
+  @override
+  Session? get questSession => _currentSession;
+  @override
+  Future<void> persistAndNotify() async {
+    await _saveGames();
+    notifyListeners();
   }
 
   // Reference to the ImageManagerProvider
@@ -98,22 +113,21 @@ class GameProvider extends ChangeNotifier {
     }
     
     // Load Sentient AI image if available
-    if (_currentGame!.sentientAiEnabled && 
-        _currentGame!.sentientAiImagePath != null && 
-        _currentGame!.sentientAiImagePath!.isNotEmpty &&
-        _currentGame!.sentientAiImagePath!.startsWith('http')) {
-      
-      // Save the image from URL and get an imageId
+    final ai = _currentGame!.aiConfig;
+    if (ai.sentientAiEnabled &&
+        ai.sentientAiImagePath != null &&
+        ai.sentientAiImagePath!.isNotEmpty &&
+        ai.sentientAiImagePath!.startsWith('http')) {
+
       final image = await _imageManagerProvider!.addImageFromUrl(
-        _currentGame!.sentientAiImagePath!,
+        ai.sentientAiImagePath!,
         metadata: {'usage': 'sentientAi', 'gameId': _currentGame!.id},
       );
-      
+
       if (image != null) {
-        // Update the game with the imageId (store in sentientAiImagePath)
-        _currentGame!.sentientAiImagePath = image.id;
+        ai.sentientAiImagePath = image.id;
         loggingService.debug(
-          'Saved Sentient AI image: ${_currentGame!.sentientAiName ?? "AI"} (URL: ${_currentGame!.sentientAiImagePath}, ID: ${image.id})',
+          'Saved Sentient AI image: ${ai.sentientAiName ?? "AI"} (URL: ${ai.sentientAiImagePath}, ID: ${image.id})',
           tag: 'GameProvider',
         );
       }
@@ -185,16 +199,15 @@ class GameProvider extends ChangeNotifier {
       
       // Log the loaded games
       for (final game in _games) {
-        if (game.aiImageGenerationEnabled && game.aiImageProvider != null) {
+        if (game.aiConfig.aiImageGenerationEnabled && game.aiConfig.aiImageProvider != null) {
           LoggingService().info(
-            'Loaded game with AI image generation enabled: ${game.name} (Provider: ${game.aiImageProvider})',
+            'Loaded game with AI image generation enabled: ${game.name} (Provider: ${game.aiConfig.aiImageProvider})',
             tag: 'GameProvider'
           );
-          
-          // Log API keys without exposing the actual keys
-          if (game.aiApiKeys.isNotEmpty) {
+
+          if (game.aiConfig.aiApiKeys.isNotEmpty) {
             LoggingService().debug(
-              'Game has ${game.aiApiKeys.length} API key(s) for providers: ${game.aiApiKeys.keys.join(", ")}',
+              'Game has ${game.aiConfig.aiApiKeys.length} API key(s) for providers: ${game.aiConfig.aiApiKeys.keys.join(", ")}',
               tag: 'GameProvider'
             );
           } else {
@@ -209,14 +222,11 @@ class GameProvider extends ChangeNotifier {
       // Load last played game
       final lastPlayedId = prefs.getString('lastPlayedGameId');
       if (lastPlayedId != null) {
-        try {
-          _currentGame = _games.firstWhere(
-            (game) => game.id == lastPlayedId,
-          );
-        } catch (e) {
-          if (_games.isNotEmpty) {
-            _currentGame = _games.first;
-          }
+        _currentGame = _games.firstWhereOrNull(
+          (game) => game.id == lastPlayedId,
+        );
+        if (_currentGame == null && _games.isNotEmpty) {
+          _currentGame = _games.first;
         }
         
         // Load last played session
@@ -269,9 +279,9 @@ class GameProvider extends ChangeNotifier {
         final jsonString = game.toJsonString();
         
         // Log API keys information before saving
-        if (game.aiImageGenerationEnabled && game.aiImageProvider != null) {
+        if (game.aiConfig.aiImageGenerationEnabled && game.aiConfig.aiImageProvider != null) {
           LoggingService().debug(
-            'Saving game with API keys: ${game.aiApiKeys.keys.join(", ")}',
+            'Saving game with API keys: ${game.aiConfig.aiApiKeys.keys.join(", ")}',
             tag: 'GameProvider'
           );
           
@@ -360,8 +370,12 @@ class GameProvider extends ChangeNotifier {
 
   // Switch to a different game
   Future<void> switchGame(String gameId) async {
-    final game = _games.firstWhere((g) => g.id == gameId);
-    
+    final game = _games.firstWhereOrNull((g) => g.id == gameId);
+    if (game == null) {
+      LoggingService().warning('Game not found: $gameId', tag: 'GameProvider');
+      return;
+    }
+
     _currentGame = game;
     _currentGame!.updateLastPlayed();
     
@@ -371,23 +385,16 @@ class GameProvider extends ChangeNotifier {
       final lastSessionId = prefs.getString('lastSessionId_${_currentGame!.id}');
       
       if (lastSessionId != null) {
-        // Try to find the last selected session
-        try {
-          _currentSession = _currentGame!.sessions.firstWhere(
-            (session) => session.id == lastSessionId,
-          );
-        } catch (_) {
-          // If the last session can't be found, use the first session
-          _currentSession = _currentGame!.sessions.first;
-        }
+        _currentSession = _currentGame!.sessions.firstWhereOrNull(
+          (session) => session.id == lastSessionId,
+        ) ?? _currentGame!.sessions.first;
       } else {
-        // If no last session is saved, use the first session
         _currentSession = _currentGame!.sessions.first;
       }
     } else {
       _currentSession = null;
     }
-    
+
     await _saveGames();
     notifyListeners();
   }
@@ -395,27 +402,20 @@ class GameProvider extends ChangeNotifier {
   // Delete a game
   Future<void> deleteGame(String gameId) async {
     _games.removeWhere((g) => g.id == gameId);
-    
+
     if (_currentGame?.id == gameId) {
       _currentGame = _games.isNotEmpty ? _games.first : null;
-      
+
       // Try to load the last selected session for the new current game
       if (_currentGame != null && _currentGame!.sessions.isNotEmpty) {
         final prefs = await SharedPreferences.getInstance();
         final lastSessionId = prefs.getString('lastSessionId_${_currentGame!.id}');
-        
+
         if (lastSessionId != null) {
-          // Try to find the last selected session
-          try {
-            _currentSession = _currentGame!.sessions.firstWhere(
-              (session) => session.id == lastSessionId,
-            );
-          } catch (_) {
-            // If the last session can't be found, use the first session
-            _currentSession = _currentGame!.sessions.first;
-          }
+          _currentSession = _currentGame!.sessions.firstWhereOrNull(
+            (session) => session.id == lastSessionId,
+          ) ?? _currentGame!.sessions.first;
         } else {
-          // If no last session is saved, use the first session
           _currentSession = _currentGame!.sessions.first;
         }
       } else {
@@ -458,17 +458,17 @@ class GameProvider extends ChangeNotifier {
             if (assetsByCategory.containsKey('rig')) {
               final rigAssets = assetsByCategory['rig'];
               if (rigAssets != null && rigAssets.isNotEmpty) {
-                try {
-                  baseRig = rigAssets.firstWhere(
-                    (a) => a.id == "base_rig"
-                  );
+                baseRig = rigAssets.firstWhereOrNull(
+                  (a) => a.id == "base_rig"
+                );
+                if (baseRig != null) {
                   loggingService.debug(
                     'Found Base Rig asset in rig category: ${baseRig.name} (ID: ${baseRig.id})',
                     tag: 'GameProvider',
                   );
-                } catch (e) {
+                } else {
                   loggingService.warning(
-                    'Base Rig asset not found in rig category: ${e.toString()}',
+                    'Base Rig asset not found in rig category',
                     tag: 'GameProvider',
                   );
                 }
@@ -742,8 +742,13 @@ class GameProvider extends ChangeNotifier {
       throw Exception('No game selected');
     }
     
-    _currentSession = _currentGame!.sessions.firstWhere((s) => s.id == sessionId);
-    
+    final session = _currentGame!.sessions.firstWhereOrNull((s) => s.id == sessionId);
+    if (session == null) {
+      LoggingService().warning('Session not found: $sessionId', tag: 'GameProvider');
+      return;
+    }
+    _currentSession = session;
+
     await _saveGames();
     notifyListeners();
   }
@@ -768,249 +773,19 @@ class GameProvider extends ChangeNotifier {
       throw Exception('No game or session selected');
     }
     
-    final entry = _currentSession!.entries.firstWhere((e) => e.id == entryId);
+    final entry = _currentSession!.entries.firstWhereOrNull((e) => e.id == entryId);
+    if (entry == null) {
+      LoggingService().warning('Journal entry not found: $entryId', tag: 'GameProvider');
+      return;
+    }
     entry.update(content);
     
     await _saveGames();
     notifyListeners();
   }
-  
-  // Quest-related methods
-  
-  // Create a new quest
-  Future<Quest> createQuest(
-    String title,
-    String characterId,
-    QuestRank rank, {
-    String notes = '',
-  }) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    // Verify the character exists
-    _currentGame!.characters.firstWhere(
-      (c) => c.id == characterId,
-      orElse: () => throw Exception('Character not found'),
-    );
-    
-    final quest = Quest(
-      title: title,
-      characterId: characterId,
-      rank: rank,
-      notes: notes,
-    );
-    
-    _currentGame!.quests.add(quest);
-    
-    await _saveGames();
-    notifyListeners();
-    
-    return quest;
-  }
-  
-  // Update quest progress in boxes (0-10)
-  Future<void> updateQuestProgress(String questId, int progress) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    final quest = _currentGame!.quests.firstWhere(
-      (q) => q.id == questId,
-      orElse: () => throw Exception('Quest not found'),
-    );
-    
-    // Ensure progress is within bounds
-    final newProgress = progress.clamp(0, 10);
-    quest.updateProgress(newProgress);
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
-  
-  // Update quest progress in ticks (0-40)
-  Future<void> updateQuestProgressTicks(String questId, int ticks) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    final quest = _currentGame!.quests.firstWhere(
-      (q) => q.id == questId,
-      orElse: () => throw Exception('Quest not found'),
-    );
-    
-    quest.updateProgressTicks(ticks);
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
-  // Add a single tick to quest progress
-  Future<void> addQuestTick(String questId) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    final quest = _currentGame!.quests.firstWhere(
-      (q) => q.id == questId,
-      orElse: () => throw Exception('Quest not found'),
-    );
-    
-    quest.addTick();
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
-  // Remove a single tick from quest progress
-  Future<void> removeQuestTick(String questId) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    final quest = _currentGame!.quests.firstWhere(
-      (q) => q.id == questId,
-      orElse: () => throw Exception('Quest not found'),
-    );
-    
-    quest.removeTick();
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
-  // Add ticks based on quest rank
-  Future<void> addQuestTicksForRank(String questId) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    final quest = _currentGame!.quests.firstWhere(
-      (q) => q.id == questId,
-      orElse: () => throw Exception('Quest not found'),
-    );
-    
-    quest.addTicksForRank();
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
-  // Remove ticks based on quest rank
-  Future<void> removeQuestTicksForRank(String questId) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    final quest = _currentGame!.quests.firstWhere(
-      (q) => q.id == questId,
-      orElse: () => throw Exception('Quest not found'),
-    );
-    
-    quest.removeTicksForRank();
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
-  // Update quest notes
-  Future<void> updateQuestNotes(String questId, String notes) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    final quest = _currentGame!.quests.firstWhere(
-      (q) => q.id == questId,
-      orElse: () => throw Exception('Quest not found'),
-    );
-    
-    quest.notes = notes;
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
-  // Complete a quest
-  Future<void> completeQuest(String questId) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    final quest = _currentGame!.quests.firstWhere(
-      (q) => q.id == questId,
-      orElse: () => throw Exception('Quest not found'),
-    );
-    
-    quest.complete();
-    
-    // Create a journal entry for the completed quest
-    if (_currentSession != null) {
-      final character = _currentGame!.characters.firstWhere(
-        (c) => c.id == quest.characterId,
-        orElse: () => throw Exception('Character not found'),
-      );
-      
-      final entry = _currentSession!.createNewEntry(
-        'Quest "${quest.title}" completed by ${character.name}.\n'
-        'Final progress: ${quest.progress}/10\n'
-        'Notes: ${quest.notes}'
-      );
-      
-      // Add metadata to indicate this entry was created from a quest
-      entry.metadata = {'sourceScreen': 'quests'};
-    }
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
-  // Forsake a quest
-  Future<void> forsakeQuest(String questId) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    final quest = _currentGame!.quests.firstWhere(
-      (q) => q.id == questId,
-      orElse: () => throw Exception('Quest not found'),
-    );
-    
-    quest.forsake();
-    
-    // Create a journal entry for the forsaken quest
-    if (_currentSession != null) {
-      final character = _currentGame!.characters.firstWhere(
-        (c) => c.id == quest.characterId,
-        orElse: () => throw Exception('Character not found'),
-      );
-      
-      final entry = _currentSession!.createNewEntry(
-        'Quest "${quest.title}" forsaken by ${character.name}.\n'
-        'Final progress: ${quest.progress}/10\n'
-        'Notes: ${quest.notes}'
-      );
-      
-      // Add metadata to indicate this entry was created from a quest
-      entry.metadata = {'sourceScreen': 'quests'};
-    }
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
-  // Delete a quest
-  Future<void> deleteQuest(String questId) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    _currentGame!.quests.removeWhere((q) => q.id == questId);
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
+
+  // Quest-related methods are provided by QuestOperationsMixin
+
   // Sentient AI-related methods
   
   // Update sentientAiEnabled setting
@@ -1019,170 +794,78 @@ class GameProvider extends ChangeNotifier {
       throw Exception('No game selected');
     }
     
-    _currentGame!.sentientAiEnabled = enabled;
-    
+    _currentGame!.aiConfig.sentientAiEnabled = enabled;
+
     await _saveGames();
     notifyListeners();
   }
-  
-  // Update sentientAiName setting
+
   Future<void> updateSentientAiName(String? name) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    _currentGame!.sentientAiName = name;
-    
+    if (_currentGame == null) throw Exception('No game selected');
+    _currentGame!.aiConfig.sentientAiName = name;
     await _saveGames();
     notifyListeners();
   }
-  
-  // Update sentientAiPersona setting
+
   Future<void> updateSentientAiPersona(String? persona) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    _currentGame!.sentientAiPersona = persona;
-    
+    if (_currentGame == null) throw Exception('No game selected');
+    _currentGame!.aiConfig.sentientAiPersona = persona;
     await _saveGames();
     notifyListeners();
   }
-  
-  // Update sentientAiImagePath setting
+
   Future<void> updateSentientAiImagePath(String? imagePath) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    _currentGame!.sentientAiImagePath = imagePath;
-    
+    if (_currentGame == null) throw Exception('No game selected');
+    _currentGame!.aiConfig.sentientAiImagePath = imagePath;
     await _saveGames();
     notifyListeners();
   }
-  
-  // AI Image Generation methods
-  
-  // Update aiImageGenerationEnabled setting
+
   Future<void> updateAiImageGenerationEnabled(bool enabled) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    _currentGame!.setAiImageGenerationEnabled(enabled);
-    
+    if (_currentGame == null) throw Exception('No game selected');
+    _currentGame!.aiConfig.aiImageGenerationEnabled = enabled;
     await _saveGames();
     notifyListeners();
   }
-  
-  // Update aiImageProvider setting
+
   Future<void> updateAiImageProvider(String? provider) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    _currentGame!.setAiImageProvider(provider);
-    
+    if (_currentGame == null) throw Exception('No game selected');
+    _currentGame!.aiConfig.aiImageProvider = provider;
     await _saveGames();
     notifyListeners();
   }
-  
-  // Update OpenAI model setting
+
   Future<void> updateOpenAiModel(String model) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    LoggingService().info(
-      'Updating OpenAI model to: $model',
-      tag: 'GameProvider'
-    );
-    
-    _currentGame!.setOpenAiModel(model);
-    
-    LoggingService().debug(
-      'OpenAI model was set successfully to: $model',
-      tag: 'GameProvider'
-    );
-    
+    if (_currentGame == null) throw Exception('No game selected');
+    _currentGame!.aiConfig.openaiModel = model;
     await _saveGames();
     notifyListeners();
   }
-  
-  // Update API key for a specific provider
+
   Future<void> updateAiApiKey(String provider, String apiKey) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    LoggingService().info(
-      'Updating API key for provider: $provider',
-      tag: 'GameProvider'
-    );
-    
-    _currentGame!.setAiApiKey(provider, apiKey);
-    
-    // Log that the API key was set without exposing the actual key
-    LoggingService().debug(
-      'API key for $provider was set successfully',
-      tag: 'GameProvider'
-    );
-    
+    if (_currentGame == null) throw Exception('No game selected');
+    _currentGame!.aiConfig.setAiApiKey(provider, apiKey);
     await _saveGames();
     notifyListeners();
   }
-  
-  // Update artistic direction for a specific provider
+
   Future<void> updateAiArtisticDirection(String provider, String artisticDirection) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    LoggingService().info(
-      'Updating artistic direction for provider: $provider',
-      tag: 'GameProvider'
-    );
-    
-    _currentGame!.setAiArtisticDirection(provider, artisticDirection);
-    
-    LoggingService().debug(
-      'Artistic direction for $provider was set successfully',
-      tag: 'GameProvider'
-    );
-    
+    if (_currentGame == null) throw Exception('No game selected');
+    _currentGame!.aiConfig.setAiArtisticDirection(provider, artisticDirection);
     await _saveGames();
     notifyListeners();
   }
-  
-  // Remove API key for a specific provider
+
   Future<void> removeAiApiKey(String provider) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    LoggingService().info(
-      'Removing API key for provider: $provider',
-      tag: 'GameProvider'
-    );
-    
-    _currentGame!.removeAiApiKey(provider);
-    
-    LoggingService().debug(
-      'API key for $provider was removed successfully',
-      tag: 'GameProvider'
-    );
-    
+    if (_currentGame == null) throw Exception('No game selected');
+    _currentGame!.aiConfig.removeAiApiKey(provider);
     await _saveGames();
     notifyListeners();
   }
-  
-  // Check if AI image generation is available
+
   bool isAiImageGenerationAvailable() {
-    if (_currentGame == null) {
-      return false;
-    }
-    
-    return _currentGame!.isAiImageGenerationAvailable();
+    if (_currentGame == null) return false;
+    return _currentGame!.aiConfig.isAiImageGenerationAvailable();
   }
   
   // Get AI personas from the datasworn provider
@@ -1215,182 +898,7 @@ class GameProvider extends ChangeNotifier {
     return personas[randomIndex]['id'];
   }
   
-  // Clock-related methods
-  
-  // Create a new clock
-  Future<Clock> createClock(
-    String title,
-    int segments,
-    ClockType type,
-  ) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    // Validate segments (must be 4, 6, 8, or 10)
-    if (![4, 6, 8, 10].contains(segments)) {
-      throw Exception('Invalid number of segments. Must be 4, 6, 8, or 10.');
-    }
-    
-    final clock = Clock(
-      title: title,
-      segments: segments,
-      type: type,
-    );
-    
-    _currentGame!.addClock(clock);
-    
-    await _saveGames();
-    notifyListeners();
-    
-    return clock;
-  }
-  
-  // Update a clock's title
-  Future<void> updateClockTitle(String clockId, String title) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    final clock = _currentGame!.clocks.firstWhere(
-      (c) => c.id == clockId,
-      orElse: () => throw Exception('Clock not found'),
-    );
-    
-    clock.title = title;
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
-  // Advance a clock by one segment
-  Future<void> advanceClock(String clockId) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    final clock = _currentGame!.clocks.firstWhere(
-      (c) => c.id == clockId,
-      orElse: () => throw Exception('Clock not found'),
-    );
-    
-    // Advance the clock
-    clock.advance();
-    
-    // Create a journal entry if the clock is now complete
-    if (clock.isComplete && _currentSession != null) {
-      _currentSession!.createNewEntry(
-        'Clock "${clock.title}" has filled completely.\n'
-        'Type: ${clock.type.displayName}\n'
-        'Segments: ${clock.progress}/${clock.segments}'
-      );
-    }
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
-  // Reset a clock's progress
-  Future<void> resetClock(String clockId) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    final clock = _currentGame!.clocks.firstWhere(
-      (c) => c.id == clockId,
-      orElse: () => throw Exception('Clock not found'),
-    );
-    
-    clock.reset();
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
-  // Delete a clock
-  Future<void> deleteClock(String clockId) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    _currentGame!.clocks.removeWhere((c) => c.id == clockId);
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
-  // Advance all clocks of a specific type
-  Future<void> advanceAllClocksOfType(ClockType type) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    final clocks = _currentGame!.getClocksByType(type);
-    bool anyCompleted = false;
-    
-    for (final clock in clocks) {
-      if (!clock.isComplete) {
-        clock.advance();
-        
-        if (clock.isComplete) {
-          anyCompleted = true;
-        }
-      }
-    }
-    
-    // Create a journal entry if any clocks were completed
-    if (anyCompleted && _currentSession != null) {
-      final completedClocks = clocks.where((c) => c.isComplete && c.completedAt != null);
-      
-      if (completedClocks.isNotEmpty) {
-        final clockNames = completedClocks.map((c) => '"${c.title}"').join(', ');
-        _currentSession!.createNewEntry(
-          'The following ${type.displayName} clocks have filled completely: $clockNames'
-        );
-      }
-    }
-    
-    await _saveGames();
-    notifyListeners();
-  }
-  
-  // Make a progress roll for a quest
-  Future<Map<String, dynamic>> makeQuestProgressRoll(String questId) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    final quest = _currentGame!.quests.firstWhere(
-      (q) => q.id == questId,
-      orElse: () => throw Exception('Quest not found'),
-    );
-    
-    // Only full boxes (progress) count for progress rolls
-    final result = DiceRoller.rollProgressMove(progressValue: quest.progress);
-    
-    // Create a journal entry for the roll result
-    if (_currentSession != null) {
-      final character = _currentGame!.characters.firstWhere(
-        (c) => c.id == quest.characterId,
-        orElse: () => throw Exception('Character not found'),
-      );
-      
-      final entry = _currentSession!.createNewEntry(
-        'Progress roll for quest "${quest.title}" by ${character.name}.\n'
-        'Progress: ${quest.progress}/10 (${quest.progressTicks} ticks)\n'
-        'Challenge Dice: ${result['challengeDice'][0]}, ${result['challengeDice'][1]}\n'
-        'Outcome: ${result['outcome']}'
-      );
-      
-      // Add metadata to indicate this entry was created from a quest
-      entry.metadata = {'sourceScreen': 'quests'};
-    }
-    
-    await _saveGames();
-    notifyListeners();
-    
-    return result;
-  }
+  // Clock-related methods are provided by ClockOperationsMixin
 
   // Export game to JSON file
   Future<String?> exportGame(String gameId) async {

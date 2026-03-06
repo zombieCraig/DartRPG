@@ -42,5 +42,11 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   }
 
   @override
+  Future<void> updateBaseRigAssets(dynamic dataswornProvider) async {}
+
+  @override
+  Future<void> updateLocationPosition(String locationId, double x, double y) async {}
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

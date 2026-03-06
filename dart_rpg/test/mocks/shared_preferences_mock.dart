@@ -8,7 +8,7 @@ void setupSharedPreferencesMock() {
     'fontSize': 16.0,
     'fontFamily': 'Roboto',
     'logLevel': 0,
-    'enableTutorials': true,
+    'enableTutorials': false,
     'enableAnimations': true,
     'animationSpeed': 1.0,
     'enableGlitchEffects': false,

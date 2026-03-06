@@ -400,22 +400,12 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
   
   // Add an image to the document
   Future<void> _addImage() async {
-    // Get the current context object and type from the parent widget
-    final gameProvider = Provider.of<GameProvider>(context, listen: false);
-    final currentGame = gameProvider.currentGame;
-    
     // Always use the journal entry as the primary context
     dynamic contextObject = JournalEntry(
       id: 'temp',
       content: _controller.text,
     );
     String contextType = 'journal';
-    
-    // Check if there's a referenced character with an image to use as subject reference
-    String? referencedCharacterId;
-    if (currentGame != null && _linkedItemsManager.linkedCharacterIds.isNotEmpty) {
-      referencedCharacterId = _linkedItemsManager.linkedCharacterIds.first;
-    }
     
     // Show image picker dialog with context
     final result = await ImagePickerDialog.show(
@@ -425,10 +415,11 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
     );
     
     if (result != null) {
+      if (!mounted) return;
       final imageManagerProvider = Provider.of<ImageManagerProvider>(context, listen: false);
       String? imageUrl;
       String? imageId;
-      
+
       // Process the result based on the type
       if (result['type'] == 'url') {
         // URL selected
@@ -436,7 +427,7 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
       } else if (result['type'] == 'file') {
         // File selected
         final file = result['file'] as File;
-        
+
         // Show loading indicator
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -499,6 +490,7 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
           }
         } else {
           // Handle invalid cursor position
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Error: Invalid cursor position'),
@@ -536,9 +528,6 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
     }
   }
   
-  // Performance metrics
-  final int _lastRebuildTime = 0;
-  int _lastMentionCheckTime = 0;
   bool _shouldCheckMentions = false;
   
   // Show character details dialog
@@ -817,8 +806,6 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
   
   @override
   Widget build(BuildContext context) {
-    final stopwatch = Stopwatch()..start();
-    
     final gameProvider = Provider.of<GameProvider>(context);
     final currentGame = gameProvider.currentGame;
     
@@ -841,8 +828,6 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
     
     // Only check for mentions if we need to
     if (_shouldCheckMentions && currentGame != null && !widget.readOnly) {
-      final mentionStopwatch = Stopwatch()..start();
-      
       _autocompleteSystem.checkForMentions(
         text: _controller.text,
         cursorPosition: _controller.selection.baseOffset,
@@ -850,7 +835,6 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
         locations: currentGame.locations,
       );
       
-      _lastMentionCheckTime = mentionStopwatch.elapsedMicroseconds;
       _shouldCheckMentions = false;
     }
     
@@ -967,7 +951,7 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
                         final charBeforeCursor = value[cursorPosition - 1];
                         if (charBeforeCursor == '@' || charBeforeCursor == '#') {
                           // Immediately check for mentions when @ or # is typed
-                          final mentionResult = _autocompleteSystem.checkForMentions(
+                          _autocompleteSystem.checkForMentions(
                             text: value,
                             cursorPosition: cursorPosition,
                             characters: currentGame.characters,

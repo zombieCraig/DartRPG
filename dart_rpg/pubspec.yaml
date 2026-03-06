@@ -44,9 +44,11 @@ dependencies:
   
   # Network and data
   http: ^1.2.1
+  http_parser: ^4.0.2
   uuid: ^4.3.3
   localstorage: ^6.0.0
   collection: ^1.18.0
+  path: ^1.9.0
   
   # UI components
   flutter_markdown_plus: ^1.0.7

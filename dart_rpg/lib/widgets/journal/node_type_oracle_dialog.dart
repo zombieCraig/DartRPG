@@ -177,7 +177,7 @@ class _NodeTypeOracleDialogState extends State<NodeTypeOracleDialog> {
       }
       
       // Show the result
-      if (context.mounted) {
+      if (mounted) {
         showDialog(
           context: context,
           builder: (context) {

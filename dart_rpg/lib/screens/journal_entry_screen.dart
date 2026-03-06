@@ -120,36 +120,38 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
           
           // Save the entry
           await _saveEntry();
-          
+
           // Clear any existing snackbars
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).clearSnackBars();
         } catch (e) {
           // Show error if saving fails
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error saving journal entry: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error saving journal entry: ${e.toString()}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
           // Still navigate even if save fails
         }
       }
-      
+
       // Use pushReplacement to ensure we go directly to the Quests screen
-      if (context.mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => GameScreen(
-              gameId: gameProvider.currentGame!.id,
-              initialTabIndex: 3, // Quests tab index
-            ),
+      if (!context.mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => GameScreen(
+            gameId: gameProvider.currentGame!.id,
+            initialTabIndex: 3, // Quests tab index
           ),
-        );
-      }
+        ),
+      );
     }
   }
-  
+
   // Navigate to the Moves screen
   Future<void> _navigateToMoves(BuildContext context) async {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
@@ -167,36 +169,38 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
           
           // Save the entry
           await _saveEntry();
-          
+
           // Clear any existing snackbars
+          if (!context.mounted) return;
           ScaffoldMessenger.of(context).clearSnackBars();
         } catch (e) {
           // Show error if saving fails
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error saving journal entry: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error saving journal entry: ${e.toString()}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
           // Still navigate even if save fails
         }
       }
-      
+
       // Use pushReplacement to ensure we go directly to the Moves screen
-      if (context.mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => GameScreen(
-              gameId: gameProvider.currentGame!.id,
-              initialTabIndex: 4, // Moves tab index
-            ),
+      if (!context.mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => GameScreen(
+            gameId: gameProvider.currentGame!.id,
+            initialTabIndex: 4, // Moves tab index
           ),
-        );
-      }
+        ),
+      );
     }
   }
-  
+
   void _startAutoSaveTimer() {
     // Cancel any existing timer
     _autoSaveTimer?.cancel();
@@ -215,9 +219,6 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   
   // Focus node for the editor
   final FocusNode _editorFocusNode = FocusNode();
-  
-  // Performance metrics
-  int _lastAutoSaveDuration = 0;
   
   void _autoSave() async {
     // Skip autosave for very short content
@@ -322,8 +323,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
       );
     } finally {
       _isAutoSaving = false;
-      _lastAutoSaveDuration = stopwatch.elapsedMilliseconds;
-      
+
       // Log performance metrics
       LoggingService().debug(
         'Journal entry autosave completed in ${stopwatch.elapsedMilliseconds}ms',
@@ -409,11 +409,12 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         
         // Save the game to persist the changes
         await gameProvider.saveGame();
-        
+
         setState(() {
           _isEditing = false;
         });
-        
+
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Journal entry updated'),
@@ -448,11 +449,10 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         setState(() {
           _isEditing = false;
         });
-        
+
         // Navigate back to journal screen
-        if (context.mounted) {
-          Navigator.pop(context);
-        }
+        if (!mounted) return;
+        Navigator.pop(context);
       } else {
         // Create new entry
         final entry = await gameProvider.createJournalEntry(_content);
@@ -472,13 +472,13 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
           _createdEntryId = entry.id;
           _isEditing = false;
         });
-        
+
         // Navigate back to journal screen
-        if (context.mounted) {
-          Navigator.pop(context);
-        }
+        if (!mounted) return;
+        Navigator.pop(context);
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error saving journal entry: ${e.toString()}'),
@@ -716,17 +716,19 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
       });
       
       // Show confirmation
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Entry saved. Started new entry.'),
           backgroundColor: Colors.green,
         ),
       );
-      
+
       // Focus the editor
       _editorFocusNode.requestFocus();
-      
+
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error saving journal entry: ${e.toString()}'),
@@ -760,8 +762,6 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   
   @override
   Widget build(BuildContext context) {
-    final buildStopwatch = Stopwatch()..start();
-    
     final gameProvider = Provider.of<GameProvider>(context);
     final currentGame = gameProvider.currentGame;
     

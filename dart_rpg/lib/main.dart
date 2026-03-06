@@ -55,8 +55,7 @@ class MyApp extends StatelessWidget {
                   
                   // Get the route settings
                   final name = settings.name;
-                  final arguments = settings.arguments;
-                  
+
                   // Handle specific named routes if needed
                   if (name == '/') {
                     return MaterialPageRoute(

@@ -124,6 +124,7 @@ class QuickAddDialogs {
           'Failed to roll on fe_runner_handles oracle table: ${rollResult['error']}',
           tag: 'QuickAddDialogs',
         );
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to generate random handle: ${rollResult['error']}')),
         );

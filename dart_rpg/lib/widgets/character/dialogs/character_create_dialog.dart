@@ -160,14 +160,13 @@ class _CharacterCreateDialogState extends State<CharacterCreateDialog> {
               goals: !isPlayerCharacter && goalsController.text.isNotEmpty ? goalsController.text : null,
             );
             
-            if (mounted) {
-              // Close the character creation dialog
-              Navigator.pop(context);
-              
-              // Show the initial assets dialog for player characters
-              if (isPlayerCharacter && character != null) {
-                await InitialAssetsDialog.show(context, character, widget.gameProvider);
-              }
+            if (!context.mounted) return;
+            // Close the character creation dialog
+            Navigator.pop(context);
+
+            // Show the initial assets dialog for player characters
+            if (isPlayerCharacter && character != null) {
+              await InitialAssetsDialog.show(context, character, widget.gameProvider);
             }
           },
           child: const Text('Create'),

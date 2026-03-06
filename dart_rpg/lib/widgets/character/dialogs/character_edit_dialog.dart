@@ -417,17 +417,17 @@ class _CharacterEditDialogState extends State<CharacterEditDialog> {
                 widget.character,
               );
               
-              if (confirmed && mounted) {
+              if (confirmed && context.mounted) {
                 CharacterDialogService.deleteCharacter(
                   gameProvider: widget.gameProvider,
                   character: widget.character,
                 );
-                
+
                 // Call the onCharacterDeleted callback if provided
                 if (widget.onCharacterDeleted != null) {
                   widget.onCharacterDeleted!();
                 }
-                
+
                 Navigator.pop(context); // Close character details dialog
               }
             },

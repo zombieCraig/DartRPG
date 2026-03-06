@@ -93,10 +93,10 @@ class LocationDialog {
                             }
                             
                             createdLocation = location;
-                            Navigator.pop(context);
+                            if (context.mounted) Navigator.pop(context);
                           },
                         ),
-                        
+
                         if (connectToLocationId != null) ...[
                           const SizedBox(height: 16),
                           const Text(
@@ -199,9 +199,10 @@ class LocationDialog {
                                 
                                 if (success) {
                                   wasUpdated = true;
-                                  Navigator.pop(context);
+                                  if (context.mounted) Navigator.pop(context);
                                 } else {
                                   // Show error message
+                                  if (!context.mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text('Failed to update location'),
@@ -335,6 +336,7 @@ class LocationDialog {
                       onPressed: () async {
                         final success = await locationService.deleteLocation(location.id);
                         
+                        if (!context.mounted) return;
                         if (success) {
                           wasDeleted = true;
                           Navigator.pop(context); // Close confirmation dialog
@@ -431,6 +433,7 @@ class LocationDialog {
                                 targetLocation.id
                               );
                               
+                              if (!context.mounted) return;
                               if (success) {
                                 wasConnected = true;
                                 Navigator.pop(context);

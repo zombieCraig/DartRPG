@@ -11,8 +11,6 @@ import 'web_image_utils_impl.dart' if (dart.library.io) 'web_image_utils_stub.da
 
 /// Abstract base class for image utilities
 abstract class ImageUtils {
-  static final LoggingService _loggingService = LoggingService();
-  
   /// Get the platform-specific implementation
   static ImageUtils get instance {
     if (kIsWeb) {
@@ -111,8 +109,6 @@ class WebImageUtils implements ImageUtils {
 
 /// Implementation for native platforms
 class NativeImageUtils implements ImageUtils {
-  static final LoggingService _loggingService = LoggingService();
-  
   @override
   Future<String?> createDisplayUrlFromXFile(picker.XFile file) async {
     // For native platforms, we just return the file path

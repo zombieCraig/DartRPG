@@ -198,7 +198,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
         final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
         
         // Create the game with all settings
-        final game = await gameProvider.createGame(
+        await gameProvider.createGame(
           _nameController.text,
           dataswornSource: 'assets/data/fe_runners.json',
           tutorialsEnabled: _enableTutorials,
@@ -238,28 +238,26 @@ class _NewGameScreenState extends State<NewGameScreen> {
         // Load the datasworn source
         await dataswornProvider.loadDatasworn('assets/data/fe_runners.json');
         
-        if (context.mounted) {
-          // Show success message
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Game "${_nameController.text}" created successfully'),
-              backgroundColor: Theme.of(context).colorScheme.primary,
-            ),
-          );
-          
-          // Return to the game selection screen
-          final navigationService = NavigationService();
-          navigationService.goBack(context);
-        }
+        if (!mounted) return;
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Game "${_nameController.text}" created successfully'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+          ),
+        );
+
+        // Return to the game selection screen
+        final navigationService = NavigationService();
+        navigationService.goBack(context);
       } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to create game: ${e.toString()}'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
-        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create game: ${e.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
       } finally {
         if (mounted) {
           setState(() {

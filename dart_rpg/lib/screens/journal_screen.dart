@@ -56,8 +56,9 @@ class _JournalScreenState extends State<JournalScreen> {
     }
     
     // Tutorial for understanding sessions after creating first one
-    if (currentGame.sessions.length == 1 && currentSession != null && 
+    if (currentGame.sessions.length == 1 && currentSession != null &&
         currentSession.entries.isEmpty) {
+      if (!mounted) return;
       await TutorialService.showTutorialIfNeeded(
         context: context,
         tutorialId: 'journal_session_explanation',

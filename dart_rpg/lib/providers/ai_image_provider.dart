@@ -846,17 +846,4 @@ class AiImageProvider extends ChangeNotifier {
     }
   }
   
-  /// Get the maximum number of images that can be generated for the specified OpenAI model.
-  int _getMaxImagesForModel(String model) {
-    switch (model) {
-      case 'dall-e-2':
-        return 10;
-      case 'dall-e-3':
-        return 1;
-      case 'gpt-image-1':
-        return 4;
-      default:
-        return 1;
-    }
-  }
 }

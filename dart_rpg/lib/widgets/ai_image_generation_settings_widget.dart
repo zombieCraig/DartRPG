@@ -143,11 +143,6 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
         _aiImageGenerationEnabled : widget.game.aiConfig.aiImageGenerationEnabled;
     final aiImageProvider = widget.isNewGame ? 
         _aiImageProvider : widget.game.aiConfig.aiImageProvider;
-    final aiApiKeys = widget.isNewGame ? 
-        _aiApiKeys : widget.game.aiConfig.aiApiKeys;
-    final aiArtisticDirections = widget.isNewGame ?
-        _aiArtisticDirections : widget.game.aiConfig.aiArtisticDirections;
-    
     return Column(
       children: [
         if (widget.showDividers) const Divider(),
@@ -417,9 +412,9 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                       Container(
                         padding: const EdgeInsets.all(12.0),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
+                          color: Colors.blue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8.0),
-                          border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                          border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -452,9 +447,9 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                         Container(
                           padding: const EdgeInsets.all(12.0),
                           decoration: BoxDecoration(
-                            color: Colors.grey.withOpacity(0.1),
+                            color: Colors.grey.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8.0),
-                            border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                            border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -478,6 +473,7 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                                     onTap: () async {
                                       final Uri url = Uri.parse('https://www.minimax.io/platform/user-center/basic-information/interface-key');
                                       if (!await launchUrl(url)) {
+                                        if (!context.mounted) return;
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           const SnackBar(
                                             content: Text('Could not open the URL'),
@@ -512,9 +508,9 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                         Container(
                           padding: const EdgeInsets.all(12.0),
                           decoration: BoxDecoration(
-                            color: Colors.grey.withOpacity(0.1),
+                            color: Colors.grey.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8.0),
-                            border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                            border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -538,6 +534,7 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                                     onTap: () async {
                                       final Uri url = Uri.parse('https://platform.openai.com/api-keys');
                                       if (!await launchUrl(url)) {
+                                        if (!context.mounted) return;
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           const SnackBar(
                                             content: Text('Could not open the URL'),

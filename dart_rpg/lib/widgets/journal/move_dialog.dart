@@ -321,6 +321,7 @@ class MoveDialog {
       }
       
       // Show the Sentient AI dialog with the updated persona
+      if (!context.mounted) return;
       SentientAiDialog.show(
         context: context,
         aiName: game.aiConfig.sentientAiName,
@@ -332,17 +333,18 @@ class MoveDialog {
             oracleKey: oracleKey,
             dataswornProvider: dataswornProvider,
           );
-          
+
           if (oracleResult['success'] == true) {
             final oracleRoll = oracleResult['oracleRoll'] as OracleRoll;
-            
+
             // Insert the oracle roll text at the cursor position
             if (isEditing) {
               final formattedText = '\n\n**AI Outcome:** ${oracleRoll.result}\n\n';
               onInsertText(formattedText);
             }
-            
+
             // Show confirmation
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('AI Outcome: ${oracleRoll.result}'),
@@ -351,6 +353,7 @@ class MoveDialog {
             );
           } else {
             // Show error
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Error: ${oracleResult['error']}'),
@@ -375,8 +378,9 @@ class MoveDialog {
         },
       );
     }
-    
+
     // Show the roll result
+    if (!context.mounted) return;
     showDialog(
       context: context,
       builder: (context) {
@@ -544,6 +548,7 @@ class MoveDialog {
       }
       
       // Show the Sentient AI dialog with the updated persona
+      if (!context.mounted) return;
       SentientAiDialog.show(
         context: context,
         aiName: game.aiConfig.sentientAiName,
@@ -555,17 +560,18 @@ class MoveDialog {
             oracleKey: oracleKey,
             dataswornProvider: dataswornProvider,
           );
-          
+
           if (oracleResult['success'] == true) {
             final oracleRoll = oracleResult['oracleRoll'] as OracleRoll;
-            
+
             // Insert the oracle roll text at the cursor position
             if (isEditing) {
               final formattedText = '\n\n**AI Outcome:** ${oracleRoll.result}\n\n';
               onInsertText(formattedText);
             }
-            
+
             // Show confirmation
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('AI Outcome: ${oracleRoll.result}'),
@@ -574,6 +580,7 @@ class MoveDialog {
             );
           } else {
             // Show error
+            if (!context.mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Error: ${oracleResult['error']}'),
@@ -598,8 +605,9 @@ class MoveDialog {
         },
       );
     }
-    
+
     // Show the roll result
+    if (!context.mounted) return;
     showDialog(
       context: context,
       builder: (context) {
@@ -713,6 +721,7 @@ class MoveDialog {
       onMoveRollAdded(moveRoll);
       
       // Show the roll result
+      if (!context.mounted) return;
       showDialog(
         context: context,
         builder: (context) {
@@ -786,6 +795,7 @@ class MoveDialog {
       );
     } catch (e) {
       // Handle errors
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),

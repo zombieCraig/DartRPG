@@ -1,11 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dart_rpg/models/game.dart';
 import 'package:dart_rpg/models/character.dart';
-import 'package:dart_rpg/models/session.dart';
 import 'package:dart_rpg/models/quest.dart';
 import 'package:dart_rpg/models/clock.dart';
 import 'package:dart_rpg/models/location.dart';
-import 'package:dart_rpg/models/journal_entry.dart';
 
 void main() {
   group('Game JSON roundtrip', () {

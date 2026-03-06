@@ -661,7 +661,8 @@ class LocationGraphController {
           // Update the location's position directly
           location.x = position.dx;
           location.y = position.dy;
-        } catch (e) {
+        } catch (_) {
+          // Location not found in list; skip position update
         }
       }
     }

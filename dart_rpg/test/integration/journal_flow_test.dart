@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:dart_rpg/models/game.dart';
 import 'package:dart_rpg/models/character.dart';
-import 'package:dart_rpg/models/session.dart';
 import 'package:dart_rpg/models/journal_entry.dart';
 import 'package:dart_rpg/providers/game_provider.dart';
 import 'package:dart_rpg/providers/datasworn_provider.dart';

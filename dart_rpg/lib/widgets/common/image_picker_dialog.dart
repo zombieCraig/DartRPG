@@ -118,6 +118,7 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
         }
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error picking image: $e'),
@@ -245,12 +246,14 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
                 }
                 
                 if (savedImage != null) {
+                  if (!context.mounted) return;
                   Navigator.pop(context, {
                     'type': 'saved',  // Use 'saved' type since it's now in permanent storage
                     'imageId': savedImage.id,
                   });
                 } else {
                   // Failed to save image
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Failed to save image'),
@@ -435,12 +438,6 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
       );
     }
     
-    // Check if there's a referenced character ID in the context object
-    String? referencedCharacterId;
-    if (widget.contextObject is JournalEntry && widget.contextObject.linkedCharacterIds.isNotEmpty) {
-      referencedCharacterId = widget.contextObject.linkedCharacterIds.first;
-    }
-    
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
@@ -491,7 +488,7 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.red),
               ),

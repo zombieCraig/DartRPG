@@ -401,6 +401,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onTap: () async {
                   final Uri url = Uri.parse('https://github.com/zombieCraig/DartRPG');
                   if (!await launchUrl(url)) {
+                    if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Could not open URL')),
                     );
@@ -413,6 +414,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onTap: () async {
                   final Uri url = Uri.parse('https://zombiecraig.itch.io/fe-runners');
                   if (!await launchUrl(url)) {
+                    if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Could not open URL')),
                     );

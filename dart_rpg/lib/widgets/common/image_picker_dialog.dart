@@ -9,6 +9,7 @@ import '../../providers/ai_image_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/image_manager_provider.dart';
 import '../../utils/logging_service.dart';
+import '../../screens/game_settings_screen.dart';
 
 /// A dialog for picking images from different sources.
 class ImagePickerDialog extends StatefulWidget {
@@ -410,11 +411,13 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
                 icon: const Icon(Icons.settings),
                 label: const Text('Go to Settings'),
                 onPressed: () {
-                  // Close the dialog
                   Navigator.pop(context);
-                  
-                  // Navigate to the Game Settings screen
-                  Navigator.pushNamed(context, '/game_settings');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const GameSettingsScreen(),
+                    ),
+                  );
                 },
               ),
             ],

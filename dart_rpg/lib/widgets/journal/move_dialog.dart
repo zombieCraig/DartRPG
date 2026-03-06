@@ -6,6 +6,7 @@ import '../../models/journal_entry.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../services/roll_service.dart';
+import '../../screens/game_screen.dart';
 import '../sentient_ai_dialog.dart';
 import '../moves/move_list.dart';
 import '../moves/move_details.dart';
@@ -361,8 +362,16 @@ class MoveDialog {
         },
         onAskOraclePressed: () {
           // Navigate to the Oracles screen
+          final gameId = Provider.of<GameProvider>(context, listen: false).currentGame?.id;
           Navigator.pop(context);
-          Navigator.pushNamed(context, '/oracles');
+          if (gameId != null && context.mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => GameScreen(gameId: gameId, initialTabIndex: 5),
+              ),
+            );
+          }
         },
       );
     }
@@ -576,8 +585,16 @@ class MoveDialog {
         },
         onAskOraclePressed: () {
           // Navigate to the Oracles screen
+          final gameId = Provider.of<GameProvider>(context, listen: false).currentGame?.id;
           Navigator.pop(context);
-          Navigator.pushNamed(context, '/oracles');
+          if (gameId != null && context.mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => GameScreen(gameId: gameId, initialTabIndex: 5),
+              ),
+            );
+          }
         },
       );
     }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../models/game.dart';
-import '../providers/game_provider.dart';
+import '../providers/ai_config_provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../utils/logging_service.dart';
 import '../utils/sentient_ai_utils.dart';
@@ -12,8 +12,8 @@ class SentientAiSettingsWidget extends StatefulWidget {
   /// The game object to modify
   final Game game;
   
-  /// The game provider to update the game
-  final GameProvider gameProvider;
+  /// The AI config provider to update AI settings
+  final AiConfigProvider aiConfigProvider;
   
   /// The datasworn provider to get AI personas
   final DataswornProvider dataswornProvider;
@@ -44,7 +44,7 @@ class SentientAiSettingsWidget extends StatefulWidget {
   const SentientAiSettingsWidget({
     super.key,
     required this.game,
-    required this.gameProvider,
+    required this.aiConfigProvider,
     required this.dataswornProvider,
     this.initiallyExpanded = true,
     this.showDividers = true,
@@ -96,7 +96,7 @@ class _SentientAiSettingsWidgetState extends State<SentientAiSettingsWidget> {
   @override
   Widget build(BuildContext context) {
     // Get AI personas from the datasworn provider
-    final aiPersonas = widget.gameProvider.getAiPersonas(widget.dataswornProvider);
+    final aiPersonas = widget.aiConfigProvider.getAiPersonas(widget.dataswornProvider);
     
     // Use either the game's values or the local values depending on mode
     final sentientAiEnabled = widget.isNewGame ? _sentientAiEnabled : widget.game.aiConfig.sentientAiEnabled;
@@ -138,7 +138,7 @@ class _SentientAiSettingsWidgetState extends State<SentientAiSettingsWidget> {
                   });
                   _notifyNewGameSettingsChanged();
                 } else {
-                  widget.gameProvider.updateSentientAiEnabled(value);
+                  widget.aiConfigProvider.updateSentientAiEnabled(value);
                   if (widget.onSettingsChanged != null) {
                     widget.onSettingsChanged!();
                   }
@@ -165,7 +165,7 @@ class _SentientAiSettingsWidgetState extends State<SentientAiSettingsWidget> {
                       });
                       _notifyNewGameSettingsChanged();
                     } else {
-                      widget.gameProvider.updateSentientAiName(nameValue);
+                      widget.aiConfigProvider.updateSentientAiName(nameValue);
                       if (widget.onSettingsChanged != null) {
                         widget.onSettingsChanged!();
                       }
@@ -227,7 +227,7 @@ class _SentientAiSettingsWidgetState extends State<SentientAiSettingsWidget> {
                               });
                               _notifyNewGameSettingsChanged();
                             } else {
-                              widget.gameProvider.updateSentientAiPersona(value);
+                              widget.aiConfigProvider.updateSentientAiPersona(value);
                               if (widget.onSettingsChanged != null) {
                                 widget.onSettingsChanged!();
                               }
@@ -251,7 +251,7 @@ class _SentientAiSettingsWidgetState extends State<SentientAiSettingsWidget> {
                         icon: const Icon(Icons.shuffle),
                         tooltip: 'Random Persona',
                         onPressed: () {
-                          final randomPersona = widget.gameProvider.getRandomAiPersona(widget.dataswornProvider);
+                          final randomPersona = widget.aiConfigProvider.getRandomAiPersona(widget.dataswornProvider);
                           if (randomPersona != null) {
                             if (widget.isNewGame) {
                               setState(() {
@@ -259,7 +259,7 @@ class _SentientAiSettingsWidgetState extends State<SentientAiSettingsWidget> {
                               });
                               _notifyNewGameSettingsChanged();
                             } else {
-                              widget.gameProvider.updateSentientAiPersona(randomPersona);
+                              widget.aiConfigProvider.updateSentientAiPersona(randomPersona);
                               if (widget.onSettingsChanged != null) {
                                 widget.onSettingsChanged!();
                               }
@@ -335,7 +335,7 @@ class _SentientAiSettingsWidgetState extends State<SentientAiSettingsWidget> {
                                 });
                                 _notifyNewGameSettingsChanged();
                               } else {
-                                widget.gameProvider.updateSentientAiImagePath(null);
+                                widget.aiConfigProvider.updateSentientAiImagePath(null);
                                 if (widget.onSettingsChanged != null) {
                                   widget.onSettingsChanged!();
                                 }
@@ -388,7 +388,7 @@ class _SentientAiSettingsWidgetState extends State<SentientAiSettingsWidget> {
             });
             _notifyNewGameSettingsChanged();
           } else {
-            widget.gameProvider.updateSentientAiImagePath(file.path);
+            widget.aiConfigProvider.updateSentientAiImagePath(file.path);
             if (widget.onSettingsChanged != null) {
               widget.onSettingsChanged!();
             }

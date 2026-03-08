@@ -11,7 +11,6 @@ import '../models/location.dart';
 import '../models/session.dart';
 import '../models/journal_entry.dart';
 import '../utils/logging_service.dart';
-import '../services/oracle_service.dart';
 import 'datasworn_provider.dart';
 import 'image_manager_provider.dart';
 import 'clock_operations_mixin.dart';
@@ -787,147 +786,8 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
 
   // Quest-related methods are provided by QuestOperationsMixin
 
-  // Sentient AI-related methods
-  
-  // Update sentientAiEnabled setting
-  Future<void> updateSentientAiEnabled(bool enabled) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    if (_currentGame!.aiConfig.sentientAiEnabled == enabled) return;
-    _currentGame!.aiConfig.sentientAiEnabled = enabled;
-    notifyListeners();
-    await _saveGames();
-  }
+  // Sentient AI and AI Image Generation methods are provided by AiConfigProvider
 
-  Future<void> updateSentientAiName(String? name) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    if (_currentGame!.aiConfig.sentientAiName == name) return;
-    _currentGame!.aiConfig.sentientAiName = name;
-    notifyListeners();
-    await _saveGames();
-  }
-
-  Future<void> updateSentientAiPersona(String? persona) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    if (_currentGame!.aiConfig.sentientAiPersona == persona) return;
-    _currentGame!.aiConfig.sentientAiPersona = persona;
-    notifyListeners();
-    await _saveGames();
-  }
-
-  Future<void> updateSentientAiImagePath(String? imagePath) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    if (_currentGame!.aiConfig.sentientAiImagePath == imagePath) return;
-    _currentGame!.aiConfig.sentientAiImagePath = imagePath;
-    notifyListeners();
-    await _saveGames();
-  }
-
-  Future<void> updateAiImageGenerationEnabled(bool enabled) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    if (_currentGame!.aiConfig.aiImageGenerationEnabled == enabled) return;
-    _currentGame!.aiConfig.aiImageGenerationEnabled = enabled;
-    notifyListeners();
-    await _saveGames();
-  }
-
-  Future<void> updateAiImageProvider(String? provider) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    if (_currentGame!.aiConfig.aiImageProvider == provider) return;
-    _currentGame!.aiConfig.aiImageProvider = provider;
-    notifyListeners();
-    await _saveGames();
-  }
-
-  Future<void> updateOpenAiModel(String model) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    if (_currentGame!.aiConfig.openaiModel == model) return;
-    _currentGame!.aiConfig.openaiModel = model;
-    notifyListeners();
-    await _saveGames();
-  }
-
-  Future<void> updateAiApiKey(String provider, String apiKey) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    if (_currentGame!.aiConfig.getAiApiKey(provider) == apiKey) return;
-    _currentGame!.aiConfig.setAiApiKey(provider, apiKey);
-    notifyListeners();
-    await _saveGames();
-  }
-
-  Future<void> updateAiArtisticDirection(String provider, String artisticDirection) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    if (_currentGame!.aiConfig.getAiArtisticDirection(provider) == artisticDirection) return;
-    _currentGame!.aiConfig.setAiArtisticDirection(provider, artisticDirection);
-    notifyListeners();
-    await _saveGames();
-  }
-
-  Future<void> removeAiApiKey(String provider) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    if (!_currentGame!.aiConfig.aiApiKeys.containsKey(provider)) return;
-    _currentGame!.aiConfig.removeAiApiKey(provider);
-    notifyListeners();
-    await _saveGames();
-  }
-
-  // Batch update AI config settings (reduces multiple save/notify cycles to one)
-  Future<void> updateAiConfig({
-    bool? aiImageGenerationEnabled,
-    String? aiImageProvider,
-    String? openaiModel,
-    Map<String, String>? apiKeys,
-    Map<String, String>? artisticDirections,
-  }) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    final config = _currentGame!.aiConfig;
-    if (aiImageGenerationEnabled != null) config.aiImageGenerationEnabled = aiImageGenerationEnabled;
-    if (aiImageProvider != null) config.aiImageProvider = aiImageProvider;
-    if (openaiModel != null) config.openaiModel = openaiModel;
-    if (apiKeys != null) {
-      for (final e in apiKeys.entries) config.setAiApiKey(e.key, e.value);
-    }
-    if (artisticDirections != null) {
-      for (final e in artisticDirections.entries) config.setAiArtisticDirection(e.key, e.value);
-    }
-    notifyListeners();
-    await _saveGames();
-  }
-
-  bool isAiImageGenerationAvailable() {
-    if (_currentGame == null) return false;
-    return _currentGame!.aiConfig.isAiImageGenerationAvailable();
-  }
-  
-  // Get AI personas from the datasworn provider
-  List<Map<String, String>> getAiPersonas(DataswornProvider dataswornProvider) {
-    // Use the recursive search function from OracleService with just "persona" as the key
-    final personaTable = OracleService.findOracleTableByKeyAnywhere('persona', dataswornProvider);
-    if (personaTable == null) return [];
-    
-    return personaTable.rows.map((row) {
-      final text = row.result;
-      final parts = text.split(' - ');
-      final name = parts[0];
-      final description = parts.length > 1 ? parts[1] : '';
-      
-      return {
-        'id': text,
-        'name': name,
-        'description': description,
-      };
-    }).toList();
-  }
-  
-  // Get a random AI persona
-  String? getRandomAiPersona(DataswornProvider dataswornProvider) {
-    final personas = getAiPersonas(dataswornProvider);
-    if (personas.isEmpty) return null;
-    
-    final random = math.Random();
-    final randomIndex = random.nextInt(personas.length);
-    return personas[randomIndex]['id'];
-  }
-  
   // Clock-related methods are provided by ClockOperationsMixin
 
   // Export game to JSON file

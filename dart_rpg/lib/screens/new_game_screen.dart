@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/ai_config_provider.dart';
 import '../providers/game_provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../transitions/navigation_service.dart';
@@ -146,7 +147,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
                   // Sentient AI Settings
                   SentientAiSettingsWidget(
                     game: tempGame,
-                    gameProvider: gameProvider,
+                    aiConfigProvider: Provider.of<AiConfigProvider>(context, listen: false),
                     dataswornProvider: dataswornProvider,
                     initiallyExpanded: false,
                     showDividers: true,
@@ -159,7 +160,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
                   // AI Image Generation Settings
                   AiImageGenerationSettingsWidget(
                     game: tempGame,
-                    gameProvider: gameProvider,
+                    aiConfigProvider: Provider.of<AiConfigProvider>(context, listen: false),
                     initiallyExpanded: false,
                     showDividers: true,
                     showHelpText: true,
@@ -210,7 +211,8 @@ class _NewGameScreenState extends State<NewGameScreen> {
         
         // Set AI Image Generation settings in a single batch call
         if (_aiImageGenerationEnabled) {
-          await gameProvider.updateAiConfig(
+          final aiConfigProvider = Provider.of<AiConfigProvider>(context, listen: false);
+          await aiConfigProvider.updateAiConfig(
             aiImageGenerationEnabled: _aiImageGenerationEnabled,
             aiImageProvider: _aiImageProvider,
             openaiModel: (_aiImageProvider == 'openai') ? _openaiModel : null,

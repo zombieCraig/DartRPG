@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/move.dart';
 import '../../models/journal_entry.dart';
+import '../../providers/ai_config_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../services/roll_service.dart';
@@ -312,11 +313,12 @@ class MoveDialog {
       final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
       
       // If both name and persona are null, randomly select a persona
+      final aiConfigProvider = Provider.of<AiConfigProvider>(context, listen: false);
       if (game.aiConfig.sentientAiName == null && game.aiConfig.sentientAiPersona == null) {
-        final randomPersona = gameProvider.getRandomAiPersona(dataswornProvider);
+        final randomPersona = aiConfigProvider.getRandomAiPersona(dataswornProvider);
         if (randomPersona != null) {
           // Save the randomly selected persona
-          await gameProvider.updateSentientAiPersona(randomPersona);
+          await aiConfigProvider.updateSentientAiPersona(randomPersona);
         }
       }
       
@@ -541,11 +543,12 @@ class MoveDialog {
       final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
       
       // If both name and persona are null, randomly select a persona
+      final aiConfigProvider = Provider.of<AiConfigProvider>(context, listen: false);
       if (game.aiConfig.sentientAiName == null && game.aiConfig.sentientAiPersona == null) {
-        final randomPersona = gameProvider.getRandomAiPersona(dataswornProvider);
+        final randomPersona = aiConfigProvider.getRandomAiPersona(dataswornProvider);
         if (randomPersona != null) {
           // Save the randomly selected persona
-          await gameProvider.updateSentientAiPersona(randomPersona);
+          await aiConfigProvider.updateSentientAiPersona(randomPersona);
         }
       }
       

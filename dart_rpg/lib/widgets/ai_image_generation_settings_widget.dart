@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/game.dart';
-import '../providers/game_provider.dart';
+import '../providers/ai_config_provider.dart';
 import '../utils/logging_service.dart';
 
 /// A reusable widget for AI image generation settings that can be used in both
@@ -10,8 +10,8 @@ class AiImageGenerationSettingsWidget extends StatefulWidget {
   /// The game object to modify
   final Game game;
   
-  /// The game provider to update the game
-  final GameProvider gameProvider;
+  /// The AI config provider to update AI settings
+  final AiConfigProvider aiConfigProvider;
   
   /// Whether the settings are initially expanded
   final bool initiallyExpanded;
@@ -36,7 +36,7 @@ class AiImageGenerationSettingsWidget extends StatefulWidget {
   const AiImageGenerationSettingsWidget({
     super.key,
     required this.game,
-    required this.gameProvider,
+    required this.aiConfigProvider,
     this.initiallyExpanded = false,
     this.showDividers = true,
     this.showHelpText = true,
@@ -178,7 +178,7 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                   });
                   _notifyNewGameSettingsChanged();
                 } else {
-                  widget.gameProvider.updateAiImageGenerationEnabled(value);
+                  widget.aiConfigProvider.updateAiImageGenerationEnabled(value);
                   if (widget.onSettingsChanged != null) {
                     widget.onSettingsChanged!();
                   }
@@ -212,7 +212,7 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                       });
                       _notifyNewGameSettingsChanged();
                     } else {
-                      widget.gameProvider.updateAiImageProvider(value);
+                      widget.aiConfigProvider.updateAiImageProvider(value);
                       
                       // Update the API key controller
                       if (value != null && widget.game.aiConfig.aiApiKeys.containsKey(value)) {
@@ -263,7 +263,7 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                         _notifyNewGameSettingsChanged();
                       } else {
                         if (value != null) {
-                          widget.gameProvider.updateOpenAiModel(value);
+                          widget.aiConfigProvider.updateOpenAiModel(value);
                           
                           if (widget.onSettingsChanged != null) {
                             widget.onSettingsChanged!();
@@ -320,7 +320,7 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                         );
                         
                         // Update the API key in the game provider
-                        widget.gameProvider.updateAiApiKey(aiImageProvider, value);
+                        widget.aiConfigProvider.updateAiApiKey(aiImageProvider, value);
                         
                         // Verify the API key was set correctly in the game object
                         final apiKey = widget.game.aiConfig.getAiApiKey(aiImageProvider);
@@ -336,7 +336,7 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                           );
                         }
                       } else {
-                        widget.gameProvider.removeAiApiKey(aiImageProvider);
+                        widget.aiConfigProvider.removeAiApiKey(aiImageProvider);
                       }
                       
                       if (widget.onSettingsChanged != null) {
@@ -377,7 +377,7 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                         );
                         
                         // Update the artistic direction in the game provider
-                        widget.gameProvider.updateAiArtisticDirection(aiImageProvider, value);
+                        widget.aiConfigProvider.updateAiArtisticDirection(aiImageProvider, value);
                         
                         // Verify the artistic direction was set correctly in the game object
                         final artisticDirection = widget.game.aiConfig.getAiArtisticDirection(aiImageProvider);

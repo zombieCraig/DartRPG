@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart' as picker;
 import '../../models/app_image.dart';
 import '../../models/journal_entry.dart';
+import '../../providers/ai_config_provider.dart';
 import '../../providers/ai_image_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/image_manager_provider.dart';
@@ -377,12 +378,13 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
   
   /// Build the AI tab
   Widget _buildAiTab() {
-    // Get the game provider to check if AI image generation is available
+    // Get providers for AI image generation
+    final aiConfigProvider = Provider.of<AiConfigProvider>(context, listen: false);
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final aiImageProvider = Provider.of<AiImageProvider>(context, listen: false);
-    
+
     // Check if AI image generation is available
-    final isAiAvailable = gameProvider.isAiImageGenerationAvailable();
+    final isAiAvailable = aiConfigProvider.isAiImageGenerationAvailable();
     
     if (!isAiAvailable) {
       return Center(

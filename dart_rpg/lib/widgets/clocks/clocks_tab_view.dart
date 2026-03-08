@@ -38,18 +38,11 @@ class _ClocksTabViewState extends State<ClocksTabView> {
   
   @override
   Widget build(BuildContext context) {
-    return Consumer<GameProvider>(
-      builder: (context, gameProvider, _) {
-        final game = gameProvider.games.firstWhere(
-          (g) => g.id == widget.gameId,
-          orElse: () => throw Exception('Game not found'),
-        );
-        
-        // Get all clocks
-        final clocks = game.getAllClocks();
-        
+    return Selector<GameProvider, List<Clock>>(
+      selector: (_, gp) => gp.currentGame?.getAllClocks() ?? [],
+      builder: (context, clocks, _) {
         // Ensure the clock service is initialized
-        _clockService = ClockService(gameProvider: gameProvider);
+        _clockService = ClockService(gameProvider: context.read<GameProvider>());
         
         return Column(
           children: [

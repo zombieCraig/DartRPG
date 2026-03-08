@@ -6,6 +6,7 @@ import '../../models/move.dart';
 import '../../models/journal_entry.dart';
 import '../../models/quest.dart';
 import '../../models/recent_move_entry.dart';
+import '../../providers/ai_config_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../services/roll_service.dart';
@@ -766,9 +767,10 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
     final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
 
     if (game.aiConfig.sentientAiName == null && game.aiConfig.sentientAiPersona == null) {
-      final randomPersona = gameProvider.getRandomAiPersona(dataswornProvider);
+      final aiConfigProvider = Provider.of<AiConfigProvider>(context, listen: false);
+      final randomPersona = aiConfigProvider.getRandomAiPersona(dataswornProvider);
       if (randomPersona != null) {
-        await gameProvider.updateSentientAiPersona(randomPersona);
+        await aiConfigProvider.updateSentientAiPersona(randomPersona);
       }
     }
 

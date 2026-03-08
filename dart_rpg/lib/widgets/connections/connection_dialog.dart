@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/character.dart';
 import '../../models/connection.dart';
+import '../../utils/outcome_utils.dart';
 import 'connection_form.dart';
 
 /// Dialog utilities for connections
@@ -113,7 +114,7 @@ class ConnectionDialog {
               'Outcome: ${result['outcome']}',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: _getOutcomeColor(result['outcome']),
+                color: getOutcomeColor(result['outcome']),
               ),
             ),
           ],
@@ -128,13 +129,4 @@ class ConnectionDialog {
     );
   }
 
-  static Color _getOutcomeColor(String outcome) {
-    if (outcome.contains('strong hit')) {
-      return Colors.green;
-    } else if (outcome.contains('weak hit')) {
-      return Colors.orange;
-    } else {
-      return Colors.red;
-    }
-  }
 }

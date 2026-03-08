@@ -16,6 +16,7 @@ class DataswornProvider extends ChangeNotifier {
   String? _error;
   String? _currentSource;
   bool _customOraclesLoaded = false;
+  Map<String, List<Asset>>? _cachedAssetsByCategory;
 
   List<Move> get moves => _moves;
   List<OracleCategory> get oracles => _oracles;
@@ -152,18 +153,22 @@ class DataswornProvider extends ChangeNotifier {
     return movesByCategory;
   }
 
-  // Get assets by category
+  // Get assets by category (cached after first computation)
   Map<String, List<Asset>> getAssetsByCategory() {
+    if (_cachedAssetsByCategory != null) return _cachedAssetsByCategory!;
+
     final Map<String, List<Asset>> assetsByCategory = {};
-    
+
     for (final asset in _assets) {
       final category = asset.category;
-      if (!assetsByCategory.containsKey(category)) {
-        assetsByCategory[category] = [];
-      }
-      assetsByCategory[category]!.add(asset);
+      (assetsByCategory[category] ??= []).add(asset);
     }
-    
+    // Pre-sort each category's list
+    for (final list in assetsByCategory.values) {
+      list.sort((a, b) => a.name.compareTo(b.name));
+    }
+
+    _cachedAssetsByCategory = assetsByCategory;
     return assetsByCategory;
   }
 

@@ -6,16 +6,18 @@ import 'move_card.dart';
 class MoveList extends StatelessWidget {
   final List<Move> moves;
   final Function(Move) onMoveTap;
-  
+  final bool preSorted;
+
   const MoveList({
     super.key,
     required this.moves,
     required this.onMoveTap,
+    this.preSorted = false,
   });
-  
+
   @override
   Widget build(BuildContext context) {
-    final sortedMoves = List<Move>.from(moves)..sort((a, b) => a.name.compareTo(b.name));
+    final sortedMoves = preSorted ? moves : (List<Move>.from(moves)..sort((a, b) => a.name.compareTo(b.name)));
     
     return ListView.builder(
       padding: const EdgeInsets.all(16),

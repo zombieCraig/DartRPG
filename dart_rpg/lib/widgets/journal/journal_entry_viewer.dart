@@ -8,9 +8,22 @@ import '../../models/character.dart';
 import '../../models/location.dart';
 import '../../models/journal_entry.dart';
 import '../../models/game.dart';
+import '../../utils/outcome_utils.dart';
 import '../../widgets/common/app_image_widget.dart';
 
 class JournalEntryViewer extends StatelessWidget {
+  static final _characterRegex = RegExp(r'@(\w+)');
+  static final _locationRegex = RegExp(r'#([^\s\[\]]+)');
+  static final _moveRegex = RegExp(r'\[(.*?) - (.*?)\]');
+  static final _oracleRegex = RegExp(r'\[(.*?): (.*?)\]');
+  static final _imageRegex = RegExp(r'!\[(?:.*?)\]\((.*?)\)');
+  static final _boldRegex = RegExp(r'\*\*(.*?)\*\*');
+  static final _italicRegex = RegExp(r'\*(.*?)\*');
+  static final _headerRegex = RegExp(r'^(#{1,6})\s+(.*?)$', multiLine: true);
+  static final _ulRegex = RegExp(r'^-\s+(.*?)$', multiLine: true);
+  static final _olRegex = RegExp(r'^(\d+)\.\s+(.*?)$', multiLine: true);
+  static final _formattedTextRegex = RegExp(r'<(b|i|h[1-6])>(.*?)</\1>|([^<]+)', dotAll: true);
+
   final String content;
   final Function(Character character)? onCharacterTap;
   final Function(Location location)? onLocationTap;
@@ -46,18 +59,11 @@ class JournalEntryViewer extends StatelessWidget {
   }
   
   Widget _buildMarkdownWithReferences(BuildContext context, Game currentGame) {
-    // Regular expressions for finding references
-    final characterRegex = RegExp(r'@(\w+)');
-    final locationRegex = RegExp(r'#([^\s\[\]]+)');
-    final moveRegex = RegExp(r'\[(.*?) - (.*?)\]');
-    final oracleRegex = RegExp(r'\[(.*?): (.*?)\]');
-    final imageRegex = RegExp(r'!\[(?:.*?)\]\((.*?)\)');
-    
     // Find all matches and sort them by position
     final allMatches = <_TextMatch>[];
     
     // Find character references
-    for (final match in characterRegex.allMatches(content)) {
+    for (final match in _characterRegex.allMatches(content)) {
       final handle = match.group(1)!;
       final character = _findCharacterByHandle(currentGame, handle);
       
@@ -72,7 +78,7 @@ class JournalEntryViewer extends StatelessWidget {
     }
     
     // Find location references
-    for (final match in locationRegex.allMatches(content)) {
+    for (final match in _locationRegex.allMatches(content)) {
       final name = match.group(1)!;
       final location = _findLocationByName(currentGame, name);
       
@@ -87,7 +93,7 @@ class JournalEntryViewer extends StatelessWidget {
     }
     
     // Find move references
-    for (final match in moveRegex.allMatches(content)) {
+    for (final match in _moveRegex.allMatches(content)) {
       final moveName = match.group(1)!;
       final outcome = match.group(2)!;
       final moveRoll = _findMoveRoll(moveName, outcome);
@@ -103,7 +109,7 @@ class JournalEntryViewer extends StatelessWidget {
     }
     
     // Find oracle references
-    for (final match in oracleRegex.allMatches(content)) {
+    for (final match in _oracleRegex.allMatches(content)) {
       final oracleName = match.group(1)!;
       final result = match.group(2)!;
       final oracleRoll = _findOracleRoll(oracleName, result);
@@ -119,7 +125,7 @@ class JournalEntryViewer extends StatelessWidget {
     }
     
     // Find image references
-    for (final match in imageRegex.allMatches(content)) {
+    for (final match in _imageRegex.allMatches(content)) {
       final url = match.group(1)!;
       
       // Check if it's a local image (id:imageId) or a URL
@@ -216,34 +222,29 @@ class JournalEntryViewer extends StatelessWidget {
     // This is a simplified approach - a more complete solution would use a markdown parser
     
     // Handle bold: **text**
-    final boldRegex = RegExp(r'\*\*(.*?)\*\*');
-    text = text.replaceAllMapped(boldRegex, (match) {
+    text = text.replaceAllMapped(_boldRegex, (match) {
       return '<b>${match.group(1)}</b>';
     });
     
     // Handle italic: *text*
-    final italicRegex = RegExp(r'\*(.*?)\*');
-    text = text.replaceAllMapped(italicRegex, (match) {
+    text = text.replaceAllMapped(_italicRegex, (match) {
       return '<i>${match.group(1)}</i>';
     });
     
     // Handle headers: # text
-    final headerRegex = RegExp(r'^(#{1,6})\s+(.*?)$', multiLine: true);
-    text = text.replaceAllMapped(headerRegex, (match) {
+    text = text.replaceAllMapped(_headerRegex, (match) {
       final level = match.group(1)!.length;
       final headerText = match.group(2);
       return '<h$level>$headerText</h$level>';
     });
     
     // Handle unordered lists: - item
-    final ulRegex = RegExp(r'^-\s+(.*?)$', multiLine: true);
-    text = text.replaceAllMapped(ulRegex, (match) {
+    text = text.replaceAllMapped(_ulRegex, (match) {
       return '• ${match.group(1)}';
     });
     
     // Handle ordered lists: 1. item
-    final olRegex = RegExp(r'^(\d+)\.\s+(.*?)$', multiLine: true);
-    text = text.replaceAllMapped(olRegex, (match) {
+    text = text.replaceAllMapped(_olRegex, (match) {
       return '${match.group(1)}. ${match.group(2)}';
     });
     
@@ -290,7 +291,7 @@ class JournalEntryViewer extends StatelessWidget {
         break;
       case _MatchType.move:
         final moveRoll = data as MoveRoll;
-        color = _getOutcomeColor(moveRoll.outcome);
+        color = getOutcomeColor(moveRoll.outcome);
         break;
       case _MatchType.oracle:
         color = Colors.purple;
@@ -554,7 +555,7 @@ class JournalEntryViewer extends StatelessWidget {
                     'Outcome: ${moveRoll.outcome.toUpperCase()}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: _getOutcomeColor(moveRoll.outcome),
+                      color: getOutcomeColor(moveRoll.outcome),
                     ),
                   ),
                 ] else ...[
@@ -647,10 +648,7 @@ class JournalEntryViewer extends StatelessWidget {
   List<TextSpan> _parseFormattedText(BuildContext context, String text) {
     final List<TextSpan> spans = [];
     
-    // Parse <b>, <i>, <h1>-<h6> tags
-    final regex = RegExp(r'<(b|i|h[1-6])>(.*?)</\1>|([^<]+)', dotAll: true);
-    
-    for (final match in regex.allMatches(text)) {
+    for (final match in _formattedTextRegex.allMatches(text)) {
       final tag = match.group(1);
       final content = match.group(2);
       final plainText = match.group(3);
@@ -707,21 +705,6 @@ class JournalEntryViewer extends StatelessWidget {
     return spans;
   }
   
-  Color _getOutcomeColor(String outcome) {
-    if (outcome.toLowerCase().contains('strong hit with a match')) {
-      return Colors.green[700]!; // Darker green for strong hit with match
-    } else if (outcome.toLowerCase().contains('strong hit')) {
-      return Colors.green;
-    } else if (outcome.toLowerCase().contains('weak hit')) {
-      return Colors.orange;
-    } else if (outcome.toLowerCase().contains('miss with a match')) {
-      return Colors.red[700]!; // Darker red for miss with match
-    } else if (outcome.toLowerCase().contains('miss')) {
-      return Colors.red;
-    } else {
-      return Colors.grey;
-    }
-  }
 }
 
 // Helper classes for parsing

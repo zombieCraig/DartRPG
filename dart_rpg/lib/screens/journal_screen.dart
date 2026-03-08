@@ -6,7 +6,9 @@ import 'package:provider/provider.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:file_picker/file_picker.dart';
 import '../providers/game_provider.dart';
+import '../models/character.dart';
 import '../models/journal_entry.dart';
+import '../models/location.dart';
 import '../models/session.dart';
 import '../services/tutorial_service.dart';
 import 'journal_entry_screen.dart';
@@ -200,14 +202,19 @@ class _JournalScreenState extends State<JournalScreen> {
                                 )
                               : Stack(
                                   children: [
-                                    ListView.builder(
+                                    Builder(builder: (context) {
+                                      // Build O(1) lookup maps once for all cards
+                                      final characterMap = {for (final c in currentGame.characters) c.id: c};
+                                      final locationMap = {for (final l in currentGame.locations) l.id: l};
+                                      return ListView.builder(
                                       controller: _scrollController,
                                       itemCount: currentSession.entries.length,
                                       itemBuilder: (context, index) {
                                         final entry = currentSession.entries[index];
-                                        return _buildJournalEntryCard(context, entry, gameProvider);
+                                        return _buildJournalEntryCard(context, entry, gameProvider, characterMap: characterMap, locationMap: locationMap);
                                       },
-                                    ),
+                                    );
+                                    }),
                                     if (_showScrollButton)
                                       Positioned(
                                         right: 16,
@@ -234,19 +241,21 @@ class _JournalScreenState extends State<JournalScreen> {
   Widget _buildJournalEntryCard(
     BuildContext context,
     JournalEntry entry,
-    GameProvider gameProvider,
-  ) {
+    GameProvider gameProvider, {
+    Map<String, Character>? characterMap,
+    Map<String, Location>? locationMap,
+  }) {
     final currentGame = gameProvider.currentGame;
     if (currentGame == null) return const SizedBox.shrink();
 
-    // Get linked characters and locations
+    // Get linked characters and locations using O(1) maps when available
     final linkedCharacters = entry.linkedCharacterIds
-        .map((id) => currentGame.characters.firstWhereOrNull((c) => c.id == id))
+        .map((id) => characterMap != null ? characterMap[id] : currentGame.characters.firstWhereOrNull((c) => c.id == id))
         .nonNulls
         .toList();
 
     final linkedLocations = entry.linkedLocationIds
-        .map((id) => currentGame.locations.firstWhereOrNull((l) => l.id == id))
+        .map((id) => locationMap != null ? locationMap[id] : currentGame.locations.firstWhereOrNull((l) => l.id == id))
         .nonNulls
         .toList();
 

@@ -13,6 +13,7 @@ import 'editor_toolbar.dart';
 import 'autocomplete_system.dart';
 import 'linked_items_manager.dart';
 import 'location_oracle_shortcuts.dart';
+import '../../utils/outcome_utils.dart';
 import 'linked_items_summary.dart';
 
 /// A widget for editing journal entries with rich text formatting and autocompletion.
@@ -701,7 +702,7 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
                     'Outcome: ${moveRoll.outcome.toUpperCase()}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: _getOutcomeColor(moveRoll.outcome),
+                      color: getOutcomeColor(moveRoll.outcome),
                     ),
                   ),
                   
@@ -790,19 +791,6 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
     );
   }
   
-  // Get color for move outcome
-  Color _getOutcomeColor(String outcome) {
-    switch (outcome.toLowerCase()) {
-      case 'strong hit':
-        return Colors.green;
-      case 'weak hit':
-        return Colors.orange;
-      case 'miss':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
   
   @override
   Widget build(BuildContext context) {

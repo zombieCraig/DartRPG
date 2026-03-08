@@ -22,6 +22,11 @@ class _MovesScreenState extends State<MovesScreen> {
   Move? _selectedMove;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+
+  // Cached move computations
+  Map<String, List<Move>>? _cachedMovesByCategory;
+  List<String>? _cachedSortedCategories;
+  List<Move>? _lastMoves;
   
   @override
   void initState() {
@@ -40,11 +45,24 @@ class _MovesScreenState extends State<MovesScreen> {
   }
   
   Map<String, List<Move>> _groupMovesByCategory(List<Move> moves) {
+    // Use cached result if the moves list hasn't changed
+    if (identical(moves, _lastMoves) && _cachedMovesByCategory != null) {
+      return _cachedMovesByCategory!;
+    }
+
     final movesByCategory = <String, List<Move>>{};
     for (final move in moves) {
       final category = move.moveCategory ?? move.category ?? 'Uncategorized';
       (movesByCategory[category] ??= []).add(move);
     }
+    // Pre-sort each category's list
+    for (final list in movesByCategory.values) {
+      list.sort((a, b) => a.name.compareTo(b.name));
+    }
+
+    _cachedMovesByCategory = movesByCategory;
+    _cachedSortedCategories = movesByCategory.keys.toList()..sort();
+    _lastMoves = moves;
     return movesByCategory;
   }
 
@@ -62,7 +80,7 @@ class _MovesScreenState extends State<MovesScreen> {
       builder: (context, dataswornProvider, gameProvider, _) {
         final moves = dataswornProvider.moves;
         final movesByCategory = _groupMovesByCategory(moves);
-        final sortedCategories = movesByCategory.keys.toList()..sort();
+        final sortedCategories = _cachedSortedCategories ?? (movesByCategory.keys.toList()..sort());
         final filteredMoves = _filterMoves(movesByCategory, _searchQuery);
 
         return Column(
@@ -129,6 +147,7 @@ class _MovesScreenState extends State<MovesScreen> {
                       : _selectedCategory != null && movesByCategory.containsKey(_selectedCategory)
                           ? MoveList(
                               moves: movesByCategory[_selectedCategory]!,
+                              preSorted: true,
                               onMoveTap: (move) {
                                 setState(() {
                                   _selectedMove = move;

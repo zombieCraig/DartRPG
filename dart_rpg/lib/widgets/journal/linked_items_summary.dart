@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import '../../providers/game_provider.dart';
 import '../../models/journal_entry.dart';
+import '../../utils/outcome_utils.dart';
 import '../../widgets/common/app_image_widget.dart';
 
 class LinkedItemsSummary extends StatefulWidget {
@@ -27,25 +28,50 @@ class LinkedItemsSummary extends StatefulWidget {
 
 class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
   bool _isExpanded = false;
+  List<dynamic> _linkedCharacters = [];
+  List<dynamic> _linkedLocations = [];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _computeLinkedItems();
+  }
+
+  @override
+  void didUpdateWidget(LinkedItemsSummary oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.journalEntry != widget.journalEntry) {
+      _computeLinkedItems();
+    }
+  }
+
+  void _computeLinkedItems() {
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final currentGame = gameProvider.currentGame;
+    if (currentGame == null) {
+      _linkedCharacters = [];
+      _linkedLocations = [];
+      return;
+    }
+    _linkedCharacters = currentGame.characters
+        .where((c) => widget.journalEntry.linkedCharacterIds.contains(c.id))
+        .toList();
+    _linkedLocations = currentGame.locations
+        .where((l) => widget.journalEntry.linkedLocationIds.contains(l.id))
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final currentGame = gameProvider.currentGame;
-    
+
     if (currentGame == null) {
       return const SizedBox.shrink();
     }
-    
-    // Get linked characters
-    final linkedCharacters = currentGame.characters
-        .where((c) => widget.journalEntry.linkedCharacterIds.contains(c.id))
-        .toList();
-    
-    // Get linked locations
-    final linkedLocations = currentGame.locations
-        .where((l) => widget.journalEntry.linkedLocationIds.contains(l.id))
-        .toList();
+
+    final linkedCharacters = _linkedCharacters;
+    final linkedLocations = _linkedLocations;
     
     // Get move rolls
     final moveRolls = widget.journalEntry.moveRolls;
@@ -184,7 +210,7 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                     ),
                     const SizedBox(height: 4),
                     ...moveRolls.map((moveRoll) {
-                      final outcomeColor = _getOutcomeColor(moveRoll.outcome);
+                      final outcomeColor = getOutcomeColor(moveRoll.outcome);
                       
                       String subtitleText;
                       if (moveRoll.rollType == 'action_roll') {
@@ -237,7 +263,7 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                       return ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: Icon(
-                          _getRollTypeIcon(moveRoll.rollType, moveRoll.outcome),
+                          getRollTypeIcon(moveRoll.rollType, moveRoll.outcome),
                           color: outcomeColor,
                         ),
                         title: Row(
@@ -362,50 +388,6 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
     );
   }
   
-  IconData _getRollTypeIcon(String rollType, String outcome) {
-    if (rollType == 'no_roll') {
-      return Icons.check_circle_outline;
-    }
-    
-    if (rollType == 'progress_roll') {
-      return Icons.trending_up;
-    }
-    
-    if (rollType == 'oracle_roll') {
-      return Icons.casino;
-    }
-    
-    // For action rolls, use outcome-based icons
-    if (outcome.toLowerCase().contains('strong hit with a match')) {
-      return Icons.star; // Special icon for strong hit with match
-    } else if (outcome.toLowerCase().contains('strong hit')) {
-      return Icons.check_circle;
-    } else if (outcome.toLowerCase().contains('weak hit')) {
-      return Icons.check_circle_outline;
-    } else if (outcome.toLowerCase().contains('miss with a match')) {
-      return Icons.warning; // Special icon for miss with match
-    } else if (outcome.toLowerCase().contains('miss')) {
-      return Icons.cancel;
-    } else {
-      return Icons.sports_martial_arts;
-    }
-  }
-  
-  Color _getOutcomeColor(String outcome) {
-    if (outcome.toLowerCase().contains('strong hit with a match')) {
-      return Colors.green[700]!; // Darker green for strong hit with match
-    } else if (outcome.toLowerCase().contains('strong hit')) {
-      return Colors.green;
-    } else if (outcome.toLowerCase().contains('weak hit')) {
-      return Colors.orange;
-    } else if (outcome.toLowerCase().contains('miss with a match')) {
-      return Colors.red[700]!; // Darker red for miss with match
-    } else if (outcome.toLowerCase().contains('miss')) {
-      return Colors.red;
-    } else {
-      return Colors.grey;
-    }
-  }
   
   // Show a dialog with move details
   void _showMoveDetailsDialog(BuildContext context, MoveRoll moveRoll) {
@@ -426,7 +408,7 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                       'Outcome: ${moveRoll.outcome.toUpperCase()}',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: _getOutcomeColor(moveRoll.outcome),
+                        color: getOutcomeColor(moveRoll.outcome),
                       ),
                     ),
                     if (moveRoll.isMatch && 

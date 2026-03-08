@@ -17,7 +17,7 @@ import '../widgets/journal/linked_items_manager.dart';
 import '../widgets/journal/autocomplete_system.dart';
 import '../widgets/oracles/oracle_dialog.dart';
 import '../widgets/character/dialogs/character_edit_dialog.dart';
-import 'game_screen.dart';
+import 'quests_screen.dart';
 
 // Custom intents for keyboard shortcuts
 class QuestsIntent extends Intent {
@@ -233,53 +233,19 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     }
   }
   
-  // Navigate to the Quests screen
-  Future<void> _navigateToQuests(BuildContext context) async {
+  // Show the Quests screen as an overlay so the journal state is preserved
+  void _navigateToQuests(BuildContext context) {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
-    if (gameProvider.currentGame != null) {
-      // If we're in editing mode, save the entry first
-      if (_isEditing && _content.isNotEmpty) {
-        try {
-          // Show a loading indicator
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Saving journal entry...'),
-              duration: Duration(seconds: 1),
-            ),
-          );
-          
-          // Save the entry
-          await _saveEntry();
+    final game = gameProvider.currentGame;
+    if (game == null) return;
 
-          // Clear any existing snackbars
-          if (!context.mounted) return;
-          ScaffoldMessenger.of(context).clearSnackBars();
-        } catch (e) {
-          // Show error if saving fails
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error saving journal entry: ${e.toString()}'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-          // Still navigate even if save fails
-        }
-      }
-
-      // Use pushReplacement to ensure we go directly to the Quests screen
-      if (!context.mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => GameScreen(
-            gameId: gameProvider.currentGame!.id,
-            initialTabIndex: 3, // Quests tab index
-          ),
-        ),
-      );
-    }
+    showDialog(
+      context: context,
+      useSafeArea: false,
+      builder: (context) => Dialog.fullscreen(
+        child: QuestsScreen(gameId: game.id),
+      ),
+    );
   }
 
 
@@ -853,8 +819,8 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
       },
       actions: {
         QuestsIntent: CallbackAction<QuestsIntent>(
-          onInvoke: (QuestsIntent intent) async {
-            await _navigateToQuests(context);
+          onInvoke: (QuestsIntent intent) {
+            _navigateToQuests(context);
             return null;
           },
         ),

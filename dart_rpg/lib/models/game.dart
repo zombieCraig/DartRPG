@@ -9,6 +9,7 @@ import 'location.dart';
 import 'recent_move_entry.dart';
 import 'session.dart';
 import 'quest.dart';
+import 'connection.dart';
 
 class Game {
   final String id;
@@ -19,6 +20,7 @@ class Game {
   List<Location> locations;
   List<Session> sessions;
   List<Quest> quests;
+  List<Connection> connections;
   List<Clock> clocks;
   Character? mainCharacter;
   String? dataswornSource;
@@ -43,6 +45,7 @@ class Game {
     List<Location>? locations,
     List<Session>? sessions,
     List<Quest>? quests,
+    List<Connection>? connections,
     List<Clock>? clocks,
     this.mainCharacter,
     this.dataswornSource,
@@ -68,6 +71,7 @@ class Game {
         locations = locations ?? [],
         sessions = sessions ?? [],
         quests = quests ?? [],
+        connections = connections ?? [],
         clocks = clocks ?? [],
         recentMoves = recentMoves ?? [],
         aiConfig = aiConfig ?? AiConfig(
@@ -114,6 +118,7 @@ class Game {
       'dataswornSource': dataswornSource,
       'rigLocationId': rigLocation?.id,
       'quests': quests.map((q) => q.toJson()).toList(),
+      'connections': connections.map((c) => c.toJson()).toList(),
       'clocks': clocks.map((c) => c.toJson()).toList(),
       'tutorialsEnabled': tutorialsEnabled,
       'recentMoves': recentMoves.map((r) => r.toJson()).toList(),
@@ -166,6 +171,9 @@ class Game {
           .toList(),
       quests: (json['quests'] as List?)
           ?.map((q) => Quest.fromJson(q))
+          .toList() ?? [],
+      connections: (json['connections'] as List?)
+          ?.map((c) => Connection.fromJson(c))
           .toList() ?? [],
       clocks: (json['clocks'] as List?)
           ?.map((c) => Clock.fromJson(c))
@@ -305,6 +313,10 @@ class Game {
 
   List<Quest> getQuestsForCharacter(String characterId) {
     return quests.where((quest) => quest.characterId == characterId).toList();
+  }
+
+  List<Connection> getConnectionsForCharacter(String characterId) {
+    return connections.where((c) => c.characterId == characterId).toList();
   }
 
   List<Character> getCharactersWithStats() {

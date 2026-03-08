@@ -249,6 +249,9 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   
   @override
   Future<void> updateOpenAiModel(String model) async {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {

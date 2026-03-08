@@ -16,8 +16,9 @@ import 'datasworn_provider.dart';
 import 'image_manager_provider.dart';
 import 'clock_operations_mixin.dart';
 import 'quest_operations_mixin.dart';
+import 'connection_operations_mixin.dart';
 
-class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperationsMixin {
+class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperationsMixin, ConnectionOperationsMixin {
   
   List<Game> _games = [];
   Game? _currentGame;

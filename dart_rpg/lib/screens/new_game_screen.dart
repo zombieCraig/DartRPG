@@ -208,32 +208,16 @@ class _NewGameScreenState extends State<NewGameScreen> {
           sentientAiImagePath: _sentientAiImagePath,
         );
         
-        // Set AI Image Generation settings
+        // Set AI Image Generation settings in a single batch call
         if (_aiImageGenerationEnabled) {
-          await gameProvider.updateAiImageGenerationEnabled(_aiImageGenerationEnabled);
-          
-          if (_aiImageProvider != null) {
-            await gameProvider.updateAiImageProvider(_aiImageProvider);
-            
-            // Set OpenAI model if OpenAI is selected
-            if (_aiImageProvider == 'openai' && _openaiModel != null) {
-              await gameProvider.updateOpenAiModel(_openaiModel!);
-            }
-            
-            // Set API keys
-            for (final entry in _aiApiKeys.entries) {
-              await gameProvider.updateAiApiKey(entry.key, entry.value);
-            }
-            
-            // Set artistic directions
-            for (final entry in _aiArtisticDirections.entries) {
-              await gameProvider.updateAiArtisticDirection(entry.key, entry.value);
-            }
-          }
+          await gameProvider.updateAiConfig(
+            aiImageGenerationEnabled: _aiImageGenerationEnabled,
+            aiImageProvider: _aiImageProvider,
+            openaiModel: (_aiImageProvider == 'openai') ? _openaiModel : null,
+            apiKeys: _aiApiKeys.isNotEmpty ? _aiApiKeys : null,
+            artisticDirections: _aiArtisticDirections.isNotEmpty ? _aiArtisticDirections : null,
+          );
         }
-        
-        // Explicitly save the game
-        await gameProvider.saveGame();
         
         // Load the datasworn source
         await dataswornProvider.loadDatasworn('assets/data/fe_runners.json');

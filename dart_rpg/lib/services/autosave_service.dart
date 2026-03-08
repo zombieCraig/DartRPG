@@ -97,8 +97,7 @@ class AutosaveService {
         
         // Save the changes
         await gameProvider.updateJournalEntry(entryId, content);
-        await gameProvider.saveGame();
-        
+
       } else if (content.isNotEmpty) {
         if (_createdEntryId == null) {
           // Create new entry if there's content and we haven't created one yet
@@ -139,7 +138,6 @@ class AutosaveService {
           
           // Save the changes
           await gameProvider.updateJournalEntry(_createdEntryId!, content);
-          await gameProvider.saveGame();
         }
       }
     } catch (e) {

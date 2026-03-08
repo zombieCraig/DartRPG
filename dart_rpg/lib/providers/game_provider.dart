@@ -47,8 +47,8 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
   Session? get questSession => _currentSession;
   @override
   Future<void> persistAndNotify() async {
-    await _saveGames();
     notifyListeners();
+    await _saveGames();
   }
 
   // Reference to the ImageManagerProvider
@@ -357,14 +357,14 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
     _games.add(game);
     _currentGame = game;
     _currentSession = null;
-    
+
+    notifyListeners();
+
     await _saveGames();
-    
+
     // Load images from the game
     await loadImagesFromGame();
-    
-    notifyListeners();
-    
+
     return game;
   }
 
@@ -395,8 +395,8 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
       _currentSession = null;
     }
 
-    await _saveGames();
     notifyListeners();
+    await _saveGames();
   }
 
   // Delete a game
@@ -422,11 +422,11 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
         _currentSession = null;
       }
     }
-    
-    await _saveGames();
+
     notifyListeners();
+    await _saveGames();
   }
-  
+
   // Update Base Rig assets for existing characters
   Future<void> updateBaseRigAssets(DataswornProvider dataswornProvider) async {
     final loggingService = LoggingService();
@@ -520,10 +520,10 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
         : Character(name: name, handle: handle);
     
     _currentGame!.addCharacter(character);
-    
-    await _saveGames();
+
     notifyListeners();
-    
+    await _saveGames();
+
     return character;
   }
 
@@ -563,10 +563,10 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
         );
       }
     }
-    
-    await _saveGames();
+
     notifyListeners();
-    
+    await _saveGames();
+
     return location;
   }
   
@@ -578,8 +578,8 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
     
     try {
       _currentGame!.connectLocations(sourceId, targetId);
-      await _saveGames();
       notifyListeners();
+      await _saveGames();
     } catch (e) {
       LoggingService().error(
         'Failed to connect locations',
@@ -599,8 +599,8 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
     
     try {
       _currentGame!.disconnectLocations(sourceId, targetId);
-      await _saveGames();
       notifyListeners();
+      await _saveGames();
     } catch (e) {
       LoggingService().error(
         'Failed to disconnect locations',
@@ -637,8 +637,8 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
       }
       
       location.segment = segment;
-      await _saveGames();
       notifyListeners();
+      await _saveGames();
     } catch (e) {
       LoggingService().error(
         'Failed to update location segment',
@@ -663,8 +663,8 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
       );
       
       location.updatePosition(x, y);
-      await _saveGames();
       notifyListeners();
+      await _saveGames();
     } catch (e) {
       LoggingService().error(
         'Failed to update location position',
@@ -689,8 +689,8 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
       );
       
       location.updateScale(scale);
-      await _saveGames();
       notifyListeners();
+      await _saveGames();
     } catch (e) {
       LoggingService().error(
         'Failed to update location scale',
@@ -729,10 +729,10 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
     
     final session = _currentGame!.createNewSession(title);
     _currentSession = session;
-    
-    await _saveGames();
+
     notifyListeners();
-    
+    await _saveGames();
+
     return session;
   }
 
@@ -749,8 +749,8 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
     }
     _currentSession = session;
 
-    await _saveGames();
     notifyListeners();
+    await _saveGames();
   }
 
   // Create a new journal entry
@@ -760,10 +760,10 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
     }
     
     final entry = _currentSession!.createNewEntry(content);
-    
-    await _saveGames();
+
     notifyListeners();
-    
+    await _saveGames();
+
     return entry;
   }
 
@@ -779,9 +779,9 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
       return;
     }
     entry.update(content);
-    
-    await _saveGames();
+
     notifyListeners();
+    await _saveGames();
   }
 
   // Quest-related methods are provided by QuestOperationsMixin
@@ -790,77 +790,106 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
   
   // Update sentientAiEnabled setting
   Future<void> updateSentientAiEnabled(bool enabled) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
+    if (_currentGame == null) throw Exception('No game selected');
+    if (_currentGame!.aiConfig.sentientAiEnabled == enabled) return;
     _currentGame!.aiConfig.sentientAiEnabled = enabled;
-
-    await _saveGames();
     notifyListeners();
+    await _saveGames();
   }
 
   Future<void> updateSentientAiName(String? name) async {
     if (_currentGame == null) throw Exception('No game selected');
+    if (_currentGame!.aiConfig.sentientAiName == name) return;
     _currentGame!.aiConfig.sentientAiName = name;
-    await _saveGames();
     notifyListeners();
+    await _saveGames();
   }
 
   Future<void> updateSentientAiPersona(String? persona) async {
     if (_currentGame == null) throw Exception('No game selected');
+    if (_currentGame!.aiConfig.sentientAiPersona == persona) return;
     _currentGame!.aiConfig.sentientAiPersona = persona;
-    await _saveGames();
     notifyListeners();
+    await _saveGames();
   }
 
   Future<void> updateSentientAiImagePath(String? imagePath) async {
     if (_currentGame == null) throw Exception('No game selected');
+    if (_currentGame!.aiConfig.sentientAiImagePath == imagePath) return;
     _currentGame!.aiConfig.sentientAiImagePath = imagePath;
-    await _saveGames();
     notifyListeners();
+    await _saveGames();
   }
 
   Future<void> updateAiImageGenerationEnabled(bool enabled) async {
     if (_currentGame == null) throw Exception('No game selected');
+    if (_currentGame!.aiConfig.aiImageGenerationEnabled == enabled) return;
     _currentGame!.aiConfig.aiImageGenerationEnabled = enabled;
-    await _saveGames();
     notifyListeners();
+    await _saveGames();
   }
 
   Future<void> updateAiImageProvider(String? provider) async {
     if (_currentGame == null) throw Exception('No game selected');
+    if (_currentGame!.aiConfig.aiImageProvider == provider) return;
     _currentGame!.aiConfig.aiImageProvider = provider;
-    await _saveGames();
     notifyListeners();
+    await _saveGames();
   }
 
   Future<void> updateOpenAiModel(String model) async {
     if (_currentGame == null) throw Exception('No game selected');
+    if (_currentGame!.aiConfig.openaiModel == model) return;
     _currentGame!.aiConfig.openaiModel = model;
-    await _saveGames();
     notifyListeners();
+    await _saveGames();
   }
 
   Future<void> updateAiApiKey(String provider, String apiKey) async {
     if (_currentGame == null) throw Exception('No game selected');
+    if (_currentGame!.aiConfig.getAiApiKey(provider) == apiKey) return;
     _currentGame!.aiConfig.setAiApiKey(provider, apiKey);
-    await _saveGames();
     notifyListeners();
+    await _saveGames();
   }
 
   Future<void> updateAiArtisticDirection(String provider, String artisticDirection) async {
     if (_currentGame == null) throw Exception('No game selected');
+    if (_currentGame!.aiConfig.getAiArtisticDirection(provider) == artisticDirection) return;
     _currentGame!.aiConfig.setAiArtisticDirection(provider, artisticDirection);
-    await _saveGames();
     notifyListeners();
+    await _saveGames();
   }
 
   Future<void> removeAiApiKey(String provider) async {
     if (_currentGame == null) throw Exception('No game selected');
+    if (!_currentGame!.aiConfig.aiApiKeys.containsKey(provider)) return;
     _currentGame!.aiConfig.removeAiApiKey(provider);
-    await _saveGames();
     notifyListeners();
+    await _saveGames();
+  }
+
+  // Batch update AI config settings (reduces multiple save/notify cycles to one)
+  Future<void> updateAiConfig({
+    bool? aiImageGenerationEnabled,
+    String? aiImageProvider,
+    String? openaiModel,
+    Map<String, String>? apiKeys,
+    Map<String, String>? artisticDirections,
+  }) async {
+    if (_currentGame == null) throw Exception('No game selected');
+    final config = _currentGame!.aiConfig;
+    if (aiImageGenerationEnabled != null) config.aiImageGenerationEnabled = aiImageGenerationEnabled;
+    if (aiImageProvider != null) config.aiImageProvider = aiImageProvider;
+    if (openaiModel != null) config.openaiModel = openaiModel;
+    if (apiKeys != null) {
+      for (final e in apiKeys.entries) config.setAiApiKey(e.key, e.value);
+    }
+    if (artisticDirections != null) {
+      for (final e in artisticDirections.entries) config.setAiArtisticDirection(e.key, e.value);
+    }
+    notifyListeners();
+    await _saveGames();
   }
 
   bool isAiImageGenerationAvailable() {
@@ -1004,9 +1033,9 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
         }
       }
       
-      await _saveGames();
       notifyListeners();
-      
+      await _saveGames();
+
       return _currentGame;
     } catch (e) {
       _error = 'Failed to import game: ${e.toString()}';

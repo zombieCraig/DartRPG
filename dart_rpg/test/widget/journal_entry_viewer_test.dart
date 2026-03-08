@@ -42,6 +42,8 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   Session? get questSession => null;
   @override
   Future<void> persistAndNotify() async {}
+  @override
+  Future<void> updateAiConfig({bool? aiImageGenerationEnabled, String? aiImageProvider, String? openaiModel, Map<String, String>? apiKeys, Map<String, String>? artisticDirections}) async {}
 
   // Set the current game for testing
   void setCurrentGameForTest(Game game) {

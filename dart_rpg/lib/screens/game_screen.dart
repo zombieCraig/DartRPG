@@ -8,20 +8,20 @@ import 'journal_screen.dart';
 import 'character_screen.dart';
 import 'location_screen.dart';
 import 'quests_screen.dart';
-import 'moves_screen.dart';
-import 'oracles_screen.dart';
-import 'assets_screen.dart';
+import 'reference_screen.dart';
 import 'settings_screen.dart';
 import 'game_settings_screen.dart';
 
 class GameScreen extends StatefulWidget {
   final String gameId;
   final int initialTabIndex;
+  final int initialSubTabIndex;
 
   const GameScreen({
-    super.key, 
-    required this.gameId, 
+    super.key,
+    required this.gameId,
     this.initialTabIndex = 1, // Default to Character tab
+    this.initialSubTabIndex = 0,
   });
 
   @override
@@ -148,16 +148,8 @@ class _GameScreenState extends State<GameScreen> {
                 label: 'Quests',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.sports_martial_arts),
-                label: 'Moves',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.casino),
-                label: 'Oracles',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.card_membership),
-                label: 'Assets',
+                icon: Icon(Icons.menu_book),
+                label: 'Reference',
               ),
             ],
           ),
@@ -177,11 +169,7 @@ class _GameScreenState extends State<GameScreen> {
       case 3:
         return QuestsScreen(gameId: game.id);
       case 4:
-        return MovesScreen();
-      case 5:
-        return OraclesScreen();
-      case 6:
-        return AssetsScreen();
+        return ReferenceScreen(initialSubTabIndex: widget.initialSubTabIndex);
       default:
         return const Center(child: Text('Unknown screen'));
     }

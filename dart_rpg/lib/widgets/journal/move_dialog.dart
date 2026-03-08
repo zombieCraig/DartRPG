@@ -371,7 +371,7 @@ class MoveDialog {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => GameScreen(gameId: gameId, initialTabIndex: 5),
+                builder: (context) => GameScreen(gameId: gameId, initialTabIndex: 4, initialSubTabIndex: 1),
               ),
             );
           }
@@ -600,7 +600,7 @@ class MoveDialog {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => GameScreen(gameId: gameId, initialTabIndex: 5),
+                builder: (context) => GameScreen(gameId: gameId, initialTabIndex: 4, initialSubTabIndex: 1),
               ),
             );
           }

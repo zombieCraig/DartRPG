@@ -13,6 +13,7 @@ import '../character/panels/character_key_stats_panel.dart';
 import '../sentient_ai_dialog.dart';
 import '../moves/roll_result_view.dart';
 import '../common/search_text_field.dart';
+import 'move_dialog.dart';
 import 'quick_roll_result_banner.dart';
 
 /// A slide-in panel for quickly rolling moves from the journal editor.
@@ -276,6 +277,19 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
               visualDensity: VisualDensity.compact,
               tooltip: _showHeaderStats ? 'Hide stats' : 'Adjust stats',
             ),
+          IconButton(
+            icon: const Icon(Icons.menu_book, size: 18),
+            onPressed: () {
+              MoveDialog.show(
+                context,
+                onMoveRollAdded: widget.onMoveRollAdded,
+                onInsertText: widget.onInsertText,
+                isEditing: true,
+              );
+            },
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Browse all moves',
+          ),
           IconButton(
             icon: const Icon(Icons.close, size: 18),
             onPressed: widget.onClose,

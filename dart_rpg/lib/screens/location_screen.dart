@@ -33,16 +33,18 @@ class LocationScreenState extends State<LocationScreen> {
   
   @override
   Widget build(BuildContext context) {
-    return Consumer<GameProvider>(
-      builder: (context, gameProvider, _) {
+    return Selector<GameProvider, int>(
+      selector: (_, gp) => gp.currentGame?.locations.length ?? 0,
+      builder: (context, locationCount, _) {
+        final gameProvider = context.read<GameProvider>();
         final currentGame = gameProvider.currentGame;
-        
+
         if (currentGame == null) {
           return const Center(
             child: Text('No game selected'),
           );
         }
-        
+
         // Create location service
         final locationService = LocationService(gameProvider: gameProvider);
         

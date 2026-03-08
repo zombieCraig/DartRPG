@@ -6,6 +6,7 @@ import 'ai_config.dart';
 import 'character.dart';
 import 'clock.dart';
 import 'location.dart';
+import 'recent_move_entry.dart';
 import 'session.dart';
 import 'quest.dart';
 
@@ -27,6 +28,9 @@ class Game {
   // AI configuration (sentient AI + image generation)
   AiConfig aiConfig;
 
+  // Recent moves for Quick Roll Panel
+  List<RecentMoveEntry> recentMoves;
+
   // World Truths settings
   Map<String, String?> selectedTruths = {};
 
@@ -44,6 +48,7 @@ class Game {
     this.dataswornSource,
     this.rigLocation,
     this.tutorialsEnabled = true,
+    List<RecentMoveEntry>? recentMoves,
     // AI config fields (passed through to AiConfig)
     bool sentientAiEnabled = false,
     String? sentientAiName,
@@ -64,6 +69,7 @@ class Game {
         sessions = sessions ?? [],
         quests = quests ?? [],
         clocks = clocks ?? [],
+        recentMoves = recentMoves ?? [],
         aiConfig = aiConfig ?? AiConfig(
           sentientAiEnabled: sentientAiEnabled,
           sentientAiName: sentientAiName,
@@ -110,6 +116,7 @@ class Game {
       'quests': quests.map((q) => q.toJson()).toList(),
       'clocks': clocks.map((c) => c.toJson()).toList(),
       'tutorialsEnabled': tutorialsEnabled,
+      'recentMoves': recentMoves.map((r) => r.toJson()).toList(),
       'selectedTruths': selectedTruths,
     };
 
@@ -167,6 +174,9 @@ class Game {
       dataswornSource: json['dataswornSource'],
       rigLocation: rigLoc,
       tutorialsEnabled: json['tutorialsEnabled'] ?? true,
+      recentMoves: (json['recentMoves'] as List?)
+          ?.map((r) => RecentMoveEntry.fromJson(r))
+          .toList() ?? [],
       aiConfig: AiConfig.fromJson(json),
       selectedTruths: _parseSelectedTruths(json['selectedTruths']),
     );
@@ -309,6 +319,46 @@ class Game {
     sessions.add(session);
     return session;
   }
+
+  // Recent moves methods
+
+  static const int maxRecentMoves = 10;
+
+  void recordMoveUse(String moveId, String moveName, String? stat) {
+    final existing = recentMoves.firstWhereOrNull((r) => r.moveId == moveId);
+    if (existing != null) {
+      existing.useCount++;
+      existing.lastUsed = DateTime.now();
+      if (stat != null) existing.lastStat = stat;
+    } else {
+      recentMoves.add(RecentMoveEntry(
+        moveId: moveId,
+        moveName: moveName,
+        lastStat: stat,
+      ));
+      // Trim non-favorites if over limit
+      final nonFavorites = recentMoves.where((r) => !r.isFavorite).toList()
+        ..sort((a, b) => a.lastUsed.compareTo(b.lastUsed));
+      while (recentMoves.length > maxRecentMoves && nonFavorites.isNotEmpty) {
+        recentMoves.remove(nonFavorites.removeAt(0));
+      }
+    }
+  }
+
+  void toggleMoveFavorite(String moveId) {
+    final entry = recentMoves.firstWhereOrNull((r) => r.moveId == moveId);
+    if (entry != null) {
+      entry.isFavorite = !entry.isFavorite;
+    }
+  }
+
+  List<RecentMoveEntry> get favoriteRecentMoves =>
+      recentMoves.where((r) => r.isFavorite).toList()
+        ..sort((a, b) => b.useCount.compareTo(a.useCount));
+
+  List<RecentMoveEntry> get nonFavoriteRecentMoves =>
+      recentMoves.where((r) => !r.isFavorite).toList()
+        ..sort((a, b) => b.lastUsed.compareTo(a.lastUsed));
 
   // Truth-related methods
 

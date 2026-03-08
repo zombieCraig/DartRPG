@@ -1,7 +1,10 @@
+import 'package:flutter/material.dart';
 import '../providers/datasworn_provider.dart';
 import '../models/oracle.dart';
 import '../models/character.dart';
+import '../screens/oracles_screen.dart';
 import '../utils/logging_service.dart';
+import '../widgets/asset_detail_dialog.dart';
 
 class DataswornLink {
   final String displayText;
@@ -560,6 +563,71 @@ class DataswornLinkParser {
     return null;
   }
   
+  /// Handle a markdown link tap from MarkdownBody's onTapLink callback.
+  /// Parses the href as a Datasworn link and opens the appropriate view.
+  static void handleMarkdownLink(
+    BuildContext context,
+    DataswornProvider dataswornProvider,
+    String text,
+    String? href,
+    String? title,
+  ) {
+    if (href == null) return;
+
+    // Parse the href to extract link type and path
+    // href format: "asset:path", "oracle_rollable:path", "datasworn:oracle_rollable:path", etc.
+    final match = RegExp(
+      r'^(datasworn:)?(oracle_collection|oracle_rollable|asset|move):(.*)',
+      caseSensitive: false,
+    ).firstMatch(href);
+
+    if (match == null) {
+      _logger.debug(
+        'handleMarkdownLink: href "$href" is not a Datasworn link',
+        tag: 'DataswornLinkParser',
+      );
+      return;
+    }
+
+    final linkType = match.group(2) ?? '';
+    final path = match.group(3) ?? '';
+
+    if (linkType == 'asset') {
+      final asset = findAssetByPath(dataswornProvider, path);
+      if (asset != null) {
+        showDialog(
+          context: context,
+          builder: (context) => AssetDetailDialog(asset: asset),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Asset not found: "$text" ($path)'),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } else {
+      // oracle_rollable, oracle_collection, move
+      final linkedOracle = findOracleByPath(dataswornProvider, path);
+      if (linkedOracle != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OracleTableScreen(table: linkedOracle),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Oracle not found: "$text" ($path)'),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
   // Log available assets for debugging
   static void _logAvailableAssets(DataswornProvider provider) {
     _logger.debug(

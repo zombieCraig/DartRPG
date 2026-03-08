@@ -313,11 +313,19 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
   bool _searchedForLinks = false;
   String? _linkError;
 
+  // Mutable state for in-place re-rolls
+  late int _roll;
+  late String _result;
+  String? _text2;
+
   @override
   void initState() {
     super.initState();
+    _roll = widget.roll;
+    _result = widget.result;
+    _text2 = widget.text2;
     // Check if the result contains a link to another oracle
-    if (DataswornLinkParser.containsLinks(widget.result)) {
+    if (DataswornLinkParser.containsLinks(_result)) {
       _processLinkedOracles();
     }
   }
@@ -336,7 +344,7 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
     try {
       // Process oracle references using the new utility
       final processResult = await OracleReferenceProcessor.processOracleReferences(
-        widget.result,
+        _result,
         dataswornProvider,
       );
       
@@ -362,8 +370,8 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
       }
       
       // If we didn't find any linked results but the text contains links, show an error
-      if (_linkedResults.isEmpty && DataswornLinkParser.containsLinks(widget.result)) {
-        final links = DataswornLinkParser.parseLinks(widget.result);
+      if (_linkedResults.isEmpty && DataswornLinkParser.containsLinks(_result)) {
+        final links = DataswornLinkParser.parseLinks(_result);
         
         // Check if there are any oracle_rollable links
         final hasOracleLinks = links.any((link) => link.linkType == 'oracle_rollable');
@@ -374,7 +382,7 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
             'Could not find referenced oracles',
             tag: 'OracleResultDialog',
             error: {
-              'result': widget.result,
+              'result': _result,
               'links': links.map((l) => {
                 'text': l.displayText, 
                 'path': l.path,
@@ -415,12 +423,12 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
     );
     
     // Log the condition for displaying text2
-    final shouldShowText2 = widget.text2 != null && widget.table.text2Label != null;
+    final shouldShowText2 = _text2 != null && widget.table.text2Label != null;
     loggingService.debug(
-      'OracleResultDialog.build: shouldShowText2=$shouldShowText2 (text2 != null: ${widget.text2 != null}, text2Label != null: ${widget.table.text2Label != null})',
+      'OracleResultDialog.build: shouldShowText2=$shouldShowText2 (text2 != null: ${_text2 != null}, text2Label != null: ${widget.table.text2Label != null})',
       tag: 'OracleResultDialog',
     );
-    
+
     return AlertDialog(
       title: Text('${widget.table.name} Result'),
       content: SingleChildScrollView(
@@ -428,18 +436,18 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Roll: ${widget.roll}'),
+            Text('Roll: $_roll'),
             const SizedBox(height: 16),
-            
+
             // Main result with clickable links and processed references
             OracleResultText(
-              text: widget.result,
+              text: _result,
               style: const TextStyle(fontWeight: FontWeight.bold),
               processReferences: true,
             ),
-            
+
             // Show text2 field if available
-            if (widget.text2 != null && widget.table.text2Label != null) ...[
+            if (_text2 != null && widget.table.text2Label != null) ...[
               const SizedBox(height: 16),
               Text(
                 '${widget.table.text2Label}:',
@@ -447,7 +455,7 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
               ),
               const SizedBox(height: 4),
               OracleResultText(
-                text: widget.text2!,
+                text: _text2!,
                 style: const TextStyle(fontStyle: FontStyle.italic),
                 processReferences: true,
               ),
@@ -522,9 +530,7 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
         ),
         TextButton(
           onPressed: () {
-            Navigator.pop(context);
-            // Roll again on the original table
-            _rollOnOracle(context, widget.table);
+            _rollOnOracle(widget.table);
           },
           child: const Text('Roll Again'),
         ),
@@ -532,7 +538,7 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
     );
   }
 
-  void _rollOnOracle(BuildContext context, OracleTable table) {
+  void _rollOnOracle(OracleTable table) {
     if (table.rows.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -541,11 +547,11 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
       );
       return;
     }
-    
+
     // Roll on the oracle
     final rollResult = DiceRoller.rollOracle(table.diceFormat);
     final total = rollResult['total'] as int;
-    
+
     // Find the matching table entry
     OracleTableRow? matchingRow;
     for (final row in table.rows) {
@@ -554,7 +560,7 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
         break;
       }
     }
-    
+
     if (matchingRow == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -563,26 +569,28 @@ class _OracleResultDialogState extends State<OracleResultDialog> {
       );
       return;
     }
-    
+
     // Log the row data for debugging
     final loggingService = LoggingService();
     loggingService.debug(
       'OracleResultDialog._rollOnOracle: table=${table.id}, oracleType=${table.oracleType}, text2Label=${table.text2Label}, matchingRow.text2=${matchingRow.text2}',
       tag: 'OracleResultDialog',
     );
-    
-    // Show the result
-    showDialog(
-      context: context,
-      builder: (context) {
-        return OracleResultDialog(
-          table: table,
-          roll: total,
-          result: matchingRow!.result,
-          text2: matchingRow.text2, // Pass the text2 field
-        );
-      },
-    );
+
+    // Update state in-place instead of spawning a new dialog
+    setState(() {
+      _roll = total;
+      _result = matchingRow!.result;
+      _text2 = matchingRow.text2;
+      _linkedResults.clear();
+      _searchedForLinks = false;
+      _linkError = null;
+    });
+
+    // Process linked oracles for the new result
+    if (DataswornLinkParser.containsLinks(_result)) {
+      _processLinkedOracles();
+    }
   }
 }
 

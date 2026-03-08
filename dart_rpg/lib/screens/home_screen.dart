@@ -28,8 +28,14 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Consumer<GameProvider>(
-        builder: (context, gameProvider, _) {
+      body: Selector<GameProvider, ({bool isLoading, String? error, int gamesCount})>(
+        selector: (_, gp) => (
+          isLoading: gp.isLoading,
+          error: gp.error,
+          gamesCount: gp.games.length,
+        ),
+        builder: (context, data, _) {
+          final gameProvider = context.read<GameProvider>();
           if (gameProvider.isLoading) {
             return const Center(
               child: CircularProgressIndicator(),

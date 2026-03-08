@@ -806,9 +806,9 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
   
   @override
   Widget build(BuildContext context) {
-    final gameProvider = Provider.of<GameProvider>(context);
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final currentGame = gameProvider.currentGame;
-    
+
     // Create a memoized toolbar to prevent unnecessary rebuilds
     final toolbar = !widget.readOnly ? 
       EditorToolbar(
@@ -867,8 +867,9 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
           
         // Linked Items Summary - only show when toggled
         if (_showLinkedItems && !widget.readOnly)
-          Consumer<GameProvider>(
-            builder: (context, gameProvider, _) {
+          Builder(
+            builder: (context) {
+              final gp = Provider.of<GameProvider>(context, listen: false);
               // Create temporary journal entry for the summary
               final tempEntry = JournalEntry(
                 id: 'temp',
@@ -879,7 +880,7 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
                 oracleRolls: _linkedItemsManager.oracleRolls,
                 embeddedImages: _linkedItemsManager.embeddedImages,
               );
-              
+
               return Container(
                 constraints: const BoxConstraints(maxHeight: 300), // Limit height
                 child: SingleChildScrollView(
@@ -888,12 +889,12 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
                     child: LinkedItemsSummary(
                       journalEntry: tempEntry,
                       onCharacterTap: (characterId) {
-                        final character = gameProvider.currentGame!.characters
+                        final character = gp.currentGame!.characters
                             .firstWhereOrNull((c) => c.id == characterId);
                         if (character != null) _showCharacterDetailsDialog(context, character);
                       },
                       onLocationTap: (locationId) {
-                        final location = gameProvider.currentGame!.locations
+                        final location = gp.currentGame!.locations
                             .firstWhereOrNull((l) => l.id == locationId);
                         if (location != null) _showLocationDetailsDialog(context, location);
                       },

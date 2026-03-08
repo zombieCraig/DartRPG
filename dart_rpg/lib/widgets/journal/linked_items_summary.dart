@@ -30,7 +30,7 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
 
   @override
   Widget build(BuildContext context) {
-    final gameProvider = Provider.of<GameProvider>(context);
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final currentGame = gameProvider.currentGame;
     
     if (currentGame == null) {

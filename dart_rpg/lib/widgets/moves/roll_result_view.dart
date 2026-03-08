@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:provider/provider.dart';
 import '../../models/move.dart';
 import '../../models/journal_entry.dart';
+import '../../providers/datasworn_provider.dart';
 import '../../services/roll_service.dart';
+import '../../utils/datasworn_link_parser.dart';
 import 'outcome_oracle_panel.dart';
 
 /// A widget for displaying the results of a move roll.
@@ -16,7 +19,7 @@ class RollResultView extends StatefulWidget {
   final Function(OracleRoll)? onOracleRollAdded;
   final bool canBurnMomentum;
   final Function()? onBurnMomentum;
-  
+
   const RollResultView({
     super.key,
     required this.move,
@@ -29,17 +32,38 @@ class RollResultView extends StatefulWidget {
     this.canBurnMomentum = false,
     this.onBurnMomentum,
   });
-  
+
   @override
   State<RollResultView> createState() => _RollResultViewState();
 }
 
 class _RollResultViewState extends State<RollResultView> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text('${widget.move.name} Roll'),
       content: SingleChildScrollView(
+        controller: _scrollController,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,6 +76,10 @@ class _RollResultViewState extends State<RollResultView> {
                 ),
                 selectable: true,
                 softLineBreak: true,
+                onTapLink: (text, href, title) {
+                  final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+                  DataswornLinkParser.handleMarkdownLink(context, dataswornProvider, text, href, title);
+                },
               ),
               const SizedBox(height: 16),
             ],
@@ -102,6 +130,10 @@ class _RollResultViewState extends State<RollResultView> {
                     ),
                     selectable: true,
                     softLineBreak: true,
+                    onTapLink: (text, href, title) {
+                      final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+                      DataswornLinkParser.handleMarkdownLink(context, dataswornProvider, text, href, title);
+                    },
                   ),
             ],
             
@@ -141,11 +173,19 @@ class _RollResultViewState extends State<RollResultView> {
                  (widget.move.id == 'fe_runners/exploration/explore_the_system' && 
                   widget.moveRoll.outcome == 'weak hit'))) ...[
               const SizedBox(height: 16),
-              OutcomeOraclePanel(
-                move: widget.move,
-                outcome: widget.moveRoll.outcome,
-                statUsed: widget.moveRoll.stat,
-                onOracleRollAdded: widget.onOracleRollAdded!,
+              NotificationListener<SizeChangedLayoutNotification>(
+                onNotification: (_) {
+                  _scrollToBottom();
+                  return true;
+                },
+                child: SizeChangedLayoutNotifier(
+                  child: OutcomeOraclePanel(
+                    move: widget.move,
+                    outcome: widget.moveRoll.outcome,
+                    statUsed: widget.moveRoll.stat,
+                    onOracleRollAdded: widget.onOracleRollAdded!,
+                  ),
+                ),
               ),
             ],
           ],

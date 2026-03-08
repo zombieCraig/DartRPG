@@ -86,8 +86,16 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GameProvider>(
-      builder: (context, gameProvider, _) {
+    return Selector<GameProvider, ({int questCount, String? gameId})>(
+      selector: (_, gp) {
+        final game = gp.games.firstWhereOrNull((g) => g.id == widget.gameId);
+        return (
+          questCount: game?.getQuestsForCharacter(_selectedCharacterId ?? '').length ?? 0,
+          gameId: game?.id,
+        );
+      },
+      builder: (context, data, _) {
+        final gameProvider = context.read<GameProvider>();
         final game = gameProvider.games.firstWhereOrNull(
           (g) => g.id == widget.gameId,
         );
@@ -96,14 +104,14 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
         }
 
         final charactersWithStats = game.getCharactersWithStats();
-        
+
         // If no character is selected yet, select the first one
         if (_selectedCharacterId == null && charactersWithStats.isNotEmpty) {
           _selectedCharacterId = charactersWithStats.first.id;
         }
-        
+
         final questsByStatus = _getQuestsByStatus(game);
-        
+
         // Ensure the services are initialized
         _questService = QuestService(gameProvider: gameProvider);
         _clockService = ClockService(gameProvider: gameProvider);

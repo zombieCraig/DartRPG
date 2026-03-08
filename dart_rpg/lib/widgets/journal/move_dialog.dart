@@ -320,9 +320,9 @@ class MoveDialog {
         }
       }
       
-      // Show the Sentient AI dialog with the updated persona
+      // Show the Sentient AI dialog and await it before showing roll result
       if (!context.mounted) return;
-      SentientAiDialog.show(
+      await SentientAiDialog.show(
         context: context,
         aiName: game.aiConfig.sentientAiName,
         aiPersona: game.aiConfig.sentientAiPersona,
@@ -547,9 +547,9 @@ class MoveDialog {
         }
       }
       
-      // Show the Sentient AI dialog with the updated persona
+      // Show the Sentient AI dialog and await it before showing roll result
       if (!context.mounted) return;
-      SentientAiDialog.show(
+      await SentientAiDialog.show(
         context: context,
         aiName: game.aiConfig.sentientAiName,
         aiPersona: game.aiConfig.sentientAiPersona,

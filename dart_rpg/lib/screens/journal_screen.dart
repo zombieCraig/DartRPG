@@ -98,8 +98,14 @@ class _JournalScreenState extends State<JournalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GameProvider>(
-      builder: (context, gameProvider, _) {
+    return Selector<GameProvider, ({String? sessionId, int sessionCount, int entryCount})>(
+      selector: (_, gp) => (
+        sessionId: gp.currentSession?.id,
+        sessionCount: gp.currentGame?.sessions.length ?? 0,
+        entryCount: gp.currentSession?.entries.length ?? 0,
+      ),
+      builder: (context, data, _) {
+        final gameProvider = context.read<GameProvider>();
         final currentGame = gameProvider.currentGame;
         final currentSession = gameProvider.currentSession;
 

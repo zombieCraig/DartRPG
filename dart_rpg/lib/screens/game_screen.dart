@@ -61,18 +61,18 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GameProvider>(
-      builder: (context, gameProvider, _) {
-        final game = gameProvider.games.firstWhereOrNull(
-          (g) => g.id == widget.gameId,
-        );
-        if (game == null) {
+    return Selector<GameProvider, String?>(
+      selector: (_, gp) => gp.games.firstWhereOrNull((g) => g.id == widget.gameId)?.name,
+      builder: (context, gameName, _) {
+        if (gameName == null) {
           return const Center(child: Text('Game not found'));
         }
+        final gameProvider = context.read<GameProvider>();
+        final game = gameProvider.games.firstWhereOrNull((g) => g.id == widget.gameId)!;
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(game.name),
+            title: Text(gameName),
             actions: [
               IconButton(
                 icon: const Icon(Icons.save_alt),

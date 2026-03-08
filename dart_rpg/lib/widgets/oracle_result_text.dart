@@ -208,6 +208,15 @@ class _OracleResultTextState extends State<OracleResultText> {
                           ),
                         );
                       }
+                    } else if (link.linkType == 'move') {
+                      // Handle move links
+                      DataswornLinkParser.handleMarkdownLink(
+                        context,
+                        dataswornProvider,
+                        link.displayText,
+                        '${link.linkType}:${link.path}',
+                        null,
+                      );
                     } else {
                       // Handle oracle links (default)
                       final linkedOracle = DataswornLinkParser.findOracleByPath(

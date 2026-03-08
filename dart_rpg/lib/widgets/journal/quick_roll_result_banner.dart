@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import '../../models/character.dart';
 import '../../models/move.dart';
 import '../../models/journal_entry.dart';
 import '../../services/roll_service.dart';
+import '../character/panels/character_key_stats_panel.dart';
 
 /// Inline result display for the Quick Roll Panel.
 /// Shows the roll outcome compactly without a full dialog.
-class QuickRollResultBanner extends StatelessWidget {
+class QuickRollResultBanner extends StatefulWidget {
   final Move move;
   final MoveRoll moveRoll;
   final Map<String, dynamic> rollResult;
@@ -13,6 +15,8 @@ class QuickRollResultBanner extends StatelessWidget {
   final VoidCallback? onShowDetails;
   final bool canBurnMomentum;
   final VoidCallback? onBurnMomentum;
+  final Character? character;
+  final Function(String text)? onInsertText;
 
   const QuickRollResultBanner({
     super.key,
@@ -23,13 +27,57 @@ class QuickRollResultBanner extends StatelessWidget {
     this.onShowDetails,
     this.canBurnMomentum = false,
     this.onBurnMomentum,
+    this.character,
+    this.onInsertText,
   });
 
   @override
+  State<QuickRollResultBanner> createState() => _QuickRollResultBannerState();
+}
+
+class _QuickRollResultBannerState extends State<QuickRollResultBanner> {
+  bool _showStats = false;
+
+  // Snapshot of stats when the panel was last opened, for computing deltas
+  late int _snapMomentum;
+  late int _snapHealth;
+  late int _snapSpirit;
+  late int _snapSupply;
+
+  void _takeSnapshot() {
+    final c = widget.character!;
+    _snapMomentum = c.momentum;
+    _snapHealth = c.health;
+    _snapSpirit = c.spirit;
+    _snapSupply = c.supply;
+  }
+
+  void _onStatsChanged(int momentum, int health, int spirit, int supply) {
+    if (widget.onInsertText == null) return;
+
+    final deltas = <String>[];
+    if (momentum != _snapMomentum) deltas.add('Momentum ${_fmtDelta(momentum - _snapMomentum)}');
+    if (health != _snapHealth) deltas.add('Health ${_fmtDelta(health - _snapHealth)}');
+    if (spirit != _snapSpirit) deltas.add('Spirit ${_fmtDelta(spirit - _snapSpirit)}');
+    if (supply != _snapSupply) deltas.add('Supply ${_fmtDelta(supply - _snapSupply)}');
+
+    if (deltas.isNotEmpty) {
+      widget.onInsertText!('\n*[${deltas.join(", ")}]*');
+      // Update snapshot so the next adjustment is relative to the new values
+      _snapMomentum = momentum;
+      _snapHealth = health;
+      _snapSpirit = spirit;
+      _snapSupply = supply;
+    }
+  }
+
+  String _fmtDelta(int delta) => delta > 0 ? '+$delta' : '$delta';
+
+  @override
   Widget build(BuildContext context) {
-    final outcome = moveRoll.outcome;
+    final outcome = widget.moveRoll.outcome;
     final color = RollService.getOutcomeColor(outcome);
-    final isMatch = moveRoll.isMatch;
+    final isMatch = widget.moveRoll.isMatch;
 
     return Card(
       color: color.withAlpha(30),
@@ -79,20 +127,20 @@ class QuickRollResultBanner extends StatelessWidget {
             const SizedBox(height: 8),
 
             // Dice details
-            if (moveRoll.rollType == 'action_roll') ...[
+            if (widget.moveRoll.rollType == 'action_roll') ...[
               Text(
-                'd6(${moveRoll.actionDie}) + ${moveRoll.stat ?? "?"}(${moveRoll.statValue ?? 0})'
-                '${moveRoll.modifier != null && moveRoll.modifier != 0 ? " + ${moveRoll.modifier}" : ""}'
-                ' = ${rollResult['actionValue'] ?? (moveRoll.actionDie + (moveRoll.statValue ?? 0) + (moveRoll.modifier ?? 0))}',
+                'd6(${widget.moveRoll.actionDie}) + ${widget.moveRoll.stat ?? "?"}(${widget.moveRoll.statValue ?? 0})'
+                '${widget.moveRoll.modifier != null && widget.moveRoll.modifier != 0 ? " + ${widget.moveRoll.modifier}" : ""}'
+                ' = ${widget.rollResult['actionValue'] ?? (widget.moveRoll.actionDie + (widget.moveRoll.statValue ?? 0) + (widget.moveRoll.modifier ?? 0))}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               Text(
-                'vs d10(${moveRoll.challengeDice[0]}), d10(${moveRoll.challengeDice[1]})',
+                'vs d10(${widget.moveRoll.challengeDice[0]}), d10(${widget.moveRoll.challengeDice[1]})',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
-            ] else if (moveRoll.rollType == 'progress_roll') ...[
+            ] else if (widget.moveRoll.rollType == 'progress_roll') ...[
               Text(
-                'Progress(${moveRoll.progressValue}) vs d10(${moveRoll.challengeDice[0]}), d10(${moveRoll.challengeDice[1]})',
+                'Progress(${widget.moveRoll.progressValue}) vs d10(${widget.moveRoll.challengeDice[0]}), d10(${widget.moveRoll.challengeDice[1]})',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -107,23 +155,45 @@ class QuickRollResultBanner extends StatelessWidget {
                 _ActionChip(
                   icon: Icons.refresh,
                   label: 'Roll Again',
-                  onPressed: onRollAgain,
+                  onPressed: widget.onRollAgain,
                 ),
-                if (onShowDetails != null)
+                if (widget.onShowDetails != null)
                   _ActionChip(
                     icon: Icons.info_outline,
                     label: 'Details',
-                    onPressed: onShowDetails!,
+                    onPressed: widget.onShowDetails!,
                   ),
-                if (canBurnMomentum && onBurnMomentum != null)
+                if (widget.canBurnMomentum && widget.onBurnMomentum != null)
                   _ActionChip(
                     icon: Icons.local_fire_department,
                     label: 'Burn Momentum',
-                    onPressed: onBurnMomentum!,
+                    onPressed: widget.onBurnMomentum!,
                     color: Colors.orange,
+                  ),
+                if (widget.character != null)
+                  _ActionChip(
+                    icon: _showStats ? Icons.expand_less : Icons.tune,
+                    label: _showStats ? 'Hide Stats' : 'Adjust Stats',
+                    onPressed: () {
+                      setState(() {
+                        _showStats = !_showStats;
+                        if (_showStats) _takeSnapshot();
+                      });
+                    },
                   ),
               ],
             ),
+
+            // Inline stat adjustment strip
+            if (_showStats && widget.character != null) ...[
+              const Divider(height: 16),
+              CharacterKeyStatsPanel(
+                character: widget.character!,
+                useCompactMode: true,
+                isEditable: true,
+                onStatsChanged: _onStatsChanged,
+              ),
+            ],
           ],
         ),
       ),

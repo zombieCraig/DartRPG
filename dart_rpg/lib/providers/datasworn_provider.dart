@@ -167,13 +167,18 @@ class DataswornProvider extends ChangeNotifier {
     return assetsByCategory;
   }
 
-  // Find a move by ID
+  // Find a move by ID or path (e.g., "reveal_danger" or "fe_runners/exploration/reveal_danger")
   Move? findMoveById(String id) {
-    try {
-      return _moves.firstWhere((move) => move.id == id);
-    } catch (e) {
-      return null;
+    // Try exact match first
+    for (final move in _moves) {
+      if (move.id == id) return move;
     }
+    // Try matching by last path segment (link paths include category prefix)
+    final lastSegment = id.split('/').last;
+    for (final move in _moves) {
+      if (move.id == lastSegment) return move;
+    }
+    return null;
   }
 
   // Find an oracle table by ID

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:provider/provider.dart';
+import '../../models/character.dart';
 import '../../models/move.dart';
 import '../../models/journal_entry.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../services/roll_service.dart';
 import '../../utils/datasworn_link_parser.dart';
+import '../character/panels/character_key_stats_panel.dart';
 import 'outcome_oracle_panel.dart';
 
 /// A widget for displaying the results of a move roll.
@@ -19,6 +21,8 @@ class RollResultView extends StatefulWidget {
   final Function(OracleRoll)? onOracleRollAdded;
   final bool canBurnMomentum;
   final Function()? onBurnMomentum;
+  final Character? character;
+  final Function(String text)? onInsertText;
 
   const RollResultView({
     super.key,
@@ -31,6 +35,8 @@ class RollResultView extends StatefulWidget {
     this.onOracleRollAdded,
     this.canBurnMomentum = false,
     this.onBurnMomentum,
+    this.character,
+    this.onInsertText,
   });
 
   @override
@@ -39,12 +45,43 @@ class RollResultView extends StatefulWidget {
 
 class _RollResultViewState extends State<RollResultView> {
   final ScrollController _scrollController = ScrollController();
+  bool _showStats = false;
+  int _snapMomentum = 0;
+  int _snapHealth = 0;
+  int _snapSpirit = 0;
+  int _snapSupply = 0;
 
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
   }
+
+  void _takeSnapshot() {
+    final c = widget.character!;
+    _snapMomentum = c.momentum;
+    _snapHealth = c.health;
+    _snapSpirit = c.spirit;
+    _snapSupply = c.supply;
+  }
+
+  void _onStatsChanged(int momentum, int health, int spirit, int supply) {
+    if (widget.onInsertText == null) return;
+    final deltas = <String>[];
+    if (momentum != _snapMomentum) deltas.add('Momentum ${_fmtDelta(momentum - _snapMomentum)}');
+    if (health != _snapHealth) deltas.add('Health ${_fmtDelta(health - _snapHealth)}');
+    if (spirit != _snapSpirit) deltas.add('Spirit ${_fmtDelta(spirit - _snapSpirit)}');
+    if (supply != _snapSupply) deltas.add('Supply ${_fmtDelta(supply - _snapSupply)}');
+    if (deltas.isNotEmpty) {
+      widget.onInsertText!('\n*[${deltas.join(", ")}]*');
+      _snapMomentum = momentum;
+      _snapHealth = health;
+      _snapSpirit = spirit;
+      _snapSupply = supply;
+    }
+  }
+
+  String _fmtDelta(int delta) => delta > 0 ? '+$delta' : '$delta';
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -168,9 +205,9 @@ class _RollResultViewState extends State<RollResultView> {
             ],
             
             // Add outcome oracle panel if appropriate
-            if (widget.onOracleRollAdded != null && 
-                (widget.move.hasOraclesForOutcome(widget.moveRoll.outcome) || 
-                 (widget.move.id == 'fe_runners/exploration/explore_the_system' && 
+            if (widget.onOracleRollAdded != null &&
+                (widget.move.hasOraclesForOutcome(widget.moveRoll.outcome) ||
+                 (widget.move.id == 'fe_runners/exploration/explore_the_system' &&
                   widget.moveRoll.outcome == 'weak hit'))) ...[
               const SizedBox(height: 16),
               NotificationListener<SizeChangedLayoutNotification>(
@@ -187,6 +224,49 @@ class _RollResultViewState extends State<RollResultView> {
                   ),
                 ),
               ),
+            ],
+
+            // Inline stat adjustment
+            if (widget.character != null) ...[
+              const SizedBox(height: 16),
+              const Divider(),
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _showStats = !_showStats;
+                    if (_showStats) _takeSnapshot();
+                  });
+                  if (_showStats) _scrollToBottom();
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _showStats ? Icons.expand_less : Icons.tune,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Adjust Stats',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (_showStats)
+                CharacterKeyStatsPanel(
+                  character: widget.character!,
+                  useCompactMode: true,
+                  isEditable: true,
+                  onStatsChanged: _onStatsChanged,
+                ),
             ],
           ],
         ),

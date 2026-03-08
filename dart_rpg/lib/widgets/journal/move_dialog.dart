@@ -390,13 +390,15 @@ class MoveDialog {
               move: move,
               moveRoll: moveRoll,
               rollResult: rollResult,
+              character: character,
+              onInsertText: isEditing ? onInsertText : null,
               onClose: () {
                 Navigator.pop(context);
               },
               onRollAgain: () {
                 Navigator.pop(context);
                 _rollActionMove(
-                  context, 
+                  context,
                   move, 
                   stat, 
                   statValue, 
@@ -615,13 +617,15 @@ class MoveDialog {
           move: move,
           moveRoll: moveRoll,
           rollResult: rollResult,
+          character: gameProvider.currentGame?.mainCharacter,
+          onInsertText: isEditing ? onInsertText : null,
           onClose: () {
             Navigator.pop(context);
           },
           onRollAgain: () {
             Navigator.pop(context);
             _rollProgressMove(
-              context, 
+              context,
               move, 
               progressValue, 
               onMoveRollAdded, 
@@ -734,6 +738,8 @@ class MoveDialog {
               'progressValue': quest.progress,
               'questTitle': quest.title,
             },
+            character: gameProvider.currentGame?.mainCharacter,
+            onInsertText: isEditing ? onInsertText : null,
             onClose: () {
               Navigator.pop(context);
             },

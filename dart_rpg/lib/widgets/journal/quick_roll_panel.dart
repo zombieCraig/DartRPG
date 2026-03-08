@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../models/character.dart';
 import '../../models/move.dart';
 import '../../models/journal_entry.dart';
 import '../../models/quest.dart';
@@ -8,6 +9,7 @@ import '../../models/recent_move_entry.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../services/roll_service.dart';
+import '../character/panels/character_key_stats_panel.dart';
 import '../sentient_ai_dialog.dart';
 import '../moves/roll_result_view.dart';
 import '../common/search_text_field.dart';
@@ -36,6 +38,13 @@ class QuickRollPanel extends StatefulWidget {
 class _QuickRollPanelState extends State<QuickRollPanel> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool _showHeaderStats = false;
+
+  // Snapshot for header stat changes
+  int _snapMomentum = 0;
+  int _snapHealth = 0;
+  int _snapSpirit = 0;
+  int _snapSupply = 0;
 
   // Last roll result for inline display
   Move? _lastRolledMove;
@@ -47,6 +56,31 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
     _searchController.dispose();
     super.dispose();
   }
+
+  void _takeHeaderSnapshot(Character c) {
+    _snapMomentum = c.momentum;
+    _snapHealth = c.health;
+    _snapSpirit = c.spirit;
+    _snapSupply = c.supply;
+  }
+
+  void _onHeaderStatsChanged(int momentum, int health, int spirit, int supply) {
+    final deltas = <String>[];
+    if (momentum != _snapMomentum) deltas.add('Momentum ${_fmtDelta(momentum - _snapMomentum)}');
+    if (health != _snapHealth) deltas.add('Health ${_fmtDelta(health - _snapHealth)}');
+    if (spirit != _snapSpirit) deltas.add('Spirit ${_fmtDelta(spirit - _snapSpirit)}');
+    if (supply != _snapSupply) deltas.add('Supply ${_fmtDelta(supply - _snapSupply)}');
+
+    if (deltas.isNotEmpty) {
+      widget.onInsertText('\n*[${deltas.join(", ")}]*');
+      _snapMomentum = momentum;
+      _snapHealth = health;
+      _snapSpirit = spirit;
+      _snapSupply = supply;
+    }
+  }
+
+  String _fmtDelta(int delta) => delta > 0 ? '+$delta' : '$delta';
 
   @override
   Widget build(BuildContext context) {
@@ -83,9 +117,23 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
       child: Column(
         children: [
           // Header
-          _buildHeader(context),
+          _buildHeader(context, mainCharacter),
 
           const Divider(height: 1),
+
+          // Collapsible stat adjustment strip
+          if (_showHeaderStats && mainCharacter != null) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: CharacterKeyStatsPanel(
+                character: mainCharacter,
+                useCompactMode: true,
+                isEditable: true,
+                onStatsChanged: _onHeaderStatsChanged,
+              ),
+            ),
+            const Divider(height: 1),
+          ],
 
           // Content
           Expanded(
@@ -114,6 +162,8 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
                       onBurnMomentum: _lastRollResult!['couldBurnMomentum'] == true
                           ? () => _burnMomentum()
                           : null,
+                      character: mainCharacter,
+                      onInsertText: widget.onInsertText,
                     ),
                   ),
 
@@ -197,7 +247,7 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, Character? mainCharacter) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
@@ -211,6 +261,21 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
             ),
           ),
           const Spacer(),
+          if (mainCharacter != null)
+            IconButton(
+              icon: Icon(
+                _showHeaderStats ? Icons.expand_less : Icons.tune,
+                size: 18,
+              ),
+              onPressed: () {
+                setState(() {
+                  _showHeaderStats = !_showHeaderStats;
+                  if (_showHeaderStats) _takeHeaderSnapshot(mainCharacter);
+                });
+              },
+              visualDensity: VisualDensity.compact,
+              tooltip: _showHeaderStats ? 'Hide stats' : 'Adjust stats',
+            ),
           IconButton(
             icon: const Icon(Icons.close, size: 18),
             onPressed: widget.onClose,
@@ -359,7 +424,7 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
       ),
       child: Column(
         children: [
-          _buildHeader(context),
+          _buildHeader(context, null),
           const Divider(height: 1),
           const Expanded(
             child: Center(
@@ -646,6 +711,9 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
     MoveRoll moveRoll,
     Map<String, dynamic> rollResult,
   ) {
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final character = gameProvider.currentGame?.mainCharacter;
+
     showDialog(
       context: context,
       builder: (context) {
@@ -653,6 +721,8 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
           move: move,
           moveRoll: moveRoll,
           rollResult: rollResult,
+          character: character,
+          onInsertText: widget.onInsertText,
           onClose: () => Navigator.pop(context),
           onRollAgain: () {
             Navigator.pop(context);

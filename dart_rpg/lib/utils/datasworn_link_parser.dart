@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:provider/provider.dart';
 import '../providers/datasworn_provider.dart';
+import '../models/journal_entry.dart';
+import '../models/move.dart';
 import '../models/oracle.dart';
 import '../models/character.dart';
 import '../screens/oracles_screen.dart';
 import '../utils/logging_service.dart';
 import '../widgets/asset_detail_dialog.dart';
+import '../widgets/moves/move_oracle_panel.dart';
 
 class DataswornLink {
   final String displayText;
@@ -607,8 +612,24 @@ class DataswornLinkParser {
           ),
         );
       }
+    } else if (linkType == 'move') {
+      // Find the move by its path (e.g., "fe_runners/exploration/reveal_danger")
+      final move = dataswornProvider.findMoveById(path);
+      if (move != null) {
+        showDialog(
+          context: context,
+          builder: (context) => _MoveDetailDialog(move: move),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Move not found: "$text" ($path)'),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     } else {
-      // oracle_rollable, oracle_collection, move
+      // oracle_rollable, oracle_collection
       final linkedOracle = findOracleByPath(dataswornProvider, path);
       if (linkedOracle != null) {
         Navigator.push(
@@ -640,5 +661,62 @@ class DataswornLinkParser {
         tag: 'DataswornLinkParser',
       );
     }
+  }
+}
+
+/// Dialog for displaying a move's description and embedded oracles.
+/// Used when a move link (e.g., "Reveal a Danger") is clicked in markdown text.
+class _MoveDetailDialog extends StatelessWidget {
+  final Move move;
+
+  const _MoveDetailDialog({required this.move});
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(move.name),
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (move.description != null) ...[
+              MarkdownBody(
+                data: move.description!,
+                styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                  p: Theme.of(context).textTheme.bodyMedium,
+                ),
+                selectable: true,
+                softLineBreak: true,
+                onTapLink: (text, href, title) {
+                  final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+                  DataswornLinkParser.handleMarkdownLink(context, dataswornProvider, text, href, title);
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+            // Show embedded oracle panel if the move has oracles
+            if (move.hasEmbeddedOracles)
+              MoveOraclePanel(
+                move: move,
+                onOracleRollAdded: (oracleRoll) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Rolled: ${oracleRoll.result}'),
+                      duration: const Duration(seconds: 3),
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
+      ],
+    );
   }
 }

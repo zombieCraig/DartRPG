@@ -13,6 +13,8 @@ import '../models/session.dart';
 import '../services/tutorial_service.dart';
 import 'journal_entry_screen.dart';
 import '../widgets/common/empty_state_widget.dart';
+import '../widgets/journal/begin_session_dialog.dart';
+import '../widgets/journal/end_session_dialog.dart';
 
 class JournalScreen extends StatefulWidget {
   final String gameId;
@@ -183,6 +185,17 @@ class _JournalScreenState extends State<JournalScreen> {
                                 },
                               ),
                               const SizedBox(width: 8.0),
+                              if (currentGame.mainCharacter != null)
+                                IconButton(
+                                  icon: const Icon(Icons.flag_outlined),
+                                  tooltip: 'End Session',
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (_) => const EndSessionDialog(),
+                                    );
+                                  },
+                                ),
                               IconButton(
                                 icon: const Icon(Icons.ios_share),
                                 tooltip: 'Export Session',
@@ -379,12 +392,31 @@ class _JournalScreenState extends State<JournalScreen> {
     return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
-  void _showNewSessionDialog(BuildContext context, GameProvider gameProvider) {
+  /// Find focus notes from the previous session's End Session entry, if any.
+  String? _getPreviousSessionFocusNotes(GameProvider gameProvider) {
+    final game = gameProvider.currentGame;
+    if (game == null || game.sessions.isEmpty) return null;
+
+    // The current session (before creating a new one) is the "previous" session
+    final previousSession = gameProvider.currentSession ?? game.sessions.last;
+    // Search entries in reverse for the most recent End Session entry with focusNotes
+    for (int i = previousSession.entries.length - 1; i >= 0; i--) {
+      final meta = previousSession.entries[i].metadata;
+      if (meta != null && meta['focusNotes'] != null) {
+        return meta['focusNotes'] as String;
+      }
+    }
+    return null;
+  }
+
+  void _showNewSessionDialog(BuildContext outerContext, GameProvider gameProvider) {
     final textController = TextEditingController();
+    final isFirstSession = gameProvider.currentGame?.sessions.isEmpty ?? true;
+    final previousFocusNotes = _getPreviousSessionFocusNotes(gameProvider);
 
     showDialog(
-      context: context,
-      builder: (context) {
+      context: outerContext,
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text('New Session'),
           content: TextField(
@@ -398,7 +430,7 @@ class _JournalScreenState extends State<JournalScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
               },
               child: const Text('Cancel'),
             ),
@@ -406,19 +438,52 @@ class _JournalScreenState extends State<JournalScreen> {
               onPressed: () async {
                 if (textController.text.isNotEmpty) {
                   await gameProvider.createSession(textController.text);
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    
-                    // Show tutorial about sessions after creating the first one
-                    if (gameProvider.currentGame?.sessions.length == 1) {
-                      await TutorialService.showTutorialIfNeeded(
-                        context: context,
-                        tutorialId: 'journal_session_explanation',
-                        title: 'About Sessions',
-                        message: 'Each Session is a collection of journal entries. '
-                            'Group them how you like but often it is best to keep each entry short, '
-                            'perhaps a paragraph or two.',
-                        condition: true,
+                  if (dialogContext.mounted) {
+                    Navigator.pop(dialogContext);
+                  }
+
+                  if (!outerContext.mounted) return;
+
+                  // Show tutorial about sessions after creating the first one
+                  if (gameProvider.currentGame?.sessions.length == 1) {
+                    await TutorialService.showTutorialIfNeeded(
+                      context: outerContext,
+                      tutorialId: 'journal_session_explanation',
+                      title: 'About Sessions',
+                      message: 'Each Session is a collection of journal entries. '
+                          'Group them how you like but often it is best to keep each entry short, '
+                          'perhaps a paragraph or two.',
+                      condition: true,
+                    );
+                  }
+
+                  // Offer Begin a Session move (skip for first session — nothing to recap)
+                  if (!isFirstSession &&
+                      outerContext.mounted &&
+                      gameProvider.currentGame?.mainCharacter != null) {
+                    final runMove = await showDialog<bool>(
+                      context: outerContext,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Begin a Session'),
+                        content: const Text('Would you like to run the Begin a Session move?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: const Text('No'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: const Text('Yes'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (runMove == true && outerContext.mounted) {
+                      await showDialog(
+                        context: outerContext,
+                        builder: (_) => BeginSessionDialog(
+                          previousFocusNotes: previousFocusNotes,
+                        ),
                       );
                     }
                   }

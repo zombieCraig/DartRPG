@@ -656,6 +656,10 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
   
   // Show move roll details dialog
   void _showMoveRollDetailsDialog(BuildContext context, dynamic moveRoll) {
+    final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+    final move = dataswornProvider.findMoveById(moveRoll.moveId ?? '');
+    final description = moveRoll.resolveDescription(move);
+
     showDialog(
       context: context,
       builder: (context) {
@@ -666,8 +670,8 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (moveRoll.moveDescription != null) ...[
-                  Text(moveRoll.moveDescription!),
+                if (description != null) ...[
+                  Text(description),
                   const SizedBox(height: 16),
                 ],
                 

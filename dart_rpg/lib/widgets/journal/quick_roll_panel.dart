@@ -632,7 +632,7 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
 
       final moveRoll = MoveRoll(
         moveName: move.name,
-        moveDescription: move.description,
+        moveId: move.id,
         rollType: 'progress_roll',
         progressValue: quest.progress,
         challengeDice: result['challengeDice'] as List<int>,
@@ -640,7 +640,6 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
         actionDie: 0,
         isMatch: (result['challengeDice'] as List<int>)[0] == (result['challengeDice'] as List<int>)[1],
         moveData: {
-          'moveId': move.id,
           'questId': questId,
           'questTitle': quest.title,
           'questProgress': quest.progress,

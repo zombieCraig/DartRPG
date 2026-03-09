@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import '../../providers/game_provider.dart';
+import '../../providers/datasworn_provider.dart';
 import '../../models/character.dart';
 import '../../models/location.dart';
 import '../../models/journal_entry.dart';
@@ -502,6 +503,10 @@ class JournalEntryViewer extends StatelessWidget {
   }
   
   void _showDefaultMoveRollDialog(BuildContext context, MoveRoll moveRoll) {
+    final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+    final move = dataswornProvider.findMoveById(moveRoll.moveId ?? '');
+    final description = moveRoll.resolveDescription(move);
+
     showDialog(
       context: context,
       builder: (context) {
@@ -512,9 +517,9 @@ class JournalEntryViewer extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (moveRoll.moveDescription != null) ...[
+                if (description != null) ...[
                   MarkdownBody(
-                    data: moveRoll.moveDescription!,
+                    data: description,
                     styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
                       p: Theme.of(context).textTheme.bodyMedium,
                       textAlign: WrapAlignment.start,

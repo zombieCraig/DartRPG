@@ -193,20 +193,20 @@ class MoveDialog {
                                     // Add the oracle roll to the journal entry
                                     onMoveRollAdded(MoveRoll(
                                       moveName: selectedMove!.name,
-                                      moveDescription: selectedMove!.description,
+                                      moveId: selectedMove!.id,
                                       rollType: 'oracle_roll',
                                       outcome: 'performed',
                                       actionDie: 0,
                                       challengeDice: [],
-                                      moveData: {'moveId': selectedMove!.id, 'oracleResult': oracleRoll.result},
+                                      moveData: {'oracleResult': oracleRoll.result},
                                     ));
-                                    
+
                                     // Insert the oracle roll text at the cursor position
                                     if (isEditing) {
                                       final formattedText = oracleRoll.getFormattedText();
                                       onInsertText(formattedText);
                                     }
-                                    
+
                                     // Show confirmation
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
@@ -429,20 +429,20 @@ class MoveDialog {
                 // Add the oracle roll to the journal entry
                 onMoveRollAdded(MoveRoll(
                   moveName: move.name,
-                  moveDescription: move.description,
+                  moveId: move.id,
                   rollType: 'oracle_roll',
                   outcome: 'performed',
                   actionDie: 0,
                   challengeDice: [],
-                  moveData: {'moveId': move.id, 'oracleResult': oracleRoll.result},
+                  moveData: {'oracleResult': oracleRoll.result},
                 ));
-                
+
                 // Insert the oracle roll text at the cursor position
                 if (isEditing) {
                   final formattedText = oracleRoll.getFormattedText();
                   onInsertText(formattedText);
                 }
-                
+
                 // Show confirmation
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -655,20 +655,20 @@ class MoveDialog {
             // Add the oracle roll to the journal entry
             onMoveRollAdded(MoveRoll(
               moveName: move.name,
-              moveDescription: move.description,
+              moveId: move.id,
               rollType: 'oracle_roll',
               outcome: 'performed',
               actionDie: 0,
               challengeDice: [],
-              moveData: {'moveId': move.id, 'oracleResult': oracleRoll.result},
+              moveData: {'oracleResult': oracleRoll.result},
             ));
-            
+
             // Insert the oracle roll text at the cursor position
             if (isEditing) {
               final formattedText = oracleRoll.getFormattedText();
               onInsertText(formattedText);
             }
-            
+
             // Show confirmation
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -710,14 +710,13 @@ class MoveDialog {
       // Create a MoveRoll object
       final moveRoll = MoveRoll(
         moveName: move.name,
-        moveDescription: move.description,
+        moveId: move.id,
         rollType: 'progress_roll',
         progressValue: quest.progress,
         challengeDice: result['challengeDice'] as List<int>,
         outcome: result['outcome'] as String,
         actionDie: 0, // Default value for progress rolls
         moveData: {
-          'moveId': move.id,
           'questId': questId,
           'questTitle': quest.title,
           'questProgress': quest.progress,
@@ -777,12 +776,12 @@ class MoveDialog {
               // Add the oracle roll to the journal entry
               onMoveRollAdded(MoveRoll(
                 moveName: move.name,
-                moveDescription: move.description,
+                moveId: move.id,
                 rollType: 'oracle_roll',
                 outcome: 'performed',
                 actionDie: 0,
                 challengeDice: [],
-                moveData: {'moveId': move.id, 'oracleResult': oracleRoll.result},
+                moveData: {'oracleResult': oracleRoll.result},
               ));
               
               // Insert the oracle roll text at the cursor position

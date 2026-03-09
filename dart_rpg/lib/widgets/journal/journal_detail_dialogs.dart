@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:provider/provider.dart';
 import '../../models/journal_entry.dart';
 import '../../models/character.dart';
 import '../../models/location.dart';
+import '../../providers/datasworn_provider.dart';
 
 /// Static methods for showing detail dialogs for journal-linked items.
 class JournalDetailDialogs {
@@ -22,6 +24,10 @@ class JournalDetailDialogs {
   }
 
   static void showMoveRollDetails(BuildContext context, MoveRoll moveRoll) {
+    final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+    final move = dataswornProvider.findMoveById(moveRoll.moveId ?? '');
+    final description = moveRoll.resolveDescription(move);
+
     showDialog(
       context: context,
       builder: (context) {
@@ -32,9 +38,9 @@ class JournalDetailDialogs {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (moveRoll.moveDescription != null) ...[
+                if (description != null) ...[
                   MarkdownBody(
-                    data: moveRoll.moveDescription!,
+                    data: description,
                     styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
                       p: Theme.of(context).textTheme.bodyMedium,
                       textAlign: WrapAlignment.start,

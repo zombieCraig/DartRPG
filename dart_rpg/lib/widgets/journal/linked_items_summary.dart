@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import '../../providers/game_provider.dart';
+import '../../providers/datasworn_provider.dart';
 import '../../models/journal_entry.dart';
 import '../../utils/outcome_utils.dart';
 import '../../widgets/common/app_image_widget.dart';
@@ -391,6 +392,10 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
   
   // Show a dialog with move details
   void _showMoveDetailsDialog(BuildContext context, MoveRoll moveRoll) {
+    final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+    final move = dataswornProvider.findMoveById(moveRoll.moveId ?? '');
+    final description = moveRoll.resolveDescription(move);
+
     showDialog(
       context: context,
       builder: (context) {
@@ -461,14 +466,14 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                 const SizedBox(height: 16),
                 
                 // Move description
-                if (moveRoll.moveDescription != null) ...[
+                if (description != null) ...[
                   const Text(
                     'Move Description:',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   MarkdownBody(
-                    data: moveRoll.moveDescription!,
+                    data: description,
                     styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
                       p: Theme.of(context).textTheme.bodyMedium,
                     ),

@@ -25,7 +25,7 @@ class RollService {
     // Create a MoveRoll object
     final moveRoll = MoveRoll(
       moveName: move.name,
-      moveDescription: move.description,
+      moveId: move.id,
       rollType: 'action_roll',
       stat: stat,
       statValue: statValue,
@@ -34,7 +34,6 @@ class RollService {
       challengeDice: rollResult['challengeDice'] as List<int>,
       outcome: rollResult['outcome'] as String,
       isMatch: rollResult['isMatch'] as bool? ?? false,
-      moveData: {'moveId': move.id},
     );
     
     // Check for Sentient AI trigger
@@ -65,14 +64,13 @@ class RollService {
     // Create a MoveRoll object
     final moveRoll = MoveRoll(
       moveName: move.name,
-      moveDescription: move.description,
+      moveId: move.id,
       rollType: 'progress_roll',
       progressValue: progressValue,
       challengeDice: rollResult['challengeDice'] as List<int>,
       outcome: rollResult['outcome'] as String,
       actionDie: 0, // Default value for progress rolls
       isMatch: rollResult['isMatch'] as bool? ?? false,
-      moveData: {'moveId': move.id},
     );
     
     // Check for Sentient AI trigger
@@ -98,12 +96,11 @@ class RollService {
     // Create a MoveRoll object for a move that doesn't require a roll
     return MoveRoll(
       moveName: move.name,
-      moveDescription: move.description,
+      moveId: move.id,
       rollType: 'no_roll',
       outcome: 'performed',
       actionDie: 0, // Default value for no-roll moves
       challengeDice: [], // Empty for no-roll moves
-      moveData: {'moveId': move.id},
     );
   }
   

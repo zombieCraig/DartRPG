@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/quest.dart';
 import '../models/character.dart';
 import '../models/connection.dart';
+import '../providers/datasworn_provider.dart';
 import '../providers/game_provider.dart';
 import '../widgets/quests/quest_dialog.dart';
 import '../widgets/quests/quest_service.dart';
@@ -14,8 +15,11 @@ import '../widgets/connections/connection_tab_list.dart';
 import '../widgets/clocks/clock_dialog.dart';
 import '../widgets/clocks/clock_service.dart';
 import '../widgets/clocks/clocks_tab_view.dart';
+import '../widgets/factions/faction_dialog.dart';
+import '../widgets/factions/faction_service.dart';
+import '../widgets/factions/faction_tab_list.dart';
 
-/// A screen for managing quests, connections, and clocks
+/// A screen for managing quests, connections, clocks, and factions
 class QuestsScreen extends StatefulWidget {
   /// The ID of the game
   final String gameId;
@@ -36,17 +40,19 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
   late QuestService _questService;
   late ConnectionService _connectionService;
   late ClockService _clockService;
+  late FactionService _factionService;
   bool _showCharacterSelector = true;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
 
     // Listen for tab changes to show/hide character selector
     _tabController.addListener(() {
       setState(() {
         // Show character selector for quest tabs (0-2) and connections tab (3)
+        // Hide for clocks (4) and factions (5) — they are game-level
         _showCharacterSelector = _tabController.index < 4;
       });
     });
@@ -57,6 +63,7 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
       _questService = QuestService(gameProvider: gameProvider);
       _connectionService = ConnectionService(gameProvider: gameProvider);
       _clockService = ClockService(gameProvider: gameProvider);
+      _factionService = FactionService(gameProvider: gameProvider);
 
       final game = gameProvider.games.firstWhereOrNull(
         (g) => g.id == widget.gameId,
@@ -121,6 +128,7 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
         _questService = QuestService(gameProvider: gameProvider);
         _connectionService = ConnectionService(gameProvider: gameProvider);
         _clockService = ClockService(gameProvider: gameProvider);
+        _factionService = FactionService(gameProvider: gameProvider);
 
         return Scaffold(
           appBar: AppBar(
@@ -134,6 +142,7 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
                 Tab(text: 'Forsaken'),
                 Tab(text: 'Connections'),
                 Tab(text: 'Clocks'),
+                Tab(text: 'Factions'),
               ],
             ),
           ),
@@ -204,6 +213,14 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
                     ClocksTabView(
                       gameId: widget.gameId,
                     ),
+
+                    // Factions tab
+                    FactionTabList(
+                      factions: game.factions,
+                      clocks: game.clocks,
+                      factionService: _factionService,
+                      dataswornProvider: Provider.of<DataswornProvider>(context, listen: false),
+                    ),
                   ],
                 ),
               ),
@@ -211,7 +228,9 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: () {
-              if (_tabController.index == 4) {
+              if (_tabController.index == 5) {
+                _showCreateFactionDialog(context);
+              } else if (_tabController.index == 4) {
                 _showCreateClockDialog(context);
               } else if (_tabController.index == 3) {
                 _showCreateConnectionDialog(context, charactersWithStats);
@@ -219,11 +238,13 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
                 _showCreateQuestDialog(context, charactersWithStats);
               }
             },
-            tooltip: _tabController.index == 4
-                ? 'Create Clock'
-                : _tabController.index == 3
-                    ? 'Make a Connection'
-                    : 'Create Quest',
+            tooltip: _tabController.index == 5
+                ? 'Create Faction'
+                : _tabController.index == 4
+                    ? 'Create Clock'
+                    : _tabController.index == 3
+                        ? 'Make a Connection'
+                        : 'Create Quest',
             child: const Icon(Icons.add),
           ),
         );
@@ -301,6 +322,27 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
         title: result['title'],
         segments: result['segments'],
         type: result['type'],
+      );
+    }
+  }
+
+  /// Show a dialog to create a new faction
+  void _showCreateFactionDialog(BuildContext context) async {
+    final result = await FactionDialog.showCreateDialog(
+      context: context,
+    );
+
+    if (result != null && context.mounted) {
+      await _factionService.createFaction(
+        name: result['name'],
+        type: result['type'],
+        influence: result['influence'],
+        description: result['description'],
+        leadershipStyle: result['leadershipStyle'] ?? '',
+        subtypes: (result['subtypes'] as List?)?.cast<String>(),
+        projects: result['projects'] ?? '',
+        quirks: result['quirks'] ?? '',
+        rumors: result['rumors'] ?? '',
       );
     }
   }

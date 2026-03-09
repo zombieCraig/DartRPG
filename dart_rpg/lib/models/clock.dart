@@ -54,6 +54,9 @@ class Clock {
   final DateTime createdAt;
   DateTime? completedAt;
   
+  /// Optional faction association
+  String? factionId;
+
   /// Create a new clock
   Clock({
     String? id,
@@ -63,7 +66,8 @@ class Clock {
     this.progress = 0,
     DateTime? createdAt,
     this.completedAt,
-  }) : 
+    this.factionId,
+  }) :
     id = id ?? const Uuid().v4(),
     createdAt = createdAt ?? DateTime.now();
   
@@ -99,12 +103,13 @@ class Clock {
         orElse: () => ClockType.campaign,
       ),
       progress: json['progress'] ?? 0,
-      createdAt: json['createdAt'] != null 
-          ? DateTime.parse(json['createdAt']) 
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
-      completedAt: json['completedAt'] != null 
-          ? DateTime.parse(json['completedAt']) 
+      completedAt: json['completedAt'] != null
+          ? DateTime.parse(json['completedAt'])
           : null,
+      factionId: json['factionId'],
     );
   }
   
@@ -118,6 +123,7 @@ class Clock {
       'progress': progress,
       'createdAt': createdAt.toIso8601String(),
       'completedAt': completedAt?.toIso8601String(),
+      if (factionId != null) 'factionId': factionId,
     };
   }
   
@@ -131,6 +137,7 @@ class Clock {
       progress: progress,
       createdAt: createdAt,
       completedAt: completedAt,
+      factionId: factionId,
     );
   }
 }

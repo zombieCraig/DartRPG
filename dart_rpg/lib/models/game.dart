@@ -10,6 +10,7 @@ import 'recent_move_entry.dart';
 import 'session.dart';
 import 'quest.dart';
 import 'connection.dart';
+import 'faction.dart';
 
 class Game {
   final String id;
@@ -22,6 +23,7 @@ class Game {
   List<Quest> quests;
   List<Connection> connections;
   List<Clock> clocks;
+  List<Faction> factions;
   Character? mainCharacter;
   String? dataswornSource;
   Location? rigLocation;
@@ -47,6 +49,7 @@ class Game {
     List<Quest>? quests,
     List<Connection>? connections,
     List<Clock>? clocks,
+    List<Faction>? factions,
     this.mainCharacter,
     this.dataswornSource,
     this.rigLocation,
@@ -73,6 +76,7 @@ class Game {
         quests = quests ?? [],
         connections = connections ?? [],
         clocks = clocks ?? [],
+        factions = factions ?? [],
         recentMoves = recentMoves ?? [],
         aiConfig = aiConfig ?? AiConfig(
           sentientAiEnabled: sentientAiEnabled,
@@ -120,6 +124,7 @@ class Game {
       'quests': quests.map((q) => q.toJson()).toList(),
       'connections': connections.map((c) => c.toJson()).toList(),
       'clocks': clocks.map((c) => c.toJson()).toList(),
+      'factions': factions.map((f) => f.toJson()).toList(),
       'tutorialsEnabled': tutorialsEnabled,
       'recentMoves': recentMoves.map((r) => r.toJson()).toList(),
       'selectedTruths': selectedTruths,
@@ -177,6 +182,9 @@ class Game {
           .toList() ?? [],
       clocks: (json['clocks'] as List?)
           ?.map((c) => Clock.fromJson(c))
+          .toList() ?? [],
+      factions: (json['factions'] as List?)
+          ?.map((f) => Faction.fromJson(f))
           .toList() ?? [],
       mainCharacter: mainChar,
       dataswornSource: json['dataswornSource'],

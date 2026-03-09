@@ -6,6 +6,7 @@ import 'package:dart_rpg/models/oracle.dart';
 import 'package:dart_rpg/models/game.dart';
 import 'package:dart_rpg/providers/game_provider.dart';
 import 'package:dart_rpg/providers/datasworn_provider.dart';
+import 'package:dart_rpg/models/game_summary.dart';
 import 'package:dart_rpg/widgets/journal/location_oracle_shortcuts.dart';
 
 // Mock GameProvider for testing
@@ -14,7 +15,10 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   
   @override
   Game? get currentGame => _currentGame;
-  
+
+  @override
+  List<GameSummary> get gameSummaries => [];
+
   // Set the current game for testing
   void setCurrentGameForTest(Game game) {
     _currentGame = game;

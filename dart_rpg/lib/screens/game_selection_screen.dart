@@ -66,7 +66,7 @@ class GameSelectionScreen extends StatelessWidget {
         selector: (_, gp) => (
           isLoading: gp.isLoading,
           error: gp.error,
-          gamesCount: gp.games.length,
+          gamesCount: gp.gameSummaries.length,
         ),
         builder: (context, data, _) {
           final gameProvider = context.read<GameProvider>();
@@ -85,7 +85,7 @@ class GameSelectionScreen extends StatelessWidget {
             );
           }
 
-          if (gameProvider.games.isEmpty) {
+          if (gameProvider.gameSummaries.isEmpty) {
             return Center(
               child: SingleChildScrollView(
                 child: Column(
@@ -175,11 +175,11 @@ class GameSelectionScreen extends StatelessWidget {
               Expanded(
                 child: ListView.builder(
                   padding: const EdgeInsets.all(16),
-                  itemCount: gameProvider.games.length,
+                  itemCount: gameProvider.gameSummaries.length,
                   itemBuilder: (context, index) {
-                    final game = gameProvider.games[index];
-                    final isCurrentGame = gameProvider.currentGame?.id == game.id;
-                    
+                    final summary = gameProvider.gameSummaries[index];
+                    final isCurrentGame = gameProvider.currentGame?.id == summary.id;
+
                     return Card(
                       elevation: isCurrentGame ? 4 : 1,
                       color: isCurrentGame ? Theme.of(context).colorScheme.primaryContainer : null,
@@ -187,7 +187,7 @@ class GameSelectionScreen extends StatelessWidget {
                       child: ListTile(
                         contentPadding: const EdgeInsets.all(16),
                         title: Text(
-                          game.name,
+                          summary.name,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
@@ -198,7 +198,7 @@ class GameSelectionScreen extends StatelessWidget {
                           children: [
                             const SizedBox(height: 8),
                             Text(
-                              'Last played: ${_formatDate(game.lastPlayedAt)}',
+                              'Last played: ${_formatDate(summary.lastPlayedAt)}',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -206,7 +206,7 @@ class GameSelectionScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Sessions: ${game.sessions.length}',
+                              'Sessions: ${summary.sessionCount}',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -214,7 +214,7 @@ class GameSelectionScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Characters: ${game.characters.length}',
+                              'Characters: ${summary.characterCount}',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -228,29 +228,23 @@ class GameSelectionScreen extends StatelessWidget {
                             IconButton(
                               icon: const Icon(Icons.delete),
                               onPressed: () {
-                                _showDeleteConfirmation(context, gameProvider, game.id, game.name);
+                                _showDeleteConfirmation(context, gameProvider, summary.id, summary.name);
                               },
                             ),
                             IconButton(
                               icon: const Icon(Icons.play_arrow),
                               onPressed: () async {
-                                await gameProvider.switchGame(game.id);
-                                
-                                // We'll load datasworn in the LoadingScreen
-                                
+                                await gameProvider.switchGame(summary.id);
+
                                 if (context.mounted) {
-                                  // Check if there's a main character
-                                  final hasMainCharacter = gameProvider.currentGame?.mainCharacter != null;
-                                  
-                                  // If there's a main character, start with Journal tab (0)
-                                  // Otherwise, start with Characters tab (1)
-                                  
+                                  final hasMainCharacter = summary.hasMainCharacter;
+
                                   final navigationService = NavigationService();
                                   navigationService.replaceWith(
                                     context,
                                     LoadingScreen(
-                                      gameId: game.id,
-                                      dataswornSource: game.dataswornSource,
+                                      gameId: summary.id,
+                                      dataswornSource: summary.dataswornSource,
                                       hasMainCharacter: hasMainCharacter,
                                     ),
                                   );
@@ -260,23 +254,17 @@ class GameSelectionScreen extends StatelessWidget {
                           ],
                         ),
                         onTap: () async {
-                          await gameProvider.switchGame(game.id);
-                          
-                          // We'll load datasworn in the LoadingScreen
-                          
+                          await gameProvider.switchGame(summary.id);
+
                           if (context.mounted) {
-                            // Check if there's a main character
-                            final hasMainCharacter = gameProvider.currentGame?.mainCharacter != null;
-                            
-                            // If there's a main character, start with Journal tab (0)
-                            // Otherwise, start with Characters tab (1)
-                            
+                            final hasMainCharacter = summary.hasMainCharacter;
+
                             final navigationService = NavigationService();
                             navigationService.replaceWith(
                               context,
                               LoadingScreen(
-                                gameId: game.id,
-                                dataswornSource: game.dataswornSource,
+                                gameId: summary.id,
+                                dataswornSource: summary.dataswornSource,
                                 hasMainCharacter: hasMainCharacter,
                               ),
                             );

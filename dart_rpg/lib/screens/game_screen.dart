@@ -1,4 +1,3 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
@@ -41,14 +40,12 @@ class _GameScreenState extends State<GameScreen> {
       // Delay to ensure the game provider is initialized
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final gameProvider = Provider.of<GameProvider>(context, listen: false);
-        final game = gameProvider.games.firstWhereOrNull(
-          (g) => g.id == widget.gameId,
-        );
+        final game = gameProvider.currentGame;
         if (game == null) return;
-        
+
         // Check if there's a main character
         final hasMainCharacter = game.mainCharacter != null;
-        
+
         // If there's a main character, go to Journal tab, otherwise stay on Character tab
         if (hasMainCharacter) {
           setState(() {
@@ -62,13 +59,13 @@ class _GameScreenState extends State<GameScreen> {
   @override
   Widget build(BuildContext context) {
     return Selector<GameProvider, String?>(
-      selector: (_, gp) => gp.games.firstWhereOrNull((g) => g.id == widget.gameId)?.name,
+      selector: (_, gp) => gp.currentGame?.name,
       builder: (context, gameName, _) {
         if (gameName == null) {
           return const Center(child: Text('Game not found'));
         }
         final gameProvider = context.read<GameProvider>();
-        final game = gameProvider.games.firstWhereOrNull((g) => g.id == widget.gameId)!;
+        final game = gameProvider.currentGame!;
 
         return Scaffold(
           appBar: AppBar(

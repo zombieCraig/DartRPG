@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:dart_rpg/providers/game_provider.dart';
 import 'package:dart_rpg/models/game.dart';
+import 'package:dart_rpg/models/game_summary.dart';
 import 'package:dart_rpg/models/session.dart';
 
 /// Shared mock GameProvider for widget tests.
@@ -19,6 +20,10 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
 
   @override
   List<Game> get games => _currentGame != null ? [_currentGame!] : [];
+
+  @override
+  List<GameSummary> get gameSummaries =>
+      _currentGame != null ? [GameSummary.fromGame(_currentGame!)] : [];
 
   @override
   bool get isLoading => false;

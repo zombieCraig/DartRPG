@@ -1,9 +1,9 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/quest.dart';
 import '../models/character.dart';
 import '../models/connection.dart';
+import '../models/network_route.dart';
 import '../providers/datasworn_provider.dart';
 import '../providers/game_provider.dart';
 import '../widgets/quests/quest_dialog.dart';
@@ -12,6 +12,9 @@ import '../widgets/quests/quest_tab_list.dart';
 import '../widgets/connections/connection_dialog.dart';
 import '../widgets/connections/connection_service.dart';
 import '../widgets/connections/connection_tab_list.dart';
+import '../widgets/routes/route_dialog.dart';
+import '../widgets/routes/route_service.dart';
+import '../widgets/routes/route_tab_list.dart';
 import '../widgets/clocks/clock_dialog.dart';
 import '../widgets/clocks/clock_service.dart';
 import '../widgets/clocks/clocks_tab_view.dart';
@@ -19,7 +22,7 @@ import '../widgets/factions/faction_dialog.dart';
 import '../widgets/factions/faction_service.dart';
 import '../widgets/factions/faction_tab_list.dart';
 
-/// A screen for managing quests, connections, clocks, and factions
+/// A screen for managing quests, connections, routes, clocks, and factions
 class QuestsScreen extends StatefulWidget {
   /// The ID of the game
   final String gameId;
@@ -39,6 +42,7 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
   String? _selectedCharacterId;
   late QuestService _questService;
   late ConnectionService _connectionService;
+  late RouteService _routeService;
   late ClockService _clockService;
   late FactionService _factionService;
   bool _showCharacterSelector = true;
@@ -46,14 +50,14 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this);
+    _tabController = TabController(length: 7, vsync: this);
 
     // Listen for tab changes to show/hide character selector
     _tabController.addListener(() {
       setState(() {
-        // Show character selector for quest tabs (0-2) and connections tab (3)
-        // Hide for clocks (4) and factions (5) — they are game-level
-        _showCharacterSelector = _tabController.index < 4;
+        // Show character selector for quest tabs (0-2), connections (3), and routes (4)
+        // Hide for clocks (5) and factions (6) — they are game-level
+        _showCharacterSelector = _tabController.index < 5;
       });
     });
 
@@ -62,12 +66,11 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
       final gameProvider = Provider.of<GameProvider>(context, listen: false);
       _questService = QuestService(gameProvider: gameProvider);
       _connectionService = ConnectionService(gameProvider: gameProvider);
+      _routeService = RouteService(gameProvider: gameProvider);
       _clockService = ClockService(gameProvider: gameProvider);
       _factionService = FactionService(gameProvider: gameProvider);
 
-      final game = gameProvider.games.firstWhereOrNull(
-        (g) => g.id == widget.gameId,
-      );
+      final game = gameProvider.currentGame;
       if (game == null) return;
 
       if (game.mainCharacter != null) {
@@ -103,13 +106,16 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
     return game.getConnectionsForCharacter(_selectedCharacterId!);
   }
 
+  List<NetworkRoute> _getRoutes(dynamic game) {
+    if (_selectedCharacterId == null) return <NetworkRoute>[];
+    return game.getRoutesForCharacter(_selectedCharacterId!);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<GameProvider>(
       builder: (context, gameProvider, _) {
-        final game = gameProvider.games.firstWhereOrNull(
-          (g) => g.id == widget.gameId,
-        );
+        final game = gameProvider.currentGame;
         if (game == null) {
           return const Center(child: Text('Game not found'));
         }
@@ -123,10 +129,12 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
 
         final questsByStatus = _getQuestsByStatus(game);
         final connections = _getConnections(game);
+        final routes = _getRoutes(game);
 
         // Ensure the services are initialized
         _questService = QuestService(gameProvider: gameProvider);
         _connectionService = ConnectionService(gameProvider: gameProvider);
+        _routeService = RouteService(gameProvider: gameProvider);
         _clockService = ClockService(gameProvider: gameProvider);
         _factionService = FactionService(gameProvider: gameProvider);
 
@@ -141,6 +149,7 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
                 Tab(text: 'Completed'),
                 Tab(text: 'Forsaken'),
                 Tab(text: 'Connections'),
+                Tab(text: 'Routes'),
                 Tab(text: 'Clocks'),
                 Tab(text: 'Factions'),
               ],
@@ -148,7 +157,7 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
           ),
           body: Column(
             children: [
-              // Character selector (for quest and connection tabs)
+              // Character selector (for quest, connection, and route tabs)
               if (_showCharacterSelector)
                 Padding(
                   padding: const EdgeInsets.all(16),
@@ -209,6 +218,13 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
                       connectionService: _connectionService,
                     ),
 
+                    // Routes tab
+                    RouteTabList(
+                      routes: routes,
+                      characters: charactersWithStats,
+                      routeService: _routeService,
+                    ),
+
                     // Clocks tab
                     ClocksTabView(
                       gameId: widget.gameId,
@@ -228,23 +244,27 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: () {
-              if (_tabController.index == 5) {
+              if (_tabController.index == 6) {
                 _showCreateFactionDialog(context);
-              } else if (_tabController.index == 4) {
+              } else if (_tabController.index == 5) {
                 _showCreateClockDialog(context);
+              } else if (_tabController.index == 4) {
+                _showCreateRouteDialog(context, charactersWithStats);
               } else if (_tabController.index == 3) {
                 _showCreateConnectionDialog(context, charactersWithStats);
               } else {
                 _showCreateQuestDialog(context, charactersWithStats);
               }
             },
-            tooltip: _tabController.index == 5
+            tooltip: _tabController.index == 6
                 ? 'Create Faction'
-                : _tabController.index == 4
+                : _tabController.index == 5
                     ? 'Create Clock'
-                    : _tabController.index == 3
-                        ? 'Make a Connection'
-                        : 'Create Quest',
+                    : _tabController.index == 4
+                        ? 'Map a Route'
+                        : _tabController.index == 3
+                            ? 'Make a Connection'
+                            : 'Create Quest',
             child: const Icon(Icons.add),
           ),
         );
@@ -306,6 +326,37 @@ class _QuestsScreenState extends State<QuestsScreen> with SingleTickerProviderSt
         characterId: result['characterId'],
         rank: result['rank'],
         role: result['role'],
+        notes: result['notes'],
+      );
+    }
+  }
+
+  /// Show a dialog to create a new route
+  void _showCreateRouteDialog(
+    BuildContext context,
+    List<Character> characters,
+  ) async {
+    if (characters.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No characters available to map a route'),
+        ),
+      );
+      return;
+    }
+
+    final result = await RouteDialog.showCreateDialog(
+      context: context,
+      characters: characters,
+    );
+
+    if (result != null && context.mounted) {
+      await _routeService.createRoute(
+        name: result['name'],
+        characterId: result['characterId'],
+        origin: result['origin'],
+        destination: result['destination'],
+        rank: result['rank'],
         notes: result['notes'],
       );
     }

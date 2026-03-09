@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'moves_screen.dart';
 import 'oracles_screen.dart';
 import 'assets_screen.dart';
+import 'truths_screen.dart';
 
-/// A screen that consolidates Moves, Oracles, and Assets into sub-tabs.
+/// A screen that consolidates Moves, Oracles, Assets, and Truths into sub-tabs.
 class ReferenceScreen extends StatefulWidget {
-  /// Which sub-tab to show initially: 0=Moves, 1=Oracles, 2=Assets
+  /// Which sub-tab to show initially: 0=Moves, 1=Oracles, 2=Assets, 3=Truths
   final int initialSubTabIndex;
 
   const ReferenceScreen({
@@ -25,7 +26,7 @@ class _ReferenceScreenState extends State<ReferenceScreen>
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 3,
+      length: 4,
       vsync: this,
       initialIndex: widget.initialSubTabIndex,
     );
@@ -47,6 +48,7 @@ class _ReferenceScreenState extends State<ReferenceScreen>
             Tab(icon: Icon(Icons.sports_martial_arts), text: 'Moves'),
             Tab(icon: Icon(Icons.casino), text: 'Oracles'),
             Tab(icon: Icon(Icons.card_membership), text: 'Assets'),
+            Tab(icon: Icon(Icons.public), text: 'Truths'),
           ],
         ),
         Expanded(
@@ -56,6 +58,7 @@ class _ReferenceScreenState extends State<ReferenceScreen>
               MovesScreen(),
               OraclesScreen(),
               AssetsScreen(),
+              TruthsScreen(),
             ],
           ),
         ),

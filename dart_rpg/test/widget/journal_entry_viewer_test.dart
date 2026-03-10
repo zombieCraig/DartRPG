@@ -46,7 +46,6 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   Session? get questSession => null;
   @override
   Future<void> persistAndNotify() async {}
-  @override
   Future<void> updateAiConfig({bool? aiImageGenerationEnabled, String? aiImageProvider, String? openaiModel, Map<String, String>? apiKeys, Map<String, String>? artisticDirections}) async {}
 
   // Set the current game for testing
@@ -201,24 +200,18 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   Future<void> advanceAllClocksOfType(ClockType type) async {}
   
   // Sentient AI-related methods
-  @override
   Future<void> updateSentientAiEnabled(bool enabled) async {}
-  
-  @override
+
   Future<void> updateSentientAiName(String? name) async {}
-  
-  @override
+
   Future<void> updateSentientAiPersona(String? persona) async {}
-  
-  @override
+
   Future<void> updateSentientAiImagePath(String? imagePath) async {}
-  
-  @override
+
   List<Map<String, String>> getAiPersonas(DataswornProvider dataswornProvider) {
     return [];
   }
-  
-  @override
+
   String? getRandomAiPersona(DataswornProvider dataswornProvider) {
     return null;
   }
@@ -231,27 +224,20 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   void setImageManagerProvider(dynamic provider) {}
   
   // AI Image Generation methods
-  @override
   Future<void> updateAiImageGenerationEnabled(bool enabled) async {}
-  
-  @override
+
   Future<void> updateAiImageProvider(String? provider) async {}
-  
-  @override
+
   Future<void> updateAiApiKey(String provider, String apiKey) async {}
-  
-  @override
+
   Future<void> removeAiApiKey(String provider) async {}
-  
-  @override
+
   bool isAiImageGenerationAvailable() {
     return false;
   }
-  
-  @override
+
   Future<void> updateAiArtisticDirection(String provider, String artisticDirection) async {}
-  
-  @override
+
   Future<void> updateOpenAiModel(String model) async {}
 
   @override

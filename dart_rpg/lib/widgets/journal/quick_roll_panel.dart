@@ -124,7 +124,7 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
           const Divider(height: 1),
 
           // Collapsible stat adjustment strip
-          if (_showHeaderStats && mainCharacter != null) ...[
+          if (_showHeaderStats) ...[
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: CharacterKeyStatsPanel(

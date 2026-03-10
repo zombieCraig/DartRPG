@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:provider/provider.dart';
 import '../providers/datasworn_provider.dart';
-import '../models/journal_entry.dart';
+import '../providers/game_provider.dart';
 import '../models/move.dart';
 import '../models/oracle.dart';
 import '../models/character.dart';
@@ -700,10 +700,28 @@ class _MoveDetailDialog extends StatelessWidget {
               MoveOraclePanel(
                 move: move,
                 onOracleRollAdded: (oracleRoll) {
+                  // Create a journal entry directly via GameProvider since this
+                  // dialog is opened from a link and has no journal editor context.
+                  final gameProvider = Provider.of<GameProvider>(context, listen: false);
+                  try {
+                    gameProvider.createJournalEntry(
+                      oracleRoll.getFormattedText(),
+                    ).then((journalEntry) {
+                      journalEntry.attachOracleRoll(oracleRoll);
+                      gameProvider.persistAndNotify();
+                    });
+                  } catch (e) {
+                    LoggingService().error(
+                      'Failed to add oracle roll to journal',
+                      tag: 'DataswornLinkParser',
+                      error: e,
+                      stackTrace: StackTrace.current,
+                    );
+                  }
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Rolled: ${oracleRoll.result}'),
-                      duration: const Duration(seconds: 3),
+                    const SnackBar(
+                      content: Text('Oracle roll added to journal'),
+                      duration: Duration(seconds: 2),
                     ),
                   );
                 },

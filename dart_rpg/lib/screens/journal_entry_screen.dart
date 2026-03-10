@@ -1030,25 +1030,30 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                                         // This is handled internally by the JournalEntryEditor
                                       },
                                     )
-                                  : JournalEntryViewer(
-                                      content: _content,
-                                      moveRolls: _moveRolls,
-                                      oracleRolls: _oracleRolls,
-                                      onCharacterTap: (character) {
-                                        _showCharacterDetailsDialog(context, character);
+                                  : GestureDetector(
+                                      onDoubleTap: () {
+                                        setState(() { _isEditing = true; });
                                       },
-                                      onLocationTap: (location) {
-                                        _showLocationDetailsDialog(context, location);
-                                      },
-                                      onFactionTap: (faction) {
-                                        _showFactionDetailsDialog(context, faction);
-                                      },
-                                      onMoveRollTap: (moveRoll) {
-                                        _showMoveRollDetailsDialog(context, moveRoll);
-                                      },
-                                      onOracleRollTap: (oracleRoll) {
-                                        _showOracleRollDetailsDialog(context, oracleRoll);
-                                      },
+                                      child: JournalEntryViewer(
+                                        content: _content,
+                                        moveRolls: _moveRolls,
+                                        oracleRolls: _oracleRolls,
+                                        onCharacterTap: (character) {
+                                          _showCharacterDetailsDialog(context, character);
+                                        },
+                                        onLocationTap: (location) {
+                                          _showLocationDetailsDialog(context, location);
+                                        },
+                                        onFactionTap: (faction) {
+                                          _showFactionDetailsDialog(context, faction);
+                                        },
+                                        onMoveRollTap: (moveRoll) {
+                                          _showMoveRollDetailsDialog(context, moveRoll);
+                                        },
+                                        onOracleRollTap: (oracleRoll) {
+                                          _showOracleRollDetailsDialog(context, oracleRoll);
+                                        },
+                                      ),
                                     ),
                               ),
                             ),

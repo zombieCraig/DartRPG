@@ -60,9 +60,7 @@ void main() {
       expect(find.text('Characters'), findsOneWidget);
       expect(find.text('Locations'), findsOneWidget);
       expect(find.text('Quests'), findsOneWidget);
-      expect(find.text('Moves'), findsOneWidget);
-      expect(find.text('Oracles'), findsOneWidget);
-      expect(find.text('Assets'), findsOneWidget);
+      expect(find.text('Reference'), findsOneWidget);
     });
 
     testWidgets('starts on Characters tab by default', (tester) async {
@@ -129,9 +127,12 @@ void main() {
       await tester.pumpWidget(buildApp(initialTabIndex: 4));
       await tester.pumpAndSettle();
 
-      // Should start on Moves tab
-      // Moves tab will show empty state or moves list
-      expect(find.byIcon(Icons.sports_martial_arts), findsOneWidget);
+      // Should start on Reference tab with Moves/Oracles/Assets sub-tabs
+      expect(find.byIcon(Icons.menu_book), findsOneWidget);
+      // Sub-tabs should be visible
+      expect(find.text('Moves'), findsOneWidget);
+      expect(find.text('Oracles'), findsOneWidget);
+      expect(find.text('Assets'), findsOneWidget);
     });
 
     testWidgets('shows settings popup menu', (tester) async {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/ai_config_provider.dart';
 import '../providers/game_provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../widgets/sentient_ai_settings_widget.dart';
@@ -52,7 +53,7 @@ class _GameSettingsScreenState extends State<GameSettingsScreen> {
               // Sentient AI settings
               SentientAiSettingsWidget(
                 game: game,
-                gameProvider: gameProvider,
+                aiConfigProvider: context.read<AiConfigProvider>(),
                 dataswornProvider: dataswornProvider,
                 initiallyExpanded: false,
                 showDividers: true,
@@ -62,7 +63,7 @@ class _GameSettingsScreenState extends State<GameSettingsScreen> {
               // AI Image Generation settings
               AiImageGenerationSettingsWidget(
                 game: game,
-                gameProvider: gameProvider,
+                aiConfigProvider: context.read<AiConfigProvider>(),
                 initiallyExpanded: false,
                 showDividers: true,
                 showHelpText: true,

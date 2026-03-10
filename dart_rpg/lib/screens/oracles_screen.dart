@@ -355,6 +355,10 @@ class _OraclesScreenState extends State<OraclesScreen> {
   OracleTable? _selectedTable;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+
+  // Cached flattened oracle tables
+  List<OracleTable>? _cachedFlatTables;
+  List<OracleCategory>? _lastCategories;
   
   @override
   void initState() {
@@ -372,16 +376,25 @@ class _OraclesScreenState extends State<OraclesScreen> {
     super.dispose();
   }
   
+  List<OracleTable> _getFlatTables(List<OracleCategory> categories) {
+    if (identical(categories, _lastCategories) && _cachedFlatTables != null) {
+      return _cachedFlatTables!;
+    }
+    _cachedFlatTables = categories
+        .expand((cat) => [...cat.tables, ...cat.subcategories.expand((sub) => sub.tables)])
+        .toList()
+      ..sort((a, b) => a.name.compareTo(b.name));
+    _lastCategories = categories;
+    return _cachedFlatTables!;
+  }
+
   List<OracleTable> _filterOracleTables(List<OracleCategory> categories, String query) {
     if (query.isEmpty) return [];
+    final flatTables = _getFlatTables(categories);
     bool matches(OracleTable table) =>
         table.name.toLowerCase().contains(query) ||
         (table.description?.toLowerCase().contains(query) ?? false);
-
-    return categories
-        .expand((cat) => [...cat.tables, ...cat.subcategories.expand((sub) => sub.tables)])
-        .where(matches)
-        .toList();
+    return flatTables.where(matches).toList();
   }
 
   @override
@@ -501,13 +514,11 @@ class _OraclesScreenState extends State<OraclesScreen> {
       );
     }
     
-    final sortedTables = List<OracleTable>.from(tables)..sort((a, b) => a.name.compareTo(b.name));
-    
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: sortedTables.length,
+      itemCount: tables.length,
       itemBuilder: (context, index) {
-        final table = sortedTables[index];
+        final table = tables[index];
         
         return Card(
           margin: const EdgeInsets.only(bottom: 8),

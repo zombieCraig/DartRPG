@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../models/character.dart';
+import '../../common/app_image_widget.dart';
 
 /// A panel for displaying character details in view mode.
 class CharacterDetailsPanel extends StatelessWidget {
@@ -15,16 +16,13 @@ class CharacterDetailsPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (character.imageUrl != null)
-          Container(
+        if (character.imageUrl != null || character.imageId != null)
+          AppImageWidget(
+            imageUrl: character.imageUrl,
+            imageId: character.imageId,
             height: 200,
             width: double.infinity,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: NetworkImage(character.imageUrl!),
-                fit: BoxFit.cover,
-              ),
-            ),
+            fit: BoxFit.cover,
           ),
         
         const SizedBox(height: 16),

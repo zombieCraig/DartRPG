@@ -32,7 +32,20 @@ extension LocationSegmentExtension on LocationSegment {
       case LocationSegment.govNet:
         return Colors.grey;
       case LocationSegment.darkNet:
-        return Colors.black;
+        return Colors.purple;
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case LocationSegment.core:
+        return Icons.hub;
+      case LocationSegment.corpNet:
+        return Icons.business;
+      case LocationSegment.govNet:
+        return Icons.account_balance;
+      case LocationSegment.darkNet:
+        return Icons.dark_mode;
     }
   }
   

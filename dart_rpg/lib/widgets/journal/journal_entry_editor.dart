@@ -13,6 +13,7 @@ import 'editor_toolbar.dart';
 import 'autocomplete_system.dart';
 import 'linked_items_manager.dart';
 import 'location_oracle_shortcuts.dart';
+import '../../utils/outcome_utils.dart';
 import 'linked_items_summary.dart';
 
 /// A widget for editing journal entries with rich text formatting and autocompletion.
@@ -655,6 +656,10 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
   
   // Show move roll details dialog
   void _showMoveRollDetailsDialog(BuildContext context, dynamic moveRoll) {
+    final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+    final move = dataswornProvider.findMoveById(moveRoll.moveId ?? '');
+    final description = moveRoll.resolveDescription(move);
+
     showDialog(
       context: context,
       builder: (context) {
@@ -665,8 +670,8 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (moveRoll.moveDescription != null) ...[
-                  Text(moveRoll.moveDescription!),
+                if (description != null) ...[
+                  Text(description),
                   const SizedBox(height: 16),
                 ],
                 
@@ -701,7 +706,7 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
                     'Outcome: ${moveRoll.outcome.toUpperCase()}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: _getOutcomeColor(moveRoll.outcome),
+                      color: getOutcomeColor(moveRoll.outcome),
                     ),
                   ),
                   
@@ -790,25 +795,12 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
     );
   }
   
-  // Get color for move outcome
-  Color _getOutcomeColor(String outcome) {
-    switch (outcome.toLowerCase()) {
-      case 'strong hit':
-        return Colors.green;
-      case 'weak hit':
-        return Colors.orange;
-      case 'miss':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
   
   @override
   Widget build(BuildContext context) {
-    final gameProvider = Provider.of<GameProvider>(context);
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final currentGame = gameProvider.currentGame;
-    
+
     // Create a memoized toolbar to prevent unnecessary rebuilds
     final toolbar = !widget.readOnly ? 
       EditorToolbar(
@@ -867,8 +859,9 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
           
         // Linked Items Summary - only show when toggled
         if (_showLinkedItems && !widget.readOnly)
-          Consumer<GameProvider>(
-            builder: (context, gameProvider, _) {
+          Builder(
+            builder: (context) {
+              final gp = Provider.of<GameProvider>(context, listen: false);
               // Create temporary journal entry for the summary
               final tempEntry = JournalEntry(
                 id: 'temp',
@@ -879,7 +872,7 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
                 oracleRolls: _linkedItemsManager.oracleRolls,
                 embeddedImages: _linkedItemsManager.embeddedImages,
               );
-              
+
               return Container(
                 constraints: const BoxConstraints(maxHeight: 300), // Limit height
                 child: SingleChildScrollView(
@@ -888,12 +881,12 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
                     child: LinkedItemsSummary(
                       journalEntry: tempEntry,
                       onCharacterTap: (characterId) {
-                        final character = gameProvider.currentGame!.characters
+                        final character = gp.currentGame!.characters
                             .firstWhereOrNull((c) => c.id == characterId);
                         if (character != null) _showCharacterDetailsDialog(context, character);
                       },
                       onLocationTap: (locationId) {
-                        final location = gameProvider.currentGame!.locations
+                        final location = gp.currentGame!.locations
                             .firstWhereOrNull((l) => l.id == locationId);
                         if (location != null) _showLocationDetailsDialog(context, location);
                       },

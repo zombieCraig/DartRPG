@@ -7,6 +7,7 @@ import 'package:dart_rpg/models/character.dart';
 import 'package:dart_rpg/models/oracle.dart';
 import 'package:dart_rpg/models/session.dart';
 import 'package:dart_rpg/models/move.dart';
+import 'package:dart_rpg/models/game_summary.dart';
 
 // Mock GameProvider for testing
 class MockGameProvider extends ChangeNotifier implements GameProvider {
@@ -18,7 +19,10 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   // Other required overrides with minimal implementations
   @override
   List<Game> get games => [];
-  
+
+  @override
+  List<GameSummary> get gameSummaries => [];
+
   @override
   bool get isLoading => false;
   

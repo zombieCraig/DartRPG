@@ -28,8 +28,14 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Consumer<GameProvider>(
-        builder: (context, gameProvider, _) {
+      body: Selector<GameProvider, ({bool isLoading, String? error, int gamesCount})>(
+        selector: (_, gp) => (
+          isLoading: gp.isLoading,
+          error: gp.error,
+          gamesCount: gp.gameSummaries.length,
+        ),
+        builder: (context, data, _) {
+          final gameProvider = context.read<GameProvider>();
           if (gameProvider.isLoading) {
             return const Center(
               child: CircularProgressIndicator(),
@@ -45,7 +51,7 @@ class HomeScreen extends StatelessWidget {
             );
           }
 
-          if (gameProvider.games.isEmpty) {
+          if (gameProvider.gameSummaries.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -130,9 +136,9 @@ class HomeScreen extends StatelessWidget {
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                   ),
-                  itemCount: gameProvider.games.length + 1, // +1 for the "Add" card
+                  itemCount: gameProvider.gameSummaries.length + 1, // +1 for the "Add" card
                   itemBuilder: (context, index) {
-                    if (index == gameProvider.games.length) {
+                    if (index == gameProvider.gameSummaries.length) {
                       // "Add" card
                       return Card(
                         clipBehavior: Clip.antiAlias,
@@ -158,29 +164,29 @@ class HomeScreen extends StatelessWidget {
                         ),
                       );
                     }
-                    
-                    final game = gameProvider.games[index];
-                    final isCurrentGame = gameProvider.currentGame?.id == game.id;
-                    
+
+                    final summary = gameProvider.gameSummaries[index];
+                    final isCurrentGame = gameProvider.currentGame?.id == summary.id;
+
                     return Card(
                       clipBehavior: Clip.antiAlias,
                       elevation: isCurrentGame ? 4 : 1,
                       color: isCurrentGame ? Theme.of(context).colorScheme.primaryContainer : null,
                       child: InkWell(
                         onTap: () async {
-                          await gameProvider.switchGame(game.id);
-                          
+                          await gameProvider.switchGame(summary.id);
+
                           // Load datasworn source if available
-                          if (game.dataswornSource != null && context.mounted) {
+                          if (summary.dataswornSource != null && context.mounted) {
                             final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
-                            await dataswornProvider.loadDatasworn(game.dataswornSource!);
+                            await dataswornProvider.loadDatasworn(summary.dataswornSource!);
                           }
-                          
+
                           if (context.mounted) {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => GameScreen(gameId: game.id),
+                                builder: (context) => GameScreen(gameId: summary.id),
                               ),
                             );
                           }
@@ -196,7 +202,7 @@ class HomeScreen extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      game.name,
+                                      summary.name,
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 18,
@@ -206,7 +212,7 @@ class HomeScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      'Last played: ${_formatDate(game.lastPlayedAt)}',
+                                      'Last played: ${_formatDate(summary.lastPlayedAt)}',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -214,7 +220,7 @@ class HomeScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Sessions: ${game.sessions.length}',
+                                      'Sessions: ${summary.sessionCount}',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -222,7 +228,7 @@ class HomeScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Characters: ${game.characters.length}',
+                                      'Characters: ${summary.characterCount}',
                                       style: TextStyle(
                                         fontSize: 12,
                                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -235,25 +241,25 @@ class HomeScreen extends StatelessWidget {
                                         IconButton(
                                           icon: const Icon(Icons.delete),
                                           onPressed: () {
-                                            _showDeleteConfirmation(context, gameProvider, game.id, game.name);
+                                            _showDeleteConfirmation(context, gameProvider, summary.id, summary.name);
                                           },
                                         ),
                                         IconButton(
                                           icon: const Icon(Icons.play_arrow),
                                           onPressed: () async {
-                                            await gameProvider.switchGame(game.id);
-                                            
+                                            await gameProvider.switchGame(summary.id);
+
                                             // Load datasworn source if available
-                                            if (game.dataswornSource != null && context.mounted) {
+                                            if (summary.dataswornSource != null && context.mounted) {
                                               final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
-                                              await dataswornProvider.loadDatasworn(game.dataswornSource!);
+                                              await dataswornProvider.loadDatasworn(summary.dataswornSource!);
                                             }
-                                            
+
                                             if (context.mounted) {
                                               Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
-                                                  builder: (context) => GameScreen(gameId: game.id),
+                                                  builder: (context) => GameScreen(gameId: summary.id),
                                                 ),
                                               );
                                             }

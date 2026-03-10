@@ -845,5 +845,387 @@ class AiImageProvider extends ChangeNotifier {
         return '1024x1024';
     }
   }
-  
+
+  /// Generate images using the Stability AI API.
+  ///
+  /// Uses SD 3.5 Large via the Stable Image Generate endpoint.
+  /// Note: Stability AI only generates 1 image per call.
+  ///
+  /// [prompt] - The text prompt to generate images from
+  /// [apiKey] - The API key for the Stability AI service
+  /// [aspectRatio] - The aspect ratio of the generated images (default: "16:9")
+  /// [metadata] - Additional metadata to store with the images
+  ///
+  /// Returns a list of AppImage objects representing the generated images.
+  Future<List<AppImage>> generateImagesWithStability({
+    required String prompt,
+    required String apiKey,
+    String aspectRatio = "16:9",
+    Map<String, dynamic>? metadata,
+  }) async {
+    try {
+      _loggingService.info(
+        'Generating image with Stability AI: prompt="${prompt.substring(0, prompt.length > 50 ? 50 : prompt.length)}..."',
+        tag: 'AiImageProvider',
+      );
+
+      // Create a multipart request
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('https://api.stability.ai/v2beta/stable-image/generate/sd3'),
+      );
+
+      // Add headers
+      request.headers['Authorization'] = 'Bearer $apiKey';
+      request.headers['Accept'] = 'application/json';
+
+      // Add fields
+      request.fields['prompt'] = prompt;
+      request.fields['output_format'] = 'jpeg';
+      request.fields['aspect_ratio'] = aspectRatio;
+      request.fields['model'] = 'sd3.5-large';
+
+      // Send the request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode != 200) {
+        _loggingService.error(
+          'Failed to generate image with Stability AI: ${response.statusCode} ${response.body}',
+          tag: 'AiImageProvider',
+        );
+        throw Exception('Failed to generate image: ${response.statusCode} ${response.body}');
+      }
+
+      final responseData = jsonDecode(response.body);
+
+      _loggingService.debug(
+        'Stability AI API response received',
+        tag: 'AiImageProvider',
+      );
+
+      // Extract the base64 image
+      if (!responseData.containsKey('image') || responseData['image'] == null) {
+        throw Exception('Unexpected response format: image field is null or missing');
+      }
+
+      final String base64Image = responseData['image'];
+      final imageBytes = base64Decode(base64Image);
+
+      // Save the image to a permanent file
+      final appDir = await getApplicationDocumentsDirectory();
+      final imagesDir = Directory('${appDir.path}/images');
+      if (!await imagesDir.exists()) {
+        await imagesDir.create(recursive: true);
+      }
+
+      final imageId = const Uuid().v4();
+      final imagePath = path.join(imagesDir.path, '$imageId.jpg');
+
+      final imageFile = File(imagePath);
+      await imageFile.writeAsBytes(imageBytes);
+
+      final appImage = AppImage(
+        id: imageId,
+        localPath: imagePath,
+        metadata: {
+          'source': 'stability',
+          'model': 'sd3.5-large',
+          'prompt': prompt,
+          'aspectRatio': aspectRatio,
+          'generatedAt': DateTime.now().toIso8601String(),
+          ...?metadata,
+        },
+      );
+
+      _loggingService.debug(
+        'Saved generated image to $imagePath',
+        tag: 'AiImageProvider',
+      );
+
+      return [appImage];
+    } catch (e) {
+      _loggingService.error(
+        'Failed to generate image with Stability AI: $e',
+        tag: 'AiImageProvider',
+        error: e,
+      );
+      rethrow;
+    }
+  }
+
+  /// Generate images using the Google Imagen API.
+  ///
+  /// Uses Imagen 3 via the Gemini API predict endpoint.
+  /// Supports 1-4 images per call.
+  ///
+  /// [prompt] - The text prompt to generate images from
+  /// [apiKey] - The API key for the Google AI service
+  /// [aspectRatio] - The aspect ratio of the generated images (default: "16:9")
+  /// [count] - The number of images to generate (default: 4, max: 4)
+  /// [metadata] - Additional metadata to store with the images
+  ///
+  /// Returns a list of AppImage objects representing the generated images.
+  Future<List<AppImage>> generateImagesWithGoogleImagen({
+    required String prompt,
+    required String apiKey,
+    String aspectRatio = "16:9",
+    int count = 4,
+    Map<String, dynamic>? metadata,
+  }) async {
+    try {
+      final effectiveCount = count.clamp(1, 4);
+
+      _loggingService.info(
+        'Generating images with Google Imagen: prompt="${prompt.substring(0, prompt.length > 50 ? 50 : prompt.length)}..."',
+        tag: 'AiImageProvider',
+      );
+
+      // API key is passed as query parameter
+      final response = await http.post(
+        Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=$apiKey'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'instances': [
+            {'prompt': prompt},
+          ],
+          'parameters': {
+            'sampleCount': effectiveCount,
+            'aspectRatio': aspectRatio,
+          },
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        _loggingService.error(
+          'Failed to generate images with Google Imagen: ${response.statusCode} ${response.body}',
+          tag: 'AiImageProvider',
+        );
+        throw Exception('Failed to generate images: ${response.statusCode} ${response.body}');
+      }
+
+      final responseData = jsonDecode(response.body);
+
+      _loggingService.debug(
+        'Google Imagen API response received',
+        tag: 'AiImageProvider',
+      );
+
+      if (!responseData.containsKey('predictions') || responseData['predictions'] == null) {
+        throw Exception('Unexpected response format: predictions field is null or missing');
+      }
+
+      final List<dynamic> predictions = responseData['predictions'];
+      final List<AppImage> appImages = [];
+
+      for (int i = 0; i < predictions.length; i++) {
+        try {
+          final prediction = predictions[i];
+          final String base64Image = prediction['bytesBase64Encoded'];
+          final imageBytes = base64Decode(base64Image);
+
+          // Save the image to a permanent file
+          final appDir = await getApplicationDocumentsDirectory();
+          final imagesDir = Directory('${appDir.path}/images');
+          if (!await imagesDir.exists()) {
+            await imagesDir.create(recursive: true);
+          }
+
+          final imageId = const Uuid().v4();
+          final imagePath = path.join(imagesDir.path, '$imageId.png');
+
+          final imageFile = File(imagePath);
+          await imageFile.writeAsBytes(imageBytes);
+
+          final appImage = AppImage(
+            id: imageId,
+            localPath: imagePath,
+            metadata: {
+              'source': 'google_imagen',
+              'model': 'imagen-3.0-generate-002',
+              'prompt': prompt,
+              'aspectRatio': aspectRatio,
+              'generatedAt': DateTime.now().toIso8601String(),
+              ...?metadata,
+            },
+          );
+
+          appImages.add(appImage);
+
+          _loggingService.debug(
+            'Saved generated image to $imagePath',
+            tag: 'AiImageProvider',
+          );
+        } catch (e) {
+          _loggingService.error(
+            'Failed to process Google Imagen prediction $i: $e',
+            tag: 'AiImageProvider',
+            error: e,
+          );
+        }
+      }
+
+      return appImages;
+    } catch (e) {
+      _loggingService.error(
+        'Failed to generate images with Google Imagen: $e',
+        tag: 'AiImageProvider',
+        error: e,
+      );
+      rethrow;
+    }
+  }
+
+  /// Generate images using the FAL.ai FLUX API.
+  ///
+  /// Uses FLUX dev model. Returns image URLs that need to be downloaded.
+  ///
+  /// [prompt] - The text prompt to generate images from
+  /// [apiKey] - The API key for the FAL.ai service
+  /// [aspectRatio] - The aspect ratio of the generated images (default: "16:9")
+  /// [count] - The number of images to generate (default: 4)
+  /// [metadata] - Additional metadata to store with the images
+  ///
+  /// Returns a list of AppImage objects representing the generated images.
+  Future<List<AppImage>> generateImagesWithFal({
+    required String prompt,
+    required String apiKey,
+    String aspectRatio = "16:9",
+    int count = 4,
+    Map<String, dynamic>? metadata,
+  }) async {
+    try {
+      _loggingService.info(
+        'Generating images with FAL.ai: prompt="${prompt.substring(0, prompt.length > 50 ? 50 : prompt.length)}..."',
+        tag: 'AiImageProvider',
+      );
+
+      // Map aspect ratio to FAL.ai image_size format
+      final String imageSize = _mapAspectRatioToFalSize(aspectRatio);
+
+      final response = await http.post(
+        Uri.parse('https://fal.run/fal-ai/flux/dev'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Key $apiKey',
+        },
+        body: jsonEncode({
+          'prompt': prompt,
+          'image_size': imageSize,
+          'num_images': count,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        _loggingService.error(
+          'Failed to generate images with FAL.ai: ${response.statusCode} ${response.body}',
+          tag: 'AiImageProvider',
+        );
+        throw Exception('Failed to generate images: ${response.statusCode} ${response.body}');
+      }
+
+      final responseData = jsonDecode(response.body);
+
+      _loggingService.debug(
+        'FAL.ai API response received',
+        tag: 'AiImageProvider',
+      );
+
+      if (!responseData.containsKey('images') || responseData['images'] == null) {
+        throw Exception('Unexpected response format: images field is null or missing');
+      }
+
+      final List<dynamic> images = responseData['images'];
+      final List<AppImage> appImages = [];
+
+      // Download each image URL (same pattern as Minimax)
+      for (int i = 0; i < images.length; i++) {
+        final imageUrl = images[i]['url'];
+
+        try {
+          final imageResponse = await http.get(Uri.parse(imageUrl));
+
+          if (imageResponse.statusCode != 200) {
+            _loggingService.error(
+              'Failed to download image from $imageUrl: ${imageResponse.statusCode}',
+              tag: 'AiImageProvider',
+            );
+            continue;
+          }
+
+          // Save the image to a permanent file
+          final appDir = await getApplicationDocumentsDirectory();
+          final imagesDir = Directory('${appDir.path}/images');
+          if (!await imagesDir.exists()) {
+            await imagesDir.create(recursive: true);
+          }
+
+          final imageId = const Uuid().v4();
+          final imagePath = path.join(imagesDir.path, '$imageId.jpg');
+
+          final imageFile = File(imagePath);
+          await imageFile.writeAsBytes(imageResponse.bodyBytes);
+
+          final appImage = AppImage(
+            id: imageId,
+            localPath: imagePath,
+            originalUrl: imageUrl,
+            metadata: {
+              'source': 'fal',
+              'model': 'flux-dev',
+              'prompt': prompt,
+              'aspectRatio': aspectRatio,
+              'generatedAt': DateTime.now().toIso8601String(),
+              ...?metadata,
+            },
+          );
+
+          appImages.add(appImage);
+
+          _loggingService.debug(
+            'Saved generated image to $imagePath',
+            tag: 'AiImageProvider',
+          );
+        } catch (e) {
+          _loggingService.error(
+            'Failed to process image from $imageUrl: $e',
+            tag: 'AiImageProvider',
+            error: e,
+          );
+        }
+      }
+
+      return appImages;
+    } catch (e) {
+      _loggingService.error(
+        'Failed to generate images with FAL.ai: $e',
+        tag: 'AiImageProvider',
+        error: e,
+      );
+      rethrow;
+    }
+  }
+
+  /// Map standard aspect ratio strings to FAL.ai image_size values.
+  String _mapAspectRatioToFalSize(String aspectRatio) {
+    switch (aspectRatio) {
+      case '16:9':
+        return 'landscape_16_9';
+      case '9:16':
+        return 'portrait_16_9';
+      case '1:1':
+        return 'square_hd';
+      case '4:3':
+        return 'landscape_4_3';
+      case '3:4':
+        return 'portrait_4_3';
+      case '21:9':
+        return 'landscape_16_9'; // Closest match
+      default:
+        return 'landscape_16_9';
+    }
+  }
+
 }

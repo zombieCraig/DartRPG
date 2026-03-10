@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:provider/provider.dart';
 import '../../models/move.dart';
 import '../../models/journal_entry.dart';
+import '../../providers/datasworn_provider.dart';
 import '../../services/roll_service.dart';
+import '../../utils/datasworn_link_parser.dart';
 import 'action_roll_panel.dart';
 import 'progress_roll_panel.dart';
 import 'no_roll_panel.dart';
@@ -95,6 +98,10 @@ class MoveDetails extends StatelessWidget {
               ),
               selectable: true,
               softLineBreak: true,
+              onTapLink: (text, href, title) {
+                final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+                DataswornLinkParser.handleMarkdownLink(context, dataswornProvider, text, href, title);
+              },
             ),
             const SizedBox(height: 24),
           ],
@@ -125,6 +132,10 @@ class MoveDetails extends StatelessWidget {
                       ),
                       selectable: true,
                       softLineBreak: true,
+                      onTapLink: (text, href, title) {
+                        final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+                        DataswornLinkParser.handleMarkdownLink(context, dataswornProvider, text, href, title);
+                      },
                     ),
                   ],
                 ),

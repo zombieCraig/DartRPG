@@ -16,6 +16,7 @@ class DataswornProvider extends ChangeNotifier {
   String? _error;
   String? _currentSource;
   bool _customOraclesLoaded = false;
+  Map<String, List<Asset>>? _cachedAssetsByCategory;
 
   List<Move> get moves => _moves;
   List<OracleCategory> get oracles => _oracles;
@@ -65,6 +66,7 @@ class DataswornProvider extends ChangeNotifier {
         }
       }
       
+      _cachedAssetsByCategory = null;
       _assets = DataswornParser.parseAssets(datasworn);
       loggingService.debug('Parsed ${_assets.length} assets', tag: 'DataswornProvider');
       
@@ -152,28 +154,37 @@ class DataswornProvider extends ChangeNotifier {
     return movesByCategory;
   }
 
-  // Get assets by category
+  // Get assets by category (cached after first computation)
   Map<String, List<Asset>> getAssetsByCategory() {
+    if (_cachedAssetsByCategory != null) return _cachedAssetsByCategory!;
+
     final Map<String, List<Asset>> assetsByCategory = {};
-    
+
     for (final asset in _assets) {
       final category = asset.category;
-      if (!assetsByCategory.containsKey(category)) {
-        assetsByCategory[category] = [];
-      }
-      assetsByCategory[category]!.add(asset);
+      (assetsByCategory[category] ??= []).add(asset);
     }
-    
+    // Pre-sort each category's list
+    for (final list in assetsByCategory.values) {
+      list.sort((a, b) => a.name.compareTo(b.name));
+    }
+
+    _cachedAssetsByCategory = assetsByCategory;
     return assetsByCategory;
   }
 
-  // Find a move by ID
+  // Find a move by ID or path (e.g., "reveal_danger" or "fe_runners/exploration/reveal_danger")
   Move? findMoveById(String id) {
-    try {
-      return _moves.firstWhere((move) => move.id == id);
-    } catch (e) {
-      return null;
+    // Try exact match first
+    for (final move in _moves) {
+      if (move.id == id) return move;
     }
+    // Try matching by last path segment (link paths include category prefix)
+    final lastSegment = id.split('/').last;
+    for (final move in _moves) {
+      if (move.id == lastSegment) return move;
+    }
+    return null;
   }
 
   // Find an oracle table by ID

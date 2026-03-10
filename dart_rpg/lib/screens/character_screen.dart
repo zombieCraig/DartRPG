@@ -20,7 +20,7 @@ class _CharacterScreenState extends State<CharacterScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final gameProvider = Provider.of<GameProvider>(context);
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
     
     // Update Base Rig assets for existing characters
@@ -29,16 +29,21 @@ class _CharacterScreenState extends State<CharacterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GameProvider>(
-      builder: (context, gameProvider, _) {
+    return Selector<GameProvider, ({int characterCount, String? mainCharId})>(
+      selector: (_, gp) => (
+        characterCount: gp.currentGame?.characters.length ?? 0,
+        mainCharId: gp.currentGame?.mainCharacter?.id,
+      ),
+      builder: (context, data, _) {
+        final gameProvider = context.read<GameProvider>();
         final currentGame = gameProvider.currentGame;
-        
+
         if (currentGame == null) {
           return const Center(
             child: Text('No game selected'),
           );
         }
-        
+
         return Column(
           children: [
             // Character list/grid

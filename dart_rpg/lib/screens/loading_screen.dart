@@ -197,10 +197,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
   
   Future<void> _loadDatasworn() async {
     _loggingService.debug('Starting background loading of Datasworn', tag: 'LoadingScreen');
-    
-    // Start a timer to track loading time
-    final startTime = DateTime.now();
-    
+
     if (widget.dataswornSource != null) {
       try {
         final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
@@ -212,16 +209,6 @@ class _LoadingScreenState extends State<LoadingScreen> {
         await dataswornProvider.loadCustomOracles();
         
         if (mounted) {
-          // Calculate elapsed time
-          final elapsedTime = DateTime.now().difference(startTime);
-          
-          // Ensure a minimum loading time of 3 seconds to allow animation to progress
-          final minimumLoadingTime = const Duration(seconds: 3);
-          if (elapsedTime < minimumLoadingTime) {
-            _loggingService.debug('Waiting for minimum loading time', tag: 'LoadingScreen');
-            await Future.delayed(minimumLoadingTime - elapsedTime);
-          }
-          
           setState(() {
             _isDataswornLoaded = true;
             
@@ -246,13 +233,6 @@ class _LoadingScreenState extends State<LoadingScreen> {
         }
       }
     } else {
-      // If there's no datasworn source, still ensure a minimum display time
-      final minimumLoadingTime = const Duration(seconds: 3);
-      final elapsedTime = DateTime.now().difference(startTime);
-      if (elapsedTime < minimumLoadingTime) {
-        await Future.delayed(minimumLoadingTime - elapsedTime);
-      }
-      
       // Mark as loaded
       if (mounted) {
         setState(() {
@@ -291,6 +271,15 @@ class _LoadingScreenState extends State<LoadingScreen> {
     }
   }
   
+  void _skipAnimation() {
+    if (!_isDataswornLoaded || _isAnimationComplete) return;
+    _loggingService.debug('User skipped loading animation', tag: 'LoadingScreen');
+    setState(() {
+      _isAnimationComplete = true;
+    });
+    _navigateToGameScreen();
+  }
+
   void _navigateToGameScreen() {
     // Check if the widget is still mounted before navigating
     if (!mounted) {
@@ -337,18 +326,42 @@ class _LoadingScreenState extends State<LoadingScreen> {
     
     return Scaffold(
       backgroundColor: Colors.black,
-      body: SafeArea(
-        child: ConsoleTextAnimation(
-          getNextMessage: _getNextMessage,
-          onMessageComplete: _onMessageComplete,
-          typingSpeed: const Duration(milliseconds: 50),
-          initialPause: const Duration(milliseconds: 1000),
-          linePause: const Duration(milliseconds: 800),
-          reducedPause: const Duration(milliseconds: 100),
-          isLoadingComplete: _isDataswornLoaded,
-          onComplete: _onAnimationComplete,
-          mainCharacterName: mainCharacterName,
-          mainCharacterHandle: mainCharacterHandle,
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: _skipAnimation,
+        child: SafeArea(
+          child: Stack(
+            children: [
+              ConsoleTextAnimation(
+                getNextMessage: _getNextMessage,
+                onMessageComplete: _onMessageComplete,
+                typingSpeed: const Duration(milliseconds: 50),
+                initialPause: const Duration(milliseconds: 1000),
+                linePause: const Duration(milliseconds: 800),
+                reducedPause: const Duration(milliseconds: 100),
+                isLoadingComplete: _isDataswornLoaded,
+                onComplete: _onAnimationComplete,
+                mainCharacterName: mainCharacterName,
+                mainCharacterHandle: mainCharacterHandle,
+              ),
+              if (_isDataswornLoaded && !_isAnimationComplete)
+                Positioned(
+                  bottom: 16,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Text(
+                      'Tap to skip',
+                      style: TextStyle(
+                        color: Colors.green.withValues(alpha: 0.5),
+                        fontSize: 12,
+                        fontFamily: 'Courier',
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

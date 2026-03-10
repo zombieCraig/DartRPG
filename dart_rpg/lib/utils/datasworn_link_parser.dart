@@ -1,7 +1,15 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:provider/provider.dart';
 import '../providers/datasworn_provider.dart';
+import '../providers/game_provider.dart';
+import '../models/move.dart';
 import '../models/oracle.dart';
 import '../models/character.dart';
+import '../screens/oracles_screen.dart';
 import '../utils/logging_service.dart';
+import '../widgets/asset_detail_dialog.dart';
+import '../widgets/moves/move_oracle_panel.dart';
 
 class DataswornLink {
   final String displayText;
@@ -560,6 +568,87 @@ class DataswornLinkParser {
     return null;
   }
   
+  /// Handle a markdown link tap from MarkdownBody's onTapLink callback.
+  /// Parses the href as a Datasworn link and opens the appropriate view.
+  static void handleMarkdownLink(
+    BuildContext context,
+    DataswornProvider dataswornProvider,
+    String text,
+    String? href,
+    String? title,
+  ) {
+    if (href == null) return;
+
+    // Parse the href to extract link type and path
+    // href format: "asset:path", "oracle_rollable:path", "datasworn:oracle_rollable:path", etc.
+    final match = RegExp(
+      r'^(datasworn:)?(oracle_collection|oracle_rollable|asset|move):(.*)',
+      caseSensitive: false,
+    ).firstMatch(href);
+
+    if (match == null) {
+      _logger.debug(
+        'handleMarkdownLink: href "$href" is not a Datasworn link',
+        tag: 'DataswornLinkParser',
+      );
+      return;
+    }
+
+    final linkType = match.group(2) ?? '';
+    final path = match.group(3) ?? '';
+
+    if (linkType == 'asset') {
+      final asset = findAssetByPath(dataswornProvider, path);
+      if (asset != null) {
+        showDialog(
+          context: context,
+          builder: (context) => AssetDetailDialog(asset: asset),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Asset not found: "$text" ($path)'),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } else if (linkType == 'move') {
+      // Find the move by its path (e.g., "fe_runners/exploration/reveal_danger")
+      final move = dataswornProvider.findMoveById(path);
+      if (move != null) {
+        showDialog(
+          context: context,
+          builder: (context) => _MoveDetailDialog(move: move),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Move not found: "$text" ($path)'),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } else {
+      // oracle_rollable, oracle_collection
+      final linkedOracle = findOracleByPath(dataswornProvider, path);
+      if (linkedOracle != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OracleTableScreen(table: linkedOracle),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Oracle not found: "$text" ($path)'),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
   // Log available assets for debugging
   static void _logAvailableAssets(DataswornProvider provider) {
     _logger.debug(
@@ -572,5 +661,80 @@ class DataswornLinkParser {
         tag: 'DataswornLinkParser',
       );
     }
+  }
+}
+
+/// Dialog for displaying a move's description and embedded oracles.
+/// Used when a move link (e.g., "Reveal a Danger") is clicked in markdown text.
+class _MoveDetailDialog extends StatelessWidget {
+  final Move move;
+
+  const _MoveDetailDialog({required this.move});
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(move.name),
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (move.description != null) ...[
+              MarkdownBody(
+                data: move.description!,
+                styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                  p: Theme.of(context).textTheme.bodyMedium,
+                ),
+                selectable: true,
+                softLineBreak: true,
+                onTapLink: (text, href, title) {
+                  final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+                  DataswornLinkParser.handleMarkdownLink(context, dataswornProvider, text, href, title);
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+            // Show embedded oracle panel if the move has oracles
+            if (move.hasEmbeddedOracles)
+              MoveOraclePanel(
+                move: move,
+                onOracleRollAdded: (oracleRoll) {
+                  // Create a journal entry directly via GameProvider since this
+                  // dialog is opened from a link and has no journal editor context.
+                  final gameProvider = Provider.of<GameProvider>(context, listen: false);
+                  try {
+                    gameProvider.createJournalEntry(
+                      oracleRoll.getFormattedText(),
+                    ).then((journalEntry) {
+                      journalEntry.attachOracleRoll(oracleRoll);
+                      gameProvider.persistAndNotify();
+                    });
+                  } catch (e) {
+                    LoggingService().error(
+                      'Failed to add oracle roll to journal',
+                      tag: 'DataswornLinkParser',
+                      error: e,
+                      stackTrace: StackTrace.current,
+                    );
+                  }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Oracle roll added to journal'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
+      ],
+    );
   }
 }

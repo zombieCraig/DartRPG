@@ -12,12 +12,12 @@ import '../widgets/journal/linked_items_summary.dart';
 import '../widgets/journal/journal_entry_viewer.dart';
 import '../widgets/journal/journal_detail_dialogs.dart';
 import '../widgets/journal/quick_add_dialogs.dart';
-import '../widgets/journal/move_dialog.dart';
+import '../widgets/journal/quick_roll_panel.dart';
 import '../widgets/journal/linked_items_manager.dart';
 import '../widgets/journal/autocomplete_system.dart';
 import '../widgets/oracles/oracle_dialog.dart';
 import '../widgets/character/dialogs/character_edit_dialog.dart';
-import 'game_screen.dart';
+import 'quests_screen.dart';
 
 // Custom intents for keyboard shortcuts
 class QuestsIntent extends Intent {
@@ -50,6 +50,7 @@ class JournalEntryScreen extends StatefulWidget {
 
 class _JournalEntryScreenState extends State<JournalEntryScreen> {
   bool _isEditing = false;
+  bool _quickRollPanelOpen = false;
   String _content = '';
   String? _richContent;
   List<String> _linkedCharacterIds = [];
@@ -100,106 +101,153 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   @override
   void dispose() {
     _autoSaveTimer?.cancel();
+    // Fire-and-forget save for any remaining unsaved content (e.g., system back button)
+    _saveBeforeExitSync();
+    _editorController.dispose();
+    _editorFocusNode.dispose();
     super.dispose();
   }
+
+  /// Synchronous wrapper that kicks off save without awaiting.
+  /// Used in dispose() where async isn't available.
+  void _saveBeforeExitSync() {
+    if (_isSavingBeforeExit || !_isEditing || _content.isEmpty) return;
+    _isSavingBeforeExit = true;
+    _autoSaveTimer?.cancel();
+
+    try {
+      final gameProvider = Provider.of<GameProvider>(context, listen: false);
+      final currentSession = gameProvider.currentSession;
+      if (currentSession == null) return;
+
+      if (widget.entryId != null) {
+        final entry = currentSession.entries.firstWhere(
+          (e) => e.id == widget.entryId,
+        );
+        entry.update(_content);
+        entry.richContent = _richContent;
+        entry.linkedCharacterIds = _linkedCharacterIds;
+        entry.linkedLocationIds = _linkedLocationIds;
+        entry.moveRolls = _moveRolls;
+        entry.oracleRolls = _oracleRolls;
+        entry.embeddedImages = _embeddedImages;
+        // Fire and forget — the provider persists asynchronously
+        gameProvider.updateJournalEntry(widget.entryId!, _content);
+      } else if (_createdEntryId != null) {
+        final entry = currentSession.entries.firstWhere(
+          (e) => e.id == _createdEntryId,
+        );
+        entry.update(_content);
+        entry.richContent = _richContent;
+        entry.linkedCharacterIds = _linkedCharacterIds;
+        entry.linkedLocationIds = _linkedLocationIds;
+        entry.moveRolls = _moveRolls;
+        entry.oracleRolls = _oracleRolls;
+        entry.embeddedImages = _embeddedImages;
+        gameProvider.updateJournalEntry(_createdEntryId!, _content);
+      } else {
+        // Brand new entry — create it (fire and forget)
+        gameProvider.createJournalEntry(_content).then((entry) {
+          entry.richContent = _richContent;
+          entry.linkedCharacterIds = _linkedCharacterIds;
+          entry.linkedLocationIds = _linkedLocationIds;
+          entry.moveRolls = _moveRolls;
+          entry.oracleRolls = _oracleRolls;
+          entry.embeddedImages = _embeddedImages;
+          gameProvider.saveGame();
+        });
+      }
+    } catch (e) {
+      LoggingService().error(
+        'Error saving journal entry on dispose',
+        tag: 'JournalEntryScreen',
+        error: e,
+        stackTrace: StackTrace.current,
+      );
+    }
+  }
+
+  bool _isSavingBeforeExit = false;
+
+  /// Save any unsaved content before navigating away.
+  Future<void> _saveBeforeExit() async {
+    // Prevent concurrent save-on-exit calls
+    if (_isSavingBeforeExit) return;
+    _isSavingBeforeExit = true;
+
+    // Cancel any pending autosave — we'll save immediately
+    _autoSaveTimer?.cancel();
+
+    // Nothing to save if content is empty or already in viewer mode
+    if (!_isEditing || _content.isEmpty) return;
+
+    try {
+      final gameProvider = Provider.of<GameProvider>(context, listen: false);
+      final currentSession = gameProvider.currentSession;
+      if (currentSession == null) return;
+
+      if (widget.entryId != null) {
+        // Existing entry opened for editing
+        final entry = currentSession.entries.firstWhere(
+          (e) => e.id == widget.entryId,
+        );
+        entry.update(_content);
+        entry.richContent = _richContent;
+        entry.linkedCharacterIds = _linkedCharacterIds;
+        entry.linkedLocationIds = _linkedLocationIds;
+        entry.moveRolls = _moveRolls;
+        entry.oracleRolls = _oracleRolls;
+        entry.embeddedImages = _embeddedImages;
+        await gameProvider.updateJournalEntry(widget.entryId!, _content);
+      } else if (_createdEntryId != null) {
+        // New entry already created by autosave — update it
+        final entry = currentSession.entries.firstWhere(
+          (e) => e.id == _createdEntryId,
+        );
+        entry.update(_content);
+        entry.richContent = _richContent;
+        entry.linkedCharacterIds = _linkedCharacterIds;
+        entry.linkedLocationIds = _linkedLocationIds;
+        entry.moveRolls = _moveRolls;
+        entry.oracleRolls = _oracleRolls;
+        entry.embeddedImages = _embeddedImages;
+        await gameProvider.updateJournalEntry(_createdEntryId!, _content);
+      } else {
+        // Brand new entry never saved — create it now
+        final entry = await gameProvider.createJournalEntry(_content);
+        entry.richContent = _richContent;
+        entry.linkedCharacterIds = _linkedCharacterIds;
+        entry.linkedLocationIds = _linkedLocationIds;
+        entry.moveRolls = _moveRolls;
+        entry.oracleRolls = _oracleRolls;
+        entry.embeddedImages = _embeddedImages;
+        await gameProvider.saveGame();
+      }
+    } catch (e) {
+      LoggingService().error(
+        'Error saving journal entry on exit',
+        tag: 'JournalEntryScreen',
+        error: e,
+        stackTrace: StackTrace.current,
+      );
+    }
+  }
   
-  // Navigate to the Quests screen
-  Future<void> _navigateToQuests(BuildContext context) async {
+  // Show the Quests screen as an overlay so the journal state is preserved
+  void _navigateToQuests(BuildContext context) {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
-    if (gameProvider.currentGame != null) {
-      // If we're in editing mode, save the entry first
-      if (_isEditing && _content.isNotEmpty) {
-        try {
-          // Show a loading indicator
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Saving journal entry...'),
-              duration: Duration(seconds: 1),
-            ),
-          );
-          
-          // Save the entry
-          await _saveEntry();
+    final game = gameProvider.currentGame;
+    if (game == null) return;
 
-          // Clear any existing snackbars
-          if (!context.mounted) return;
-          ScaffoldMessenger.of(context).clearSnackBars();
-        } catch (e) {
-          // Show error if saving fails
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error saving journal entry: ${e.toString()}'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-          // Still navigate even if save fails
-        }
-      }
-
-      // Use pushReplacement to ensure we go directly to the Quests screen
-      if (!context.mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => GameScreen(
-            gameId: gameProvider.currentGame!.id,
-            initialTabIndex: 3, // Quests tab index
-          ),
-        ),
-      );
-    }
+    showDialog(
+      context: context,
+      useSafeArea: false,
+      builder: (context) => Dialog.fullscreen(
+        child: QuestsScreen(gameId: game.id),
+      ),
+    );
   }
 
-  // Navigate to the Moves screen
-  Future<void> _navigateToMoves(BuildContext context) async {
-    final gameProvider = Provider.of<GameProvider>(context, listen: false);
-    if (gameProvider.currentGame != null) {
-      // If we're in editing mode, save the entry first
-      if (_isEditing && _content.isNotEmpty) {
-        try {
-          // Show a loading indicator
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Saving journal entry...'),
-              duration: Duration(seconds: 1),
-            ),
-          );
-          
-          // Save the entry
-          await _saveEntry();
-
-          // Clear any existing snackbars
-          if (!context.mounted) return;
-          ScaffoldMessenger.of(context).clearSnackBars();
-        } catch (e) {
-          // Show error if saving fails
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error saving journal entry: ${e.toString()}'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-          // Still navigate even if save fails
-        }
-      }
-
-      // Use pushReplacement to ensure we go directly to the Moves screen
-      if (!context.mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => GameScreen(
-            gameId: gameProvider.currentGame!.id,
-            initialTabIndex: 4, // Moves tab index
-          ),
-        ),
-      );
-    }
-  }
 
   void _startAutoSaveTimer() {
     // Cancel any existing timer
@@ -554,28 +602,13 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
       );
       return;
     }
-    
-    MoveDialog.show(
-      context,
-      onMoveRollAdded: (moveRoll) {
-        setState(() {
-          _moveRolls.add(moveRoll);
-        });
-      },
-      onInsertText: (text) {
-        JournalEntryEditor.insertTextAtCursor(_editorController, text);
-        
-        // Update the content
-        setState(() {
-          _content = _editorController.text;
-        });
-        
-        // Start auto-save timer
-        _startAutoSaveTimer();
-      },
-      isEditing: true, // Always true since we check above
-    );
+
+    // Toggle Quick Roll Panel
+    setState(() {
+      _quickRollPanelOpen = !_quickRollPanelOpen;
+    });
   }
+
   
   void _showRollOracleDialog(BuildContext context) {
     // Only show the dialog if we're in editing mode
@@ -762,9 +795,9 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   
   @override
   Widget build(BuildContext context) {
-    final gameProvider = Provider.of<GameProvider>(context);
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final currentGame = gameProvider.currentGame;
-    
+
     if (currentGame == null) {
       return const Scaffold(
         body: Center(
@@ -786,14 +819,18 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
       },
       actions: {
         QuestsIntent: CallbackAction<QuestsIntent>(
-          onInvoke: (QuestsIntent intent) async {
-            await _navigateToQuests(context);
+          onInvoke: (QuestsIntent intent) {
+            _navigateToQuests(context);
             return null;
           },
         ),
         MovesIntent: CallbackAction<MovesIntent>(
-          onInvoke: (MovesIntent intent) async {
-            await _navigateToMoves(context);
+          onInvoke: (MovesIntent intent) {
+            if (_isEditing) {
+              setState(() {
+                _quickRollPanelOpen = !_quickRollPanelOpen;
+              });
+            }
             return null;
           },
         ),
@@ -816,7 +853,15 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
           : null,
         appBar: AppBar(
           title: Text(widget.entryId == null ? 'New Journal Entry' : 'Edit Journal Entry'),
-          automaticallyImplyLeading: !widget.hideAppBarBackButton,
+          automaticallyImplyLeading: false,
+          leading: widget.hideAppBarBackButton ? null : IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () async {
+              await _saveBeforeExit();
+              if (!mounted) return;
+              Navigator.of(context).pop();
+            },
+          ),
           actions: [
             // Character edit icon - only show if there's a main character
             if (currentGame.mainCharacter != null)
@@ -843,150 +888,231 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
               ),
           ],
         ),
-        body: Column(
-          children: [
-            // Editor or Viewer
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: _isEditing
-                  ? JournalEntryEditor(
-                      initialText: _content,
-                      initialRichText: _richContent,
-                      readOnly: false,
-                      controller: _editorController,
-                      focusNode: _editorFocusNode,
-                      linkedItemsManager: _linkedItemsManager,
-                      onChanged: (plainText, richText) {
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 700;
+            final showPanelSide = _quickRollPanelOpen && _isEditing && isWide;
+            final showPanelBottom = _quickRollPanelOpen && _isEditing && !isWide;
+
+            return Column(
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      // Main content
+                      Expanded(
+                        child: Column(
+                          children: [
+                            // Editor or Viewer
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: _isEditing
+                                  ? JournalEntryEditor(
+                                      initialText: _content,
+                                      initialRichText: _richContent,
+                                      readOnly: false,
+                                      controller: _editorController,
+                                      focusNode: _editorFocusNode,
+                                      linkedItemsManager: _linkedItemsManager,
+                                      onChanged: (plainText, richText) {
+                                        setState(() {
+                                          _content = plainText;
+                                          _richContent = richText;
+                                        });
+                                        _startAutoSaveTimer();
+                                      },
+                                      onCharacterLinked: (characterId) {
+                                        setState(() {
+                                          if (!_linkedCharacterIds.contains(characterId)) {
+                                            _linkedCharacterIds.add(characterId);
+                                          }
+                                        });
+                                      },
+                                      onLocationLinked: (locationId) {
+                                        setState(() {
+                                          if (!_linkedLocationIds.contains(locationId)) {
+                                            _linkedLocationIds.add(locationId);
+                                          }
+                                        });
+                                      },
+                                      onImageAdded: (imageUrl) {
+                                        setState(() {
+                                          if (!_embeddedImages.contains(imageUrl)) {
+                                            _embeddedImages.add(imageUrl);
+                                          }
+                                        });
+                                      },
+                                      onMoveRequested: () {
+                                        _showRollMoveDialog(context);
+                                      },
+                                      onOracleRequested: () {
+                                        _showRollOracleDialog(context);
+                                      },
+                                      // Only show the quest button if we didn't come from the quests screen
+                                      onQuestRequested: widget.sourceScreen != 'quests' ? () {
+                                        _navigateToQuests(context);
+                                      } : null,
+                                      onNewEntryRequested: _saveAndCreateNew,
+                                      onLinkedItemsPressed: () {
+                                        // This is handled internally by the JournalEntryEditor
+                                      },
+                                    )
+                                  : JournalEntryViewer(
+                                      content: _content,
+                                      moveRolls: _moveRolls,
+                                      oracleRolls: _oracleRolls,
+                                      onCharacterTap: (character) {
+                                        _showCharacterDetailsDialog(context, character);
+                                      },
+                                      onLocationTap: (location) {
+                                        _showLocationDetailsDialog(context, location);
+                                      },
+                                      onMoveRollTap: (moveRoll) {
+                                        _showMoveRollDetailsDialog(context, moveRoll);
+                                      },
+                                      onOracleRollTap: (oracleRoll) {
+                                        _showOracleRollDetailsDialog(context, oracleRoll);
+                                      },
+                                    ),
+                              ),
+                            ),
+
+                            // Linked items summary
+                            if (!_isEditing && (
+                                _linkedCharacterIds.isNotEmpty ||
+                                _linkedLocationIds.isNotEmpty ||
+                                _moveRolls.isNotEmpty ||
+                                _oracleRolls.isNotEmpty
+                              ))
+                              Container(
+                                constraints: const BoxConstraints(maxHeight: 300),
+                                child: SingleChildScrollView(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: LinkedItemsSummary(
+                                      journalEntry: JournalEntry(
+                                        id: widget.entryId ?? _createdEntryId ?? '',
+                                        content: _content,
+                                        richContent: _richContent,
+                                        linkedCharacterIds: _linkedCharacterIds,
+                                        linkedLocationIds: _linkedLocationIds,
+                                        moveRolls: _moveRolls,
+                                        oracleRolls: _oracleRolls,
+                                        embeddedImages: _embeddedImages,
+                                      ),
+                                      onCharacterTap: (characterId) {
+                                        final gameProvider = Provider.of<GameProvider>(context, listen: false);
+                                        final character = gameProvider.currentGame!.characters
+                                            .firstWhere((c) => c.id == characterId);
+                                        _showCharacterDetailsDialog(context, character);
+                                      },
+                                      onLocationTap: (locationId) {
+                                        final gameProvider = Provider.of<GameProvider>(context, listen: false);
+                                        final location = gameProvider.currentGame!.locations
+                                            .firstWhere((l) => l.id == locationId);
+                                        _showLocationDetailsDialog(context, location);
+                                      },
+                                      onMoveRollTap: (moveRoll) {
+                                        _showMoveRollDetailsDialog(context, moveRoll);
+                                      },
+                                      onOracleRollTap: (oracleRoll) {
+                                        _showOracleRollDetailsDialog(context, oracleRoll);
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                            // Toolbar for editing mode
+                            if (_isEditing)
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    ElevatedButton.icon(
+                                      icon: const Icon(Icons.person_add),
+                                      label: const Text('Add Character'),
+                                      onPressed: () => _showQuickAddCharacterDialog(context),
+                                    ),
+                                    ElevatedButton.icon(
+                                      icon: const Icon(Icons.add_location),
+                                      label: const Text('Create Location'),
+                                      onPressed: () => _showQuickAddLocationDialog(context),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+
+                      // Quick Roll Panel (side panel on wide screens)
+                      if (showPanelSide)
+                        SizedBox(
+                          width: 320,
+                          child: QuickRollPanel(
+                            onMoveRollAdded: (moveRoll) {
+                              setState(() {
+                                _moveRolls.add(moveRoll);
+                              });
+                            },
+                            onInsertText: (text) {
+                              JournalEntryEditor.insertTextAtCursor(_editorController, text);
+                              setState(() {
+                                _content = _editorController.text;
+                              });
+                              _startAutoSaveTimer();
+                            },
+                            onOracleRollAdded: (oracleRoll) {
+                              setState(() {
+                                _oracleRolls.add(oracleRoll);
+                              });
+                            },
+                            onClose: () {
+                              setState(() {
+                                _quickRollPanelOpen = false;
+                              });
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
+                // Quick Roll Panel (bottom sheet on narrow screens)
+                if (showPanelBottom)
+                  SizedBox(
+                    height: constraints.maxHeight * 0.45,
+                    child: QuickRollPanel(
+                      onMoveRollAdded: (moveRoll) {
                         setState(() {
-                          _content = plainText;
-                          _richContent = richText;
+                          _moveRolls.add(moveRoll);
+                        });
+                      },
+                      onInsertText: (text) {
+                        JournalEntryEditor.insertTextAtCursor(_editorController, text);
+                        setState(() {
+                          _content = _editorController.text;
                         });
                         _startAutoSaveTimer();
                       },
-                      onCharacterLinked: (characterId) {
+                      onOracleRollAdded: (oracleRoll) {
                         setState(() {
-                          if (!_linkedCharacterIds.contains(characterId)) {
-                            _linkedCharacterIds.add(characterId);
-                          }
+                          _oracleRolls.add(oracleRoll);
                         });
                       },
-                      onLocationLinked: (locationId) {
+                      onClose: () {
                         setState(() {
-                          if (!_linkedLocationIds.contains(locationId)) {
-                            _linkedLocationIds.add(locationId);
-                          }
+                          _quickRollPanelOpen = false;
                         });
-                      },
-                      onImageAdded: (imageUrl) {
-                        setState(() {
-                          if (!_embeddedImages.contains(imageUrl)) {
-                            _embeddedImages.add(imageUrl);
-                          }
-                        });
-                      },
-                      onMoveRequested: () {
-                        _showRollMoveDialog(context);
-                      },
-                      onOracleRequested: () {
-                        _showRollOracleDialog(context);
-                      },
-                      // Only show the quest button if we didn't come from the quests screen
-                      onQuestRequested: widget.sourceScreen != 'quests' ? () {
-                        _navigateToQuests(context);
-                      } : null,
-                      onNewEntryRequested: _saveAndCreateNew,
-                      onLinkedItemsPressed: () {
-                        // This is handled internally by the JournalEntryEditor
-                      },
-                    )
-                  : JournalEntryViewer(
-                      content: _content,
-                      moveRolls: _moveRolls,
-                      oracleRolls: _oracleRolls,
-                      onCharacterTap: (character) {
-                        _showCharacterDetailsDialog(context, character);
-                      },
-                      onLocationTap: (location) {
-                        _showLocationDetailsDialog(context, location);
-                      },
-                      onMoveRollTap: (moveRoll) {
-                        _showMoveRollDetailsDialog(context, moveRoll);
-                      },
-                      onOracleRollTap: (oracleRoll) {
-                        _showOracleRollDetailsDialog(context, oracleRoll);
-                      },
-                    ),
-              ),
-            ),
-            
-            // Linked items summary
-            if (!_isEditing && (
-                _linkedCharacterIds.isNotEmpty || 
-                _linkedLocationIds.isNotEmpty || 
-                _moveRolls.isNotEmpty || 
-                _oracleRolls.isNotEmpty
-              ))
-              Container(
-                constraints: const BoxConstraints(maxHeight: 300), // Limit height to prevent overflow
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: LinkedItemsSummary(
-                      journalEntry: JournalEntry(
-                        id: widget.entryId ?? _createdEntryId ?? '',
-                        content: _content,
-                        richContent: _richContent,
-                        linkedCharacterIds: _linkedCharacterIds,
-                        linkedLocationIds: _linkedLocationIds,
-                        moveRolls: _moveRolls,
-                        oracleRolls: _oracleRolls,
-                        embeddedImages: _embeddedImages,
-                      ),
-                      onCharacterTap: (characterId) {
-                        final gameProvider = Provider.of<GameProvider>(context, listen: false);
-                        final character = gameProvider.currentGame!.characters
-                            .firstWhere((c) => c.id == characterId);
-                        _showCharacterDetailsDialog(context, character);
-                      },
-                      onLocationTap: (locationId) {
-                        final gameProvider = Provider.of<GameProvider>(context, listen: false);
-                        final location = gameProvider.currentGame!.locations
-                            .firstWhere((l) => l.id == locationId);
-                        _showLocationDetailsDialog(context, location);
-                      },
-                      onMoveRollTap: (moveRoll) {
-                        _showMoveRollDetailsDialog(context, moveRoll);
-                      },
-                      onOracleRollTap: (oracleRoll) {
-                        _showOracleRollDetailsDialog(context, oracleRoll);
                       },
                     ),
                   ),
-                ),
-              ),
-            
-            // Toolbar for editing mode
-            if (_isEditing)
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.person_add),
-                      label: const Text('Add Character'),
-                      onPressed: () => _showQuickAddCharacterDialog(context),
-                    ),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.add_location),
-                      label: const Text('Create Location'),
-                      onPressed: () => _showQuickAddLocationDialog(context),
-                    ),
-                  ],
-                ),
-              ),
-          ],
+              ],
+            );
+          },
         ),
       ),
     );

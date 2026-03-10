@@ -6,8 +6,12 @@ import 'ai_config.dart';
 import 'character.dart';
 import 'clock.dart';
 import 'location.dart';
+import 'recent_move_entry.dart';
 import 'session.dart';
 import 'quest.dart';
+import 'connection.dart';
+import 'faction.dart';
+import 'network_route.dart';
 
 class Game {
   final String id;
@@ -18,14 +22,21 @@ class Game {
   List<Location> locations;
   List<Session> sessions;
   List<Quest> quests;
+  List<Connection> connections;
   List<Clock> clocks;
+  List<Faction> factions;
+  List<NetworkRoute> routes;
   Character? mainCharacter;
   String? dataswornSource;
   Location? rigLocation;
   bool tutorialsEnabled;
+  bool setupWizardCompleted;
 
   // AI configuration (sentient AI + image generation)
   AiConfig aiConfig;
+
+  // Recent moves for Quick Roll Panel
+  List<RecentMoveEntry> recentMoves;
 
   // World Truths settings
   Map<String, String?> selectedTruths = {};
@@ -39,11 +50,16 @@ class Game {
     List<Location>? locations,
     List<Session>? sessions,
     List<Quest>? quests,
+    List<Connection>? connections,
     List<Clock>? clocks,
+    List<Faction>? factions,
+    List<NetworkRoute>? routes,
     this.mainCharacter,
     this.dataswornSource,
     this.rigLocation,
     this.tutorialsEnabled = true,
+    this.setupWizardCompleted = false,
+    List<RecentMoveEntry>? recentMoves,
     // AI config fields (passed through to AiConfig)
     bool sentientAiEnabled = false,
     String? sentientAiName,
@@ -63,7 +79,11 @@ class Game {
         locations = locations ?? [],
         sessions = sessions ?? [],
         quests = quests ?? [],
+        connections = connections ?? [],
         clocks = clocks ?? [],
+        factions = factions ?? [],
+        routes = routes ?? [],
+        recentMoves = recentMoves ?? [],
         aiConfig = aiConfig ?? AiConfig(
           sentientAiEnabled: sentientAiEnabled,
           sentientAiName: sentientAiName,
@@ -108,8 +128,13 @@ class Game {
       'dataswornSource': dataswornSource,
       'rigLocationId': rigLocation?.id,
       'quests': quests.map((q) => q.toJson()).toList(),
+      'connections': connections.map((c) => c.toJson()).toList(),
       'clocks': clocks.map((c) => c.toJson()).toList(),
+      'factions': factions.map((f) => f.toJson()).toList(),
+      'routes': routes.map((r) => r.toJson()).toList(),
       'tutorialsEnabled': tutorialsEnabled,
+      'setupWizardCompleted': setupWizardCompleted,
+      'recentMoves': recentMoves.map((r) => r.toJson()).toList(),
       'selectedTruths': selectedTruths,
     };
 
@@ -160,13 +185,26 @@ class Game {
       quests: (json['quests'] as List?)
           ?.map((q) => Quest.fromJson(q))
           .toList() ?? [],
+      connections: (json['connections'] as List?)
+          ?.map((c) => Connection.fromJson(c))
+          .toList() ?? [],
       clocks: (json['clocks'] as List?)
           ?.map((c) => Clock.fromJson(c))
+          .toList() ?? [],
+      factions: (json['factions'] as List?)
+          ?.map((f) => Faction.fromJson(f))
+          .toList() ?? [],
+      routes: (json['routes'] as List?)
+          ?.map((r) => NetworkRoute.fromJson(r))
           .toList() ?? [],
       mainCharacter: mainChar,
       dataswornSource: json['dataswornSource'],
       rigLocation: rigLoc,
       tutorialsEnabled: json['tutorialsEnabled'] ?? true,
+      setupWizardCompleted: json['setupWizardCompleted'] ?? false,
+      recentMoves: (json['recentMoves'] as List?)
+          ?.map((r) => RecentMoveEntry.fromJson(r))
+          .toList() ?? [],
       aiConfig: AiConfig.fromJson(json),
       selectedTruths: _parseSelectedTruths(json['selectedTruths']),
     );
@@ -297,6 +335,18 @@ class Game {
     return quests.where((quest) => quest.characterId == characterId).toList();
   }
 
+  List<Connection> getConnectionsForCharacter(String characterId) {
+    return connections.where((c) => c.characterId == characterId).toList();
+  }
+
+  void addRoute(NetworkRoute route) {
+    routes.add(route);
+  }
+
+  List<NetworkRoute> getRoutesForCharacter(String characterId) {
+    return routes.where((r) => r.characterId == characterId).toList();
+  }
+
   List<Character> getCharactersWithStats() {
     return characters.where((character) => character.stats.isNotEmpty).toList();
   }
@@ -309,6 +359,46 @@ class Game {
     sessions.add(session);
     return session;
   }
+
+  // Recent moves methods
+
+  static const int maxRecentMoves = 10;
+
+  void recordMoveUse(String moveId, String moveName, String? stat) {
+    final existing = recentMoves.firstWhereOrNull((r) => r.moveId == moveId);
+    if (existing != null) {
+      existing.useCount++;
+      existing.lastUsed = DateTime.now();
+      if (stat != null) existing.lastStat = stat;
+    } else {
+      recentMoves.add(RecentMoveEntry(
+        moveId: moveId,
+        moveName: moveName,
+        lastStat: stat,
+      ));
+      // Trim non-favorites if over limit
+      final nonFavorites = recentMoves.where((r) => !r.isFavorite).toList()
+        ..sort((a, b) => a.lastUsed.compareTo(b.lastUsed));
+      while (recentMoves.length > maxRecentMoves && nonFavorites.isNotEmpty) {
+        recentMoves.remove(nonFavorites.removeAt(0));
+      }
+    }
+  }
+
+  void toggleMoveFavorite(String moveId) {
+    final entry = recentMoves.firstWhereOrNull((r) => r.moveId == moveId);
+    if (entry != null) {
+      entry.isFavorite = !entry.isFavorite;
+    }
+  }
+
+  List<RecentMoveEntry> get favoriteRecentMoves =>
+      recentMoves.where((r) => r.isFavorite).toList()
+        ..sort((a, b) => b.useCount.compareTo(a.useCount));
+
+  List<RecentMoveEntry> get nonFavoriteRecentMoves =>
+      recentMoves.where((r) => !r.isFavorite).toList()
+        ..sort((a, b) => b.lastUsed.compareTo(a.lastUsed));
 
   // Truth-related methods
 

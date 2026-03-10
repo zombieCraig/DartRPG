@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:collection/collection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -6,34 +7,41 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import '../models/game.dart';
+import '../models/game_summary.dart';
 import '../models/character.dart';
 import '../models/location.dart';
 import '../models/session.dart';
 import '../models/journal_entry.dart';
 import '../utils/logging_service.dart';
-import '../services/oracle_service.dart';
 import 'datasworn_provider.dart';
 import 'image_manager_provider.dart';
 import 'clock_operations_mixin.dart';
 import 'quest_operations_mixin.dart';
+import 'connection_operations_mixin.dart';
+import 'faction_operations_mixin.dart';
+import 'route_operations_mixin.dart';
 
-class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperationsMixin {
-  
-  List<Game> _games = [];
+class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperationsMixin, ConnectionOperationsMixin, FactionOperationsMixin, RouteOperationsMixin {
+
+  List<GameSummary> _gameSummaries = [];
   Game? _currentGame;
   Session? _currentSession;
   bool _isLoading = false;
   String? _error;
 
-  List<Game> get games => _games;
+  List<GameSummary> get gameSummaries => _gameSummaries;
+
+  /// Backward-compatible getter. Returns only the current game (if loaded).
+  List<Game> get games => _currentGame != null ? [_currentGame!] : [];
+
   Game? get currentGame => _currentGame;
   Session? get currentSession => _currentSession;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  
+
   // Public method to save games
   Future<void> saveGame() async {
-    await _saveGames();
+    await _saveCurrentGame();
   }
 
   // Mixin interface for ClockOperationsMixin and QuestOperationsMixin
@@ -47,8 +55,8 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
   Session? get questSession => _currentSession;
   @override
   Future<void> persistAndNotify() async {
-    await _saveGames();
     notifyListeners();
+    await _saveCurrentGame();
   }
 
   // Reference to the ImageManagerProvider
@@ -62,14 +70,26 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
   GameProvider() {
     _loadGames();
   }
-  
+
+  @override
+  void dispose() {
+    if (_currentGame != null) {
+      _saveCurrentGame();
+    }
+    _currentGame = null;
+    _currentSession = null;
+    _gameSummaries.clear();
+    _imageManagerProvider = null;
+    super.dispose();
+  }
+
   // Load images from the current game into the ImageManagerProvider
   Future<void> loadImagesFromGame() async {
     if (_currentGame == null || _imageManagerProvider == null) return;
-    
+
     final loggingService = LoggingService();
     loggingService.info('Loading images from game: ${_currentGame!.name}', tag: 'GameProvider');
-    
+
     // Load images from characters
     for (final character in _currentGame!.characters) {
       if (character.imageUrl != null && character.imageUrl!.isNotEmpty) {
@@ -78,7 +98,7 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
           character.imageUrl!,
           metadata: {'usage': 'character', 'characterId': character.id},
         );
-        
+
         if (image != null) {
           // Update the character with the imageId
           character.imageId = image.id;
@@ -89,7 +109,7 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
         }
       }
     }
-    
+
     // Load images from journal entries
     if (_currentSession != null) {
       for (final entry in _currentSession!.entries) {
@@ -99,7 +119,7 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
             imageUrl,
             metadata: {'usage': 'journal', 'entryId': entry.id},
           );
-          
+
           if (image != null) {
             // Add the imageId to the entry
             entry.addEmbeddedImageId(image.id);
@@ -111,7 +131,7 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
         }
       }
     }
-    
+
     // Load Sentient AI image if available
     final ai = _currentGame!.aiConfig;
     if (ai.sentientAiEnabled &&
@@ -132,21 +152,17 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
         );
       }
     }
-    
+
     // Load location images if they have imageUrl properties
     for (final location in _currentGame!.locations) {
-      // Check if Location has an imageUrl property and it's not empty
-      // Note: This is a placeholder - you'll need to add imageUrl to Location model if it doesn't exist
       if (location.imageUrl != null && location.imageUrl!.isNotEmpty) {
         // Save the image from URL and get an imageId
         final image = await _imageManagerProvider!.addImageFromUrl(
           location.imageUrl!,
           metadata: {'usage': 'location', 'locationId': location.id},
         );
-        
+
         if (image != null) {
-          // Update the location with the imageId
-          // Note: You'll need to add imageId to Location model if it doesn't exist
           location.imageId = image.id;
           loggingService.debug(
             'Saved location image: ${location.name} (URL: ${location.imageUrl}, ID: ${image.id})',
@@ -155,99 +171,83 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
         }
       }
     }
-    
+
     // Save the game with updated imageIds
-    await _saveGames();
+    await _saveCurrentGame();
   }
 
-  // Load games from storage using SharedPreferences for all platforms
+  // Load games from storage — only summaries at startup, full game for last-played
   Future<void> _loadGames() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      // Use SharedPreferences for all platforms
       final prefs = await SharedPreferences.getInstance();
-      
-      // Get game IDs
-      final gameIds = prefs.getStringList('gameIds') ?? [];
-      
-      
-      _games = [];
-      for (final id in gameIds) {
-        final gameJson = prefs.getString('game_$id');
-        if (gameJson != null) {
-          try {
-            final game = Game.fromJsonString(gameJson);
-            _games.add(game);
-          } catch (e) {
-            LoggingService().error(
-              'Failed to parse game JSON',
-              tag: 'GameProvider',
-              error: e,
-              stackTrace: StackTrace.current
-            );
-          }
-        } else {
-          LoggingService().warning(
-            'Game data not found for ID: $id',
-            tag: 'GameProvider'
+
+      // Try loading cached summaries first (fast path)
+      final summariesJson = prefs.getString('gameSummaries');
+      if (summariesJson != null) {
+        try {
+          _gameSummaries = GameSummary.listFromJsonString(summariesJson);
+          LoggingService().info(
+            'Loaded ${_gameSummaries.length} game summaries from cache',
+            tag: 'GameProvider',
           );
+        } catch (e) {
+          LoggingService().warning(
+            'Failed to parse cached summaries, will rebuild from game data',
+            tag: 'GameProvider',
+          );
+          _gameSummaries = [];
         }
       }
-      
-      // Log the loaded games
-      for (final game in _games) {
-        if (game.aiConfig.aiImageGenerationEnabled && game.aiConfig.aiImageProvider != null) {
-          LoggingService().info(
-            'Loaded game with AI image generation enabled: ${game.name} (Provider: ${game.aiConfig.aiImageProvider})',
-            tag: 'GameProvider'
-          );
 
-          if (game.aiConfig.aiApiKeys.isNotEmpty) {
-            LoggingService().debug(
-              'Game has ${game.aiConfig.aiApiKeys.length} API key(s) for providers: ${game.aiConfig.aiApiKeys.keys.join(", ")}',
-              tag: 'GameProvider'
-            );
+      // If no cached summaries, build them from individual game JSON (migration)
+      if (_gameSummaries.isEmpty) {
+        final gameIds = prefs.getStringList('gameIds') ?? [];
+        for (final id in gameIds) {
+          final gameJson = prefs.getString('game_$id');
+          if (gameJson != null) {
+            try {
+              final json = jsonDecode(gameJson) as Map<String, dynamic>;
+              _gameSummaries.add(GameSummary.fromGameJson(json));
+            } catch (e) {
+              LoggingService().error(
+                'Failed to parse game JSON for summary (ID: $id)',
+                tag: 'GameProvider',
+                error: e,
+                stackTrace: StackTrace.current,
+              );
+            }
           } else {
             LoggingService().warning(
-              'Game has AI image generation enabled but no API keys are set',
-              tag: 'GameProvider'
+              'Game data not found for ID: $id',
+              tag: 'GameProvider',
             );
           }
         }
+        // Save the newly built summaries
+        if (_gameSummaries.isNotEmpty) {
+          await _saveSummaries(prefs);
+        }
       }
-      
-      // Load last played game
+
+      // Load the last-played game fully
       final lastPlayedId = prefs.getString('lastPlayedGameId');
-      if (lastPlayedId != null) {
-        _currentGame = _games.firstWhereOrNull(
-          (game) => game.id == lastPlayedId,
-        );
-        if (_currentGame == null && _games.isNotEmpty) {
-          _currentGame = _games.first;
-        }
-        
-        // Load last played session
-        if (_currentGame != null) {
-          final lastSessionId = prefs.getString('lastSessionId_${_currentGame!.id}');
-          if (lastSessionId != null && _currentGame!.sessions.isNotEmpty) {
-            _currentSession = _currentGame!.sessions.firstWhere(
-              (session) => session.id == lastSessionId,
-              orElse: () => _currentGame!.sessions.first,
-            );
-          } else if (_currentGame!.sessions.isNotEmpty) {
-            _currentSession = _currentGame!.sessions.first;
-          }
-        }
-      } else if (_games.isNotEmpty) {
-        _currentGame = _games.first;
-        if (_currentGame!.sessions.isNotEmpty) {
-          _currentSession = _currentGame!.sessions.first;
-        }
+      String? gameIdToLoad;
+
+      if (lastPlayedId != null &&
+          _gameSummaries.any((s) => s.id == lastPlayedId)) {
+        gameIdToLoad = lastPlayedId;
+      } else if (_gameSummaries.isNotEmpty) {
+        gameIdToLoad = _gameSummaries.first.id;
       }
-      
+
+      if (gameIdToLoad != null) {
+        await _loadFullGame(gameIdToLoad, prefs);
+      }
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -263,64 +263,103 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
     }
   }
 
-  // Save games to storage using SharedPreferences for all platforms
-  Future<void> _saveGames() async {
+  // Load a full game from SharedPreferences by ID
+  Future<void> _loadFullGame(String gameId, [SharedPreferences? prefsArg]) async {
+    final prefs = prefsArg ?? await SharedPreferences.getInstance();
+    final gameJson = prefs.getString('game_$gameId');
+
+    if (gameJson == null) {
+      LoggingService().warning(
+        'Game data not found for ID: $gameId',
+        tag: 'GameProvider',
+      );
+      return;
+    }
+
     try {
-      // Use SharedPreferences for all platforms
-      final prefs = await SharedPreferences.getInstance();
-      
-      // Save game IDs
-      final gameIds = _games.map((game) => game.id).toList();
-      await prefs.setStringList('gameIds', gameIds);
-      LoggingService().info('Saving games to SharedPreferences: ${gameIds.length} game IDs', tag: 'GameProvider');
-      
-      // Save each game
-      for (final game in _games) {
-        final jsonString = game.toJsonString();
-        
-        // Log API keys information before saving
-        if (game.aiConfig.aiImageGenerationEnabled && game.aiConfig.aiImageProvider != null) {
-          LoggingService().debug(
-            'Saving game with API keys: ${game.aiConfig.aiApiKeys.keys.join(", ")}',
-            tag: 'GameProvider'
-          );
-          
-          // Check if aiApiKeys is in the JSON string (without logging the actual keys)
-          if (jsonString.contains('"aiApiKeys":{')) {
-            LoggingService().debug(
-              'JSON contains aiApiKeys field',
-              tag: 'GameProvider'
-            );
-          } else {
-            LoggingService().warning(
-              'JSON does NOT contain aiApiKeys field',
-              tag: 'GameProvider'
-            );
-          }
-        }
-        
-        await prefs.setString('game_${game.id}', jsonString);
-        LoggingService().debug(
-          'Saved game to SharedPreferences: ${game.name} (ID: ${game.id}) - JSON length: ${jsonString.length}',
-          tag: 'GameProvider'
+      _currentGame = Game.fromJsonString(gameJson);
+
+      // Log AI config info
+      if (_currentGame!.aiConfig.aiImageGenerationEnabled &&
+          _currentGame!.aiConfig.aiImageProvider != null) {
+        LoggingService().info(
+          'Loaded game with AI image generation enabled: ${_currentGame!.name} (Provider: ${_currentGame!.aiConfig.aiImageProvider})',
+          tag: 'GameProvider',
         );
       }
-      
-      // Save last played game and session
-      if (_currentGame != null) {
-        await prefs.setString('lastPlayedGameId', _currentGame!.id);
-        LoggingService().debug(
-          'Saved last played game ID to SharedPreferences: ${_currentGame!.id}',
-          tag: 'GameProvider'
+
+      // Restore last session
+      final lastSessionId = prefs.getString('lastSessionId_$gameId');
+      if (lastSessionId != null && _currentGame!.sessions.isNotEmpty) {
+        _currentSession = _currentGame!.sessions.firstWhere(
+          (session) => session.id == lastSessionId,
+          orElse: () => _currentGame!.sessions.first,
         );
-        
-        if (_currentSession != null) {
-          await prefs.setString('lastSessionId_${_currentGame!.id}', _currentSession!.id);
-          LoggingService().debug(
-            'Saved last session ID to SharedPreferences: ${_currentSession!.id}',
-            tag: 'GameProvider'
-          );
-        }
+      } else if (_currentGame!.sessions.isNotEmpty) {
+        _currentSession = _currentGame!.sessions.first;
+      } else {
+        _currentSession = null;
+      }
+    } catch (e) {
+      LoggingService().error(
+        'Failed to parse game JSON',
+        tag: 'GameProvider',
+        error: e,
+        stackTrace: StackTrace.current,
+      );
+    }
+  }
+
+  // Unload the current game from memory
+  void _unloadCurrentGame() {
+    _currentGame = null;
+    _currentSession = null;
+  }
+
+  // Save only the current game (not all games)
+  Future<void> _saveCurrentGame() async {
+    if (_currentGame == null) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Save the current game's JSON
+      final jsonString = _currentGame!.toJsonString();
+
+      // Log API keys information before saving
+      if (_currentGame!.aiConfig.aiImageGenerationEnabled &&
+          _currentGame!.aiConfig.aiImageProvider != null) {
+        LoggingService().debug(
+          'Saving game with API keys: ${_currentGame!.aiConfig.aiApiKeys.keys.join(", ")}',
+          tag: 'GameProvider',
+        );
+      }
+
+      await prefs.setString('game_${_currentGame!.id}', jsonString);
+      LoggingService().debug(
+        'Saved game to SharedPreferences: ${_currentGame!.name} (ID: ${_currentGame!.id}) - JSON length: ${jsonString.length}',
+        tag: 'GameProvider',
+      );
+
+      // Update the corresponding summary
+      final summaryIndex = _gameSummaries.indexWhere(
+        (s) => s.id == _currentGame!.id,
+      );
+      final updatedSummary = GameSummary.fromGame(_currentGame!);
+      if (summaryIndex != -1) {
+        _gameSummaries[summaryIndex] = updatedSummary;
+      }
+
+      // Save summaries and metadata
+      await _saveSummaries(prefs);
+
+      // Save last played game and session
+      await prefs.setString('lastPlayedGameId', _currentGame!.id);
+      if (_currentSession != null) {
+        await prefs.setString(
+          'lastSessionId_${_currentGame!.id}',
+          _currentSession!.id,
+        );
       }
     } catch (e) {
       _error = 'Failed to save games: ${e.toString()}';
@@ -333,7 +372,22 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
       notifyListeners();
     }
   }
-  
+
+  // Save the summaries list and gameIds
+  Future<void> _saveSummaries([SharedPreferences? prefsArg]) async {
+    final prefs = prefsArg ?? await SharedPreferences.getInstance();
+    final gameIds = _gameSummaries.map((s) => s.id).toList();
+    await prefs.setStringList('gameIds', gameIds);
+    await prefs.setString(
+      'gameSummaries',
+      GameSummary.listToJsonString(_gameSummaries),
+    );
+    LoggingService().debug(
+      'Saved ${_gameSummaries.length} game summaries',
+      tag: 'GameProvider',
+    );
+  }
+
   // Create a new game
   Future<Game> createGame(
     String name, {
@@ -344,6 +398,11 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
     String? sentientAiPersona,
     String? sentientAiImagePath,
   }) async {
+    // Save current game before switching
+    if (_currentGame != null) {
+      await _saveCurrentGame();
+    }
+
     final game = Game(
       name: name,
       dataswornSource: dataswornSource,
@@ -353,105 +412,99 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
       sentientAiPersona: sentientAiPersona,
       sentientAiImagePath: sentientAiImagePath,
     );
-    
-    _games.add(game);
+
+    _gameSummaries.add(GameSummary.fromGame(game));
     _currentGame = game;
     _currentSession = null;
-    
-    await _saveGames();
-    
+
+    notifyListeners();
+
+    await _saveCurrentGame();
+
     // Load images from the game
     await loadImagesFromGame();
-    
-    notifyListeners();
-    
+
     return game;
   }
 
   // Switch to a different game
   Future<void> switchGame(String gameId) async {
-    final game = _games.firstWhereOrNull((g) => g.id == gameId);
-    if (game == null) {
+    // Don't switch if already on this game
+    if (_currentGame?.id == gameId) return;
+
+    // Save and unload the current game
+    if (_currentGame != null) {
+      await _saveCurrentGame();
+      _unloadCurrentGame();
+    }
+
+    // Load the new game
+    await _loadFullGame(gameId);
+
+    if (_currentGame == null) {
       LoggingService().warning('Game not found: $gameId', tag: 'GameProvider');
       return;
     }
 
-    _currentGame = game;
     _currentGame!.updateLastPlayed();
-    
-    // Try to load the last selected session for this game
-    if (_currentGame!.sessions.isNotEmpty) {
-      final prefs = await SharedPreferences.getInstance();
-      final lastSessionId = prefs.getString('lastSessionId_${_currentGame!.id}');
-      
-      if (lastSessionId != null) {
-        _currentSession = _currentGame!.sessions.firstWhereOrNull(
-          (session) => session.id == lastSessionId,
-        ) ?? _currentGame!.sessions.first;
-      } else {
-        _currentSession = _currentGame!.sessions.first;
-      }
-    } else {
-      _currentSession = null;
+
+    // Update the summary's lastPlayedAt
+    final summaryIndex = _gameSummaries.indexWhere((s) => s.id == gameId);
+    if (summaryIndex != -1) {
+      _gameSummaries[summaryIndex].lastPlayedAt = _currentGame!.lastPlayedAt;
     }
 
-    await _saveGames();
     notifyListeners();
+    await _saveCurrentGame();
   }
 
   // Delete a game
   Future<void> deleteGame(String gameId) async {
-    _games.removeWhere((g) => g.id == gameId);
+    _gameSummaries.removeWhere((s) => s.id == gameId);
+
+    // Remove the game data from SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('game_$gameId');
+    await prefs.remove('lastSessionId_$gameId');
 
     if (_currentGame?.id == gameId) {
-      _currentGame = _games.isNotEmpty ? _games.first : null;
+      _unloadCurrentGame();
 
-      // Try to load the last selected session for the new current game
-      if (_currentGame != null && _currentGame!.sessions.isNotEmpty) {
-        final prefs = await SharedPreferences.getInstance();
-        final lastSessionId = prefs.getString('lastSessionId_${_currentGame!.id}');
-
-        if (lastSessionId != null) {
-          _currentSession = _currentGame!.sessions.firstWhereOrNull(
-            (session) => session.id == lastSessionId,
-          ) ?? _currentGame!.sessions.first;
-        } else {
-          _currentSession = _currentGame!.sessions.first;
-        }
-      } else {
-        _currentSession = null;
+      // Load the next available game
+      if (_gameSummaries.isNotEmpty) {
+        await _loadFullGame(_gameSummaries.first.id, prefs);
       }
     }
-    
-    await _saveGames();
+
+    await _saveSummaries(prefs);
     notifyListeners();
   }
-  
+
   // Update Base Rig assets for existing characters
   Future<void> updateBaseRigAssets(DataswornProvider dataswornProvider) async {
     final loggingService = LoggingService();
-    
+
     // Skip if no game is loaded
     if (_currentGame == null) return;
-    
+
     bool assetsUpdated = false;
-    
+
     // Process all characters
     for (final character in _currentGame!.characters) {
       // Find any Base Rig assets
       for (int i = 0; i < character.assets.length; i++) {
         final asset = character.assets[i];
-        
+
         // Check if this is a Base Rig asset without options (factory-created)
         if (asset.category == 'Base Rig' && asset.options.isEmpty) {
           loggingService.debug(
             'Found factory-created Base Rig asset for character: ${character.name}',
             tag: 'GameProvider',
           );
-          
+
           // Try to find the Base Rig asset in the DataswornProvider by ID
           Asset? baseRig = dataswornProvider.findAssetById("base_rig");
-          
+
           // If not found by ID, try to find it in the rig asset collection
           if (baseRig == null) {
             final assetsByCategory = dataswornProvider.getAssetsByCategory();
@@ -480,21 +533,21 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
               tag: 'GameProvider',
             );
           }
-          
+
           // If we found a proper Base Rig asset, replace the factory-created one
           if (baseRig != null) {
             loggingService.debug(
               'Replacing factory-created Base Rig with Datasworn version for character: ${character.name}',
               tag: 'GameProvider',
             );
-            
+
             // Preserve enabled state of abilities if any
             if (asset.abilities.isNotEmpty && baseRig.abilities.isNotEmpty) {
               for (int j = 0; j < math.min(asset.abilities.length, baseRig.abilities.length); j++) {
                 baseRig.abilities[j].enabled = asset.abilities[j].enabled;
               }
             }
-            
+
             // Replace the asset
             character.assets[i] = baseRig;
             assetsUpdated = true;
@@ -502,7 +555,7 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
         }
       }
     }
-    
+
     // Save changes if any assets were updated
     if (assetsUpdated) {
       await saveGame();
@@ -514,16 +567,16 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
     if (_currentGame == null) {
       throw Exception('No game selected');
     }
-    
+
     final character = isMainCharacter
         ? Character.createMainCharacter(name, handle: handle)
         : Character(name: name, handle: handle);
-    
+
     _currentGame!.addCharacter(character);
-    
-    await _saveGames();
+
     notifyListeners();
-    
+    await _saveCurrentGame();
+
     return character;
   }
 
@@ -540,7 +593,7 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
     if (_currentGame == null) {
       throw Exception('No game selected');
     }
-    
+
     final location = Location(
       name: name,
       description: description,
@@ -549,9 +602,9 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
       x: x,
       y: y,
     );
-    
+
     _currentGame!.addLocation(location);
-    
+
     // If connectToLocationId is provided, create a connection
     if (connectToLocationId != null) {
       try {
@@ -563,23 +616,23 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
         );
       }
     }
-    
-    await _saveGames();
+
     notifyListeners();
-    
+    await _saveCurrentGame();
+
     return location;
   }
-  
+
   // Connect two locations
   Future<void> connectLocations(String sourceId, String targetId) async {
     if (_currentGame == null) {
       throw Exception('No game selected');
     }
-    
+
     try {
       _currentGame!.connectLocations(sourceId, targetId);
-      await _saveGames();
       notifyListeners();
+      await _saveCurrentGame();
     } catch (e) {
       LoggingService().error(
         'Failed to connect locations',
@@ -590,17 +643,17 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
       rethrow;
     }
   }
-  
+
   // Disconnect two locations
   Future<void> disconnectLocations(String sourceId, String targetId) async {
     if (_currentGame == null) {
       throw Exception('No game selected');
     }
-    
+
     try {
       _currentGame!.disconnectLocations(sourceId, targetId);
-      await _saveGames();
       notifyListeners();
+      await _saveCurrentGame();
     } catch (e) {
       LoggingService().error(
         'Failed to disconnect locations',
@@ -611,34 +664,34 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
       rethrow;
     }
   }
-  
+
   // Update location segment
   Future<void> updateLocationSegment(String locationId, LocationSegment segment) async {
     if (_currentGame == null) {
       throw Exception('No game selected');
     }
-    
+
     try {
       final location = _currentGame!.locations.firstWhere(
         (loc) => loc.id == locationId,
         orElse: () => throw Exception('Location not found'),
       );
-      
+
       // Check if changing segment would violate connection rules
       for (final connectedId in location.connectedLocationIds) {
         final connectedLocation = _currentGame!.locations.firstWhere(
           (loc) => loc.id == connectedId,
           orElse: () => throw Exception('Connected location not found'),
         );
-        
+
         if (!_currentGame!.areSegmentsAdjacent(segment, connectedLocation.segment)) {
           throw Exception('Cannot change segment: would violate connection rules with ${connectedLocation.name}');
         }
       }
-      
+
       location.segment = segment;
-      await _saveGames();
       notifyListeners();
+      await _saveCurrentGame();
     } catch (e) {
       LoggingService().error(
         'Failed to update location segment',
@@ -649,22 +702,22 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
       rethrow;
     }
   }
-  
+
   // Update location position
   Future<void> updateLocationPosition(String locationId, double x, double y) async {
     if (_currentGame == null) {
       throw Exception('No game selected');
     }
-    
+
     try {
       final location = _currentGame!.locations.firstWhere(
         (loc) => loc.id == locationId,
         orElse: () => throw Exception('Location not found'),
       );
-      
+
       location.updatePosition(x, y);
-      await _saveGames();
       notifyListeners();
+      await _saveCurrentGame();
     } catch (e) {
       LoggingService().error(
         'Failed to update location position',
@@ -675,22 +728,22 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
       rethrow;
     }
   }
-  
+
   // Update location scale
   Future<void> updateLocationScale(String locationId, double scale) async {
     if (_currentGame == null) {
       throw Exception('No game selected');
     }
-    
+
     try {
       final location = _currentGame!.locations.firstWhere(
         (loc) => loc.id == locationId,
         orElse: () => throw Exception('Location not found'),
       );
-      
+
       location.updateScale(scale);
-      await _saveGames();
       notifyListeners();
+      await _saveCurrentGame();
     } catch (e) {
       LoggingService().error(
         'Failed to update location scale',
@@ -701,13 +754,13 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
       rethrow;
     }
   }
-  
+
   // Get valid connections for a location
   List<Location> getValidConnectionsForLocation(String locationId) {
     if (_currentGame == null) {
       throw Exception('No game selected');
     }
-    
+
     try {
       return _currentGame!.getValidConnectionsForLocation(locationId);
     } catch (e) {
@@ -726,13 +779,13 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
     if (_currentGame == null) {
       throw Exception('No game selected');
     }
-    
+
     final session = _currentGame!.createNewSession(title);
     _currentSession = session;
-    
-    await _saveGames();
+
     notifyListeners();
-    
+    await _saveCurrentGame();
+
     return session;
   }
 
@@ -741,7 +794,7 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
     if (_currentGame == null) {
       throw Exception('No game selected');
     }
-    
+
     final session = _currentGame!.sessions.firstWhereOrNull((s) => s.id == sessionId);
     if (session == null) {
       LoggingService().warning('Session not found: $sessionId', tag: 'GameProvider');
@@ -749,8 +802,8 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
     }
     _currentSession = session;
 
-    await _saveGames();
     notifyListeners();
+    await _saveCurrentGame();
   }
 
   // Create a new journal entry
@@ -758,12 +811,12 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
     if (_currentGame == null || _currentSession == null) {
       throw Exception('No game or session selected');
     }
-    
+
     final entry = _currentSession!.createNewEntry(content);
-    
-    await _saveGames();
+
     notifyListeners();
-    
+    await _saveCurrentGame();
+
     return entry;
   }
 
@@ -772,159 +825,62 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
     if (_currentGame == null || _currentSession == null) {
       throw Exception('No game or session selected');
     }
-    
+
     final entry = _currentSession!.entries.firstWhereOrNull((e) => e.id == entryId);
     if (entry == null) {
       LoggingService().warning('Journal entry not found: $entryId', tag: 'GameProvider');
       return;
     }
     entry.update(content);
-    
-    await _saveGames();
+
     notifyListeners();
+    await _saveCurrentGame();
   }
 
   // Quest-related methods are provided by QuestOperationsMixin
 
-  // Sentient AI-related methods
-  
-  // Update sentientAiEnabled setting
-  Future<void> updateSentientAiEnabled(bool enabled) async {
-    if (_currentGame == null) {
-      throw Exception('No game selected');
-    }
-    
-    _currentGame!.aiConfig.sentientAiEnabled = enabled;
+  // Sentient AI and AI Image Generation methods are provided by AiConfigProvider
 
-    await _saveGames();
-    notifyListeners();
-  }
-
-  Future<void> updateSentientAiName(String? name) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    _currentGame!.aiConfig.sentientAiName = name;
-    await _saveGames();
-    notifyListeners();
-  }
-
-  Future<void> updateSentientAiPersona(String? persona) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    _currentGame!.aiConfig.sentientAiPersona = persona;
-    await _saveGames();
-    notifyListeners();
-  }
-
-  Future<void> updateSentientAiImagePath(String? imagePath) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    _currentGame!.aiConfig.sentientAiImagePath = imagePath;
-    await _saveGames();
-    notifyListeners();
-  }
-
-  Future<void> updateAiImageGenerationEnabled(bool enabled) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    _currentGame!.aiConfig.aiImageGenerationEnabled = enabled;
-    await _saveGames();
-    notifyListeners();
-  }
-
-  Future<void> updateAiImageProvider(String? provider) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    _currentGame!.aiConfig.aiImageProvider = provider;
-    await _saveGames();
-    notifyListeners();
-  }
-
-  Future<void> updateOpenAiModel(String model) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    _currentGame!.aiConfig.openaiModel = model;
-    await _saveGames();
-    notifyListeners();
-  }
-
-  Future<void> updateAiApiKey(String provider, String apiKey) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    _currentGame!.aiConfig.setAiApiKey(provider, apiKey);
-    await _saveGames();
-    notifyListeners();
-  }
-
-  Future<void> updateAiArtisticDirection(String provider, String artisticDirection) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    _currentGame!.aiConfig.setAiArtisticDirection(provider, artisticDirection);
-    await _saveGames();
-    notifyListeners();
-  }
-
-  Future<void> removeAiApiKey(String provider) async {
-    if (_currentGame == null) throw Exception('No game selected');
-    _currentGame!.aiConfig.removeAiApiKey(provider);
-    await _saveGames();
-    notifyListeners();
-  }
-
-  bool isAiImageGenerationAvailable() {
-    if (_currentGame == null) return false;
-    return _currentGame!.aiConfig.isAiImageGenerationAvailable();
-  }
-  
-  // Get AI personas from the datasworn provider
-  List<Map<String, String>> getAiPersonas(DataswornProvider dataswornProvider) {
-    // Use the recursive search function from OracleService with just "persona" as the key
-    final personaTable = OracleService.findOracleTableByKeyAnywhere('persona', dataswornProvider);
-    if (personaTable == null) return [];
-    
-    return personaTable.rows.map((row) {
-      final text = row.result;
-      final parts = text.split(' - ');
-      final name = parts[0];
-      final description = parts.length > 1 ? parts[1] : '';
-      
-      return {
-        'id': text,
-        'name': name,
-        'description': description,
-      };
-    }).toList();
-  }
-  
-  // Get a random AI persona
-  String? getRandomAiPersona(DataswornProvider dataswornProvider) {
-    final personas = getAiPersonas(dataswornProvider);
-    if (personas.isEmpty) return null;
-    
-    final random = math.Random();
-    final randomIndex = random.nextInt(personas.length);
-    return personas[randomIndex]['id'];
-  }
-  
   // Clock-related methods are provided by ClockOperationsMixin
 
   // Export game to JSON file
   Future<String?> exportGame(String gameId) async {
     try {
-      final game = _games.firstWhere((g) => g.id == gameId);
-      final jsonString = game.toJsonString();
-      
+      // If exporting the current game, use the in-memory version
+      // Otherwise, load from SharedPreferences
+      String jsonString;
+      String gameName;
+
+      if (_currentGame != null && _currentGame!.id == gameId) {
+        jsonString = _currentGame!.toJsonString();
+        gameName = _currentGame!.name;
+      } else {
+        final prefs = await SharedPreferences.getInstance();
+        final stored = prefs.getString('game_$gameId');
+        if (stored == null) {
+          throw Exception('Game data not found for ID: $gameId');
+        }
+        jsonString = stored;
+        final summary = _gameSummaries.firstWhereOrNull((s) => s.id == gameId);
+        gameName = summary?.name ?? 'game';
+      }
+
       if (kIsWeb) {
-        // For web, we'll use a workaround with FilePicker
-        // This is a limitation since we're not using dart:html directly
-        // In a real app, you'd want to add a web-specific implementation
         return 'Export not supported in web version';
       } else {
         // For mobile, use FilePicker
         final result = await FilePicker.platform.saveFile(
           dialogTitle: 'Save Game',
-          fileName: '${game.name.replaceAll(' ', '_')}.json',
+          fileName: '${gameName.replaceAll(' ', '_')}.json',
         );
-        
+
         if (result != null) {
           final file = File(result);
           await file.writeAsString(jsonString);
           return result;
         }
       }
-      
+
       return null;
     } catch (e) {
       _error = 'Failed to export game: ${e.toString()}';
@@ -938,22 +894,22 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
       return null;
     }
   }
-  
+
   // Import game from JSON file
   Future<Game?> importGame() async {
     try {
       String? jsonString;
-      
+
       // Use FilePicker for both web and mobile
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
       );
-      
+
       if (result == null) {
         return null;
       }
-      
+
       if (kIsWeb) {
         // In web, we get the file content directly from bytes
         if (result.files.first.bytes != null) {
@@ -966,12 +922,17 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
         final file = File(result.files.single.path!);
         jsonString = await file.readAsString();
       }
-      
+
+      // Save current game before switching
+      if (_currentGame != null) {
+        await _saveCurrentGame();
+      }
+
       // Process the JSON string
       final game = Game.fromJsonString(jsonString);
-      
+
       // Check if a game with this ID already exists
-      final existingIndex = _games.indexWhere((g) => g.id == game.id);
+      final existingIndex = _gameSummaries.indexWhere((s) => s.id == game.id);
       if (existingIndex != -1) {
         // Generate a new ID for the imported game
         final importedGame = Game(
@@ -984,29 +945,29 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
           mainCharacter: game.mainCharacter,
           dataswornSource: game.dataswornSource,
         );
-        
-        _games.add(importedGame);
+
+        _gameSummaries.add(GameSummary.fromGame(importedGame));
         _currentGame = importedGame;
-        
+
         if (importedGame.sessions.isNotEmpty) {
           _currentSession = importedGame.sessions.first;
         } else {
           _currentSession = null;
         }
       } else {
-        _games.add(game);
+        _gameSummaries.add(GameSummary.fromGame(game));
         _currentGame = game;
-        
+
         if (game.sessions.isNotEmpty) {
           _currentSession = game.sessions.first;
         } else {
           _currentSession = null;
         }
       }
-      
-      await _saveGames();
+
       notifyListeners();
-      
+      await _saveCurrentGame();
+
       return _currentGame;
     } catch (e) {
       _error = 'Failed to import game: ${e.toString()}';

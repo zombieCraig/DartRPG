@@ -140,11 +140,76 @@ void main() {
       
       test('creates character with Base Rig asset', () {
         final character = Character.createMainCharacter('John Doe');
-        
+
         expect(character.assets.length, equals(1));
         expect(character.assets[0].name, equals('Base Rig'));
         expect(character.assets[0].category, equals('Base Rig'));
         expect(character.assets[0].enabled, isTrue);
+      });
+    });
+
+    group('stats', () {
+      test('stats is a List<CharacterStat>, not a Map', () {
+        final character = Character.createMainCharacter('Test');
+
+        // This verifies that stats is a List<CharacterStat>.
+        // A previous bug cast stats to Map<String, int> which caused a
+        // TypeError at runtime (e.g. when selecting "Map Route" move).
+        expect(character.stats, isA<List<CharacterStat>>());
+        expect(character.stats, isNot(isA<Map>()));
+      });
+
+      test('stat lookup by name (case-insensitive)', () {
+        final character = Character.createMainCharacter('Test');
+        character.updateStat('Edge', 3);
+
+        // Simulate the lookup pattern used by quick_roll_panel._getStatValue
+        CharacterStat? findStat(String name) {
+          final lower = name.toLowerCase();
+          for (final s in character.stats) {
+            if (s.name.toLowerCase() == lower) return s;
+          }
+          return null;
+        }
+
+        expect(findStat('Edge')?.value, 3);
+        expect(findStat('edge')?.value, 3);
+        expect(findStat('EDGE')?.value, 3);
+        expect(findStat('nonexistent'), isNull);
+      });
+
+      test('updateStat and getStat work correctly', () {
+        final character = Character.createMainCharacter('Test');
+
+        character.updateStat('Edge', 3);
+        character.updateStat('Heart', 2);
+        character.updateStat('Iron', 1);
+        character.updateStat('Shadow', 2);
+        character.updateStat('Wits', 3);
+
+        final edgeStat = character.stats.firstWhere((s) => s.name == 'Edge');
+        expect(edgeStat.value, 3);
+
+        final heartStat = character.stats.firstWhere((s) => s.name == 'Heart');
+        expect(heartStat.value, 2);
+      });
+
+      test('stats round-trip through JSON', () {
+        final character = Character.createMainCharacter('Test');
+        character.updateStat('Edge', 3);
+        character.updateStat('Wits', 2);
+
+        final json = character.toJson();
+        final restored = Character.fromJson(json);
+
+        expect(restored.stats, isA<List<CharacterStat>>());
+        expect(restored.stats.length, character.stats.length);
+
+        final edge = restored.stats.firstWhere((s) => s.name == 'Edge');
+        expect(edge.value, 3);
+
+        final wits = restored.stats.firstWhere((s) => s.name == 'Wits');
+        expect(wits.value, 2);
       });
     });
   });

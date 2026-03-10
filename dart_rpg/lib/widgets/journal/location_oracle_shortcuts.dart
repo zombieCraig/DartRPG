@@ -31,8 +31,8 @@ class LocationOracleShortcuts extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final gameProvider = Provider.of<GameProvider>(context);
-    final dataswornProvider = Provider.of<DataswornProvider>(context);
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
     final currentGame = gameProvider.currentGame;
 
     if (currentGame == null) {

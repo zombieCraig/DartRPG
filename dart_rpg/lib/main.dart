@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/game_provider.dart';
+import 'providers/ai_config_provider.dart';
 import 'providers/datasworn_provider.dart';
 import 'providers/image_manager_provider.dart';
 import 'providers/ai_image_provider.dart';
@@ -25,6 +26,10 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => GameProvider()),
+        ChangeNotifierProxyProvider<GameProvider, AiConfigProvider>(
+          create: (context) => AiConfigProvider(context.read<GameProvider>()),
+          update: (_, gameProvider, previous) => previous!..update(gameProvider),
+        ),
         ChangeNotifierProvider(create: (_) => DataswornProvider()),
         ChangeNotifierProvider(create: (_) => ImageManagerProvider()..loadImages()),
         ChangeNotifierProvider(create: (_) => AiImageProvider()),

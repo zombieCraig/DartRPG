@@ -10,6 +10,7 @@ import 'package:dart_rpg/models/journal_entry.dart';
 import 'package:dart_rpg/models/move.dart';
 import 'package:dart_rpg/models/oracle.dart';
 import 'package:dart_rpg/models/character.dart';
+import 'package:dart_rpg/models/game_summary.dart';
 import 'package:dart_rpg/widgets/journal/journal_entry_editor.dart';
 import 'package:dart_rpg/widgets/journal/journal_entry_viewer.dart';
 
@@ -27,7 +28,10 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   // Other required overrides with minimal implementations
   @override
   List<Game> get games => [];
-  
+
+  @override
+  List<GameSummary> get gameSummaries => [];
+
   @override
   bool get isLoading => false;
   

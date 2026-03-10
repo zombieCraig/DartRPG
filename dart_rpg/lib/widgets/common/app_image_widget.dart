@@ -41,6 +41,11 @@ class AppImageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Compute cache dimensions for memory-efficient image decoding
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    final int? cw = width != null ? (width! * dpr).toInt() : null;
+    final int? ch = height != null ? (height! * dpr).toInt() : null;
+
     // Default placeholder and error widgets
     final defaultPlaceholder = Container(
       color: Colors.grey[300],
@@ -76,6 +81,8 @@ class AppImageWidget extends StatelessWidget {
                   width: width,
                   height: height,
                   fit: fit,
+                  cacheWidth: cw,
+                  cacheHeight: ch,
                   loadingBuilder: (context, child, loadingProgress) {
                     if (loadingProgress == null) return child;
                     return placeholder ?? defaultPlaceholder;
@@ -91,6 +98,8 @@ class AppImageWidget extends StatelessWidget {
                   width: width,
                   height: height,
                   fit: fit,
+                  cacheWidth: cw,
+                  cacheHeight: ch,
                   loadingBuilder: (context, child, loadingProgress) {
                     if (loadingProgress == null) return child;
                     return placeholder ?? defaultPlaceholder;
@@ -110,6 +119,8 @@ class AppImageWidget extends StatelessWidget {
                 width: width,
                 height: height,
                 fit: fit,
+                cacheWidth: cw,
+                cacheHeight: ch,
                 errorBuilder: (context, error, stackTrace) {
                   return errorWidget ?? defaultErrorWidget;
                 },
@@ -124,6 +135,8 @@ class AppImageWidget extends StatelessWidget {
               width: width,
               height: height,
               fit: fit,
+              cacheWidth: cw,
+              cacheHeight: ch,
               loadingBuilder: (context, child, loadingProgress) {
                 if (loadingProgress == null) return child;
                 return placeholder ?? defaultPlaceholder;
@@ -147,6 +160,8 @@ class AppImageWidget extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
+        cacheWidth: cw,
+        cacheHeight: ch,
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
           return placeholder ?? defaultPlaceholder;

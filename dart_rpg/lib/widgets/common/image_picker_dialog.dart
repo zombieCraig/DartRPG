@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart' as picker;
 import '../../models/app_image.dart';
 import '../../models/journal_entry.dart';
+import '../../providers/ai_config_provider.dart';
 import '../../providers/ai_image_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/image_manager_provider.dart';
@@ -73,7 +74,7 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: kIsWeb ? 3 : 4, vsync: this);
 
     // Initialize with existing values if provided
     if (widget.initialImageUrl != null) {
@@ -140,11 +141,11 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
             // Tabs
             TabBar(
               controller: _tabController,
-              tabs: const [
-                Tab(text: 'URL'),
-                Tab(text: 'Gallery'),
-                Tab(text: 'Saved'),
-                Tab(text: 'AI'),
+              tabs: [
+                const Tab(text: 'URL'),
+                const Tab(text: 'Gallery'),
+                const Tab(text: 'Saved'),
+                if (!kIsWeb) const Tab(text: 'AI'),
               ],
             ),
 
@@ -161,9 +162,9 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
 
                   // Saved Tab
                   _buildSavedTab(),
-                  
-                  // AI Tab
-                  _buildAiTab(),
+
+                  // AI Tab (desktop only)
+                  if (!kIsWeb) _buildAiTab(),
                 ],
               ),
             ),
@@ -207,7 +208,7 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
                 'type': 'saved',
                 'imageId': _selectedImageId,
               });
-            } else if (activeTab == 3 && _selectedAiImage != null) {
+            } else if (!kIsWeb && activeTab == 3 && _selectedAiImage != null) {
               // AI tab - Ensure the image is saved to permanent storage
               final imageManagerProvider = Provider.of<ImageManagerProvider>(context, listen: false);
               
@@ -298,6 +299,7 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
               child: Image.network(
                 _urlController.text,
                 fit: BoxFit.contain,
+                cacheWidth: (400 * MediaQuery.devicePixelRatioOf(context)).toInt(),
                 errorBuilder: (context, error, stackTrace) {
                   return const Center(
                     child: Text('Invalid image URL'),
@@ -377,12 +379,13 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
   
   /// Build the AI tab
   Widget _buildAiTab() {
-    // Get the game provider to check if AI image generation is available
+    // Get providers for AI image generation
+    final aiConfigProvider = Provider.of<AiConfigProvider>(context, listen: false);
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
     final aiImageProvider = Provider.of<AiImageProvider>(context, listen: false);
-    
+
     // Check if AI image generation is available
-    final isAiAvailable = gameProvider.isAiImageGenerationAvailable();
+    final isAiAvailable = aiConfigProvider.isAiImageGenerationAvailable();
     
     if (!isAiAvailable) {
       return Center(
@@ -572,6 +575,7 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
         return Image.network(
           _selectedImageUrl!,
           fit: BoxFit.contain,
+          cacheWidth: (400 * MediaQuery.devicePixelRatioOf(context)).toInt(),
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
             return Center(
@@ -633,6 +637,7 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
       return Image.file(
         file,
         fit: BoxFit.contain,
+        cacheWidth: (400 * MediaQuery.devicePixelRatioOf(context)).toInt(),
         errorBuilder: (context, error, stackTrace) {
           return const Center(
             child: Icon(Icons.broken_image),
@@ -650,6 +655,7 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
         return Image.network(
           image.originalUrl!,
           fit: BoxFit.cover,
+          cacheWidth: (120 * MediaQuery.devicePixelRatioOf(context)).toInt(),
           errorBuilder: (context, error, stackTrace) {
             return Center(
               child: Icon(
@@ -675,6 +681,7 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
       return Image.file(
         File(image.localPath),
         fit: BoxFit.cover,
+        cacheWidth: (120 * MediaQuery.devicePixelRatioOf(context)).toInt(),
         errorBuilder: (context, error, stackTrace) {
           return const Center(
             child: Icon(Icons.broken_image),
@@ -826,6 +833,24 @@ class _ImagePickerDialogState extends State<ImagePickerDialog> with SingleTicker
           model: openaiModel,
           moderationLevel: moderationLevel,
           referenceImage: referenceImage,
+          metadata: metadata,
+        );
+      } else if (provider == 'stability') {
+        generatedImages = await aiImageProvider.generateImagesWithStability(
+          prompt: _promptController.text,
+          apiKey: apiKey,
+          metadata: metadata,
+        );
+      } else if (provider == 'google_imagen') {
+        generatedImages = await aiImageProvider.generateImagesWithGoogleImagen(
+          prompt: _promptController.text,
+          apiKey: apiKey,
+          metadata: metadata,
+        );
+      } else if (provider == 'fal') {
+        generatedImages = await aiImageProvider.generateImagesWithFal(
+          prompt: _promptController.text,
+          apiKey: apiKey,
           metadata: metadata,
         );
       } else {

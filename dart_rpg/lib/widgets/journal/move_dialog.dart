@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/move.dart';
 import '../../models/journal_entry.dart';
+import '../../providers/ai_config_provider.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../services/roll_service.dart';
@@ -192,20 +193,20 @@ class MoveDialog {
                                     // Add the oracle roll to the journal entry
                                     onMoveRollAdded(MoveRoll(
                                       moveName: selectedMove!.name,
-                                      moveDescription: selectedMove!.description,
+                                      moveId: selectedMove!.id,
                                       rollType: 'oracle_roll',
                                       outcome: 'performed',
                                       actionDie: 0,
                                       challengeDice: [],
-                                      moveData: {'moveId': selectedMove!.id, 'oracleResult': oracleRoll.result},
+                                      moveData: {'oracleResult': oracleRoll.result},
                                     ));
-                                    
+
                                     // Insert the oracle roll text at the cursor position
                                     if (isEditing) {
                                       final formattedText = oracleRoll.getFormattedText();
                                       onInsertText(formattedText);
                                     }
-                                    
+
                                     // Show confirmation
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
@@ -312,17 +313,18 @@ class MoveDialog {
       final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
       
       // If both name and persona are null, randomly select a persona
+      final aiConfigProvider = Provider.of<AiConfigProvider>(context, listen: false);
       if (game.aiConfig.sentientAiName == null && game.aiConfig.sentientAiPersona == null) {
-        final randomPersona = gameProvider.getRandomAiPersona(dataswornProvider);
+        final randomPersona = aiConfigProvider.getRandomAiPersona(dataswornProvider);
         if (randomPersona != null) {
           // Save the randomly selected persona
-          await gameProvider.updateSentientAiPersona(randomPersona);
+          await aiConfigProvider.updateSentientAiPersona(randomPersona);
         }
       }
       
-      // Show the Sentient AI dialog with the updated persona
+      // Show the Sentient AI dialog and await it before showing roll result
       if (!context.mounted) return;
-      SentientAiDialog.show(
+      await SentientAiDialog.show(
         context: context,
         aiName: game.aiConfig.sentientAiName,
         aiPersona: game.aiConfig.sentientAiPersona,
@@ -371,7 +373,7 @@ class MoveDialog {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => GameScreen(gameId: gameId, initialTabIndex: 5),
+                builder: (context) => GameScreen(gameId: gameId, initialTabIndex: 4, initialSubTabIndex: 1),
               ),
             );
           }
@@ -390,13 +392,15 @@ class MoveDialog {
               move: move,
               moveRoll: moveRoll,
               rollResult: rollResult,
+              character: character,
+              onInsertText: isEditing ? onInsertText : null,
               onClose: () {
                 Navigator.pop(context);
               },
               onRollAgain: () {
                 Navigator.pop(context);
                 _rollActionMove(
-                  context, 
+                  context,
                   move, 
                   stat, 
                   statValue, 
@@ -425,20 +429,20 @@ class MoveDialog {
                 // Add the oracle roll to the journal entry
                 onMoveRollAdded(MoveRoll(
                   moveName: move.name,
-                  moveDescription: move.description,
+                  moveId: move.id,
                   rollType: 'oracle_roll',
                   outcome: 'performed',
                   actionDie: 0,
                   challengeDice: [],
-                  moveData: {'moveId': move.id, 'oracleResult': oracleRoll.result},
+                  moveData: {'oracleResult': oracleRoll.result},
                 ));
-                
+
                 // Insert the oracle roll text at the cursor position
                 if (isEditing) {
                   final formattedText = oracleRoll.getFormattedText();
                   onInsertText(formattedText);
                 }
-                
+
                 // Show confirmation
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -539,17 +543,18 @@ class MoveDialog {
       final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
       
       // If both name and persona are null, randomly select a persona
+      final aiConfigProvider = Provider.of<AiConfigProvider>(context, listen: false);
       if (game.aiConfig.sentientAiName == null && game.aiConfig.sentientAiPersona == null) {
-        final randomPersona = gameProvider.getRandomAiPersona(dataswornProvider);
+        final randomPersona = aiConfigProvider.getRandomAiPersona(dataswornProvider);
         if (randomPersona != null) {
           // Save the randomly selected persona
-          await gameProvider.updateSentientAiPersona(randomPersona);
+          await aiConfigProvider.updateSentientAiPersona(randomPersona);
         }
       }
       
-      // Show the Sentient AI dialog with the updated persona
+      // Show the Sentient AI dialog and await it before showing roll result
       if (!context.mounted) return;
-      SentientAiDialog.show(
+      await SentientAiDialog.show(
         context: context,
         aiName: game.aiConfig.sentientAiName,
         aiPersona: game.aiConfig.sentientAiPersona,
@@ -598,7 +603,7 @@ class MoveDialog {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => GameScreen(gameId: gameId, initialTabIndex: 5),
+                builder: (context) => GameScreen(gameId: gameId, initialTabIndex: 4, initialSubTabIndex: 1),
               ),
             );
           }
@@ -615,13 +620,15 @@ class MoveDialog {
           move: move,
           moveRoll: moveRoll,
           rollResult: rollResult,
+          character: gameProvider.currentGame?.mainCharacter,
+          onInsertText: isEditing ? onInsertText : null,
           onClose: () {
             Navigator.pop(context);
           },
           onRollAgain: () {
             Navigator.pop(context);
             _rollProgressMove(
-              context, 
+              context,
               move, 
               progressValue, 
               onMoveRollAdded, 
@@ -648,20 +655,20 @@ class MoveDialog {
             // Add the oracle roll to the journal entry
             onMoveRollAdded(MoveRoll(
               moveName: move.name,
-              moveDescription: move.description,
+              moveId: move.id,
               rollType: 'oracle_roll',
               outcome: 'performed',
               actionDie: 0,
               challengeDice: [],
-              moveData: {'moveId': move.id, 'oracleResult': oracleRoll.result},
+              moveData: {'oracleResult': oracleRoll.result},
             ));
-            
+
             // Insert the oracle roll text at the cursor position
             if (isEditing) {
               final formattedText = oracleRoll.getFormattedText();
               onInsertText(formattedText);
             }
-            
+
             // Show confirmation
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -703,14 +710,13 @@ class MoveDialog {
       // Create a MoveRoll object
       final moveRoll = MoveRoll(
         moveName: move.name,
-        moveDescription: move.description,
+        moveId: move.id,
         rollType: 'progress_roll',
         progressValue: quest.progress,
         challengeDice: result['challengeDice'] as List<int>,
         outcome: result['outcome'] as String,
         actionDie: 0, // Default value for progress rolls
         moveData: {
-          'moveId': move.id,
           'questId': questId,
           'questTitle': quest.title,
           'questProgress': quest.progress,
@@ -734,6 +740,8 @@ class MoveDialog {
               'progressValue': quest.progress,
               'questTitle': quest.title,
             },
+            character: gameProvider.currentGame?.mainCharacter,
+            onInsertText: isEditing ? onInsertText : null,
             onClose: () {
               Navigator.pop(context);
             },
@@ -768,12 +776,12 @@ class MoveDialog {
               // Add the oracle roll to the journal entry
               onMoveRollAdded(MoveRoll(
                 moveName: move.name,
-                moveDescription: move.description,
+                moveId: move.id,
                 rollType: 'oracle_roll',
                 outcome: 'performed',
                 actionDie: 0,
                 challengeDice: [],
-                moveData: {'moveId': move.id, 'oracleResult': oracleRoll.result},
+                moveData: {'oracleResult': oracleRoll.result},
               ));
               
               // Insert the oracle roll text at the cursor position

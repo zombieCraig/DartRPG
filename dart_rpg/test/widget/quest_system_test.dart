@@ -41,9 +41,6 @@ void main() {
       );
       testGame.quests.add(testQuest);
       
-      // Add the test game to the provider
-      gameProvider.games.add(testGame);
-      
       // For testing purposes, we'll create a mock QuestService that doesn't rely on GameProvider's currentGame
       // Instead, we'll modify our test to directly update the quest
     });

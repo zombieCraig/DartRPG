@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../models/move.dart';
+import '../../models/oracle.dart';
 import '../../models/journal_entry.dart';
 import '../../utils/dice_roller.dart';
-import '../oracles/oracle_result_view.dart';
+import '../oracles/inline_oracle_result.dart';
 
 /// A widget for displaying and interacting with embedded oracles in a move.
 class MoveOraclePanel extends StatefulWidget {
@@ -21,6 +22,8 @@ class MoveOraclePanel extends StatefulWidget {
 
 class _MoveOraclePanelState extends State<MoveOraclePanel> {
   String? selectedOracleKey;
+  OracleRoll? _lastOracleRoll;
+  OracleTable? _lastOracleTable;
   
   @override
   void initState() {
@@ -96,21 +99,38 @@ class _MoveOraclePanelState extends State<MoveOraclePanel> {
             style: const TextStyle(fontStyle: FontStyle.italic),
           ),
         ],
+
+        // Show inline oracle result
+        if (_lastOracleRoll != null && _lastOracleTable != null)
+          InlineOracleResult(
+            table: _lastOracleTable!,
+            oracleRoll: _lastOracleRoll!,
+            onRollAgain: () => _rollOnSelectedOracle(context),
+            onAddToJournal: (roll) {
+              widget.onOracleRollAdded(roll);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Oracle roll added to journal entry'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+          ),
       ],
     );
   }
 
   void _rollOnSelectedOracle(BuildContext context) {
     if (selectedOracleKey == null) return;
-    
+
     final oracle = widget.move.oracles[selectedOracleKey]!;
     final oracleTable = oracle.toOracleTable();
-    
+
     // Roll on the oracle
     final rollResult = DiceRoller.rollOracle(oracleTable.diceFormat);
     final total = rollResult['total'] as int;
     final dice = rollResult['dice'] as List<int>;
-    
+
     // Find the matching row
     String result = 'No result found for roll: $total';
     for (final row in oracleTable.rows) {
@@ -119,45 +139,16 @@ class _MoveOraclePanelState extends State<MoveOraclePanel> {
         break;
       }
     }
-    
-    // Create an OracleRoll object
-    final oracleRoll = OracleRoll(
-      oracleName: oracleTable.name,
-      oracleTable: oracleTable.id,
-      dice: dice,
-      result: result,
-    );
-    
-    // Show the result
-    if (context.mounted) {
-      showDialog(
-        context: context,
-        builder: (context) {
-          return OracleResultView(
-            table: oracleTable,
-            oracleRoll: oracleRoll,
-            onClose: () {
-              Navigator.pop(context);
-            },
-            onRollAgain: () {
-              Navigator.pop(context);
-              _rollOnSelectedOracle(context);
-            },
-            onAddToJournal: (roll) {
-              widget.onOracleRollAdded(roll);
-              Navigator.pop(context);
-              
-              // Show confirmation
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Oracle roll added to journal entry'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
-          );
-        },
+
+    // Create an OracleRoll object and display inline
+    setState(() {
+      _lastOracleTable = oracleTable;
+      _lastOracleRoll = OracleRoll(
+        oracleName: oracleTable.name,
+        oracleTable: oracleTable.id,
+        dice: dice,
+        result: result,
       );
-    }
+    });
   }
 }

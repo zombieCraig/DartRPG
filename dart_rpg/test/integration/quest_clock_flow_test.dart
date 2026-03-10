@@ -5,17 +5,20 @@ import 'package:dart_rpg/models/game.dart';
 import 'package:dart_rpg/models/character.dart';
 import 'package:dart_rpg/models/quest.dart';
 import 'package:dart_rpg/models/clock.dart';
+import 'package:dart_rpg/providers/datasworn_provider.dart';
 import 'package:dart_rpg/providers/game_provider.dart';
 import 'package:dart_rpg/providers/settings_provider.dart';
 import 'package:dart_rpg/screens/quests_screen.dart';
 import '../mocks/shared_preferences_mock.dart';
 import '../mocks/mock_game_provider.dart';
+import '../mocks/mock_datasworn_provider.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late MockGameProvider gameProvider;
   late SettingsProvider settingsProvider;
+  late MockDataswornProvider dataswornProvider;
   late Game testGame;
   late Character testCharacter;
 
@@ -23,6 +26,7 @@ void main() {
     setupSharedPreferencesMock();
     gameProvider = MockGameProvider();
     settingsProvider = SettingsProvider();
+    dataswornProvider = MockDataswornProvider();
 
     testGame = Game(name: 'Test Game');
     testCharacter = Character(
@@ -46,6 +50,7 @@ void main() {
       providers: [
         ChangeNotifierProvider<GameProvider>.value(value: gameProvider),
         ChangeNotifierProvider<SettingsProvider>.value(value: settingsProvider),
+        ChangeNotifierProvider<DataswornProvider>.value(value: dataswornProvider),
       ],
       child: MaterialApp(
         home: QuestsScreen(gameId: testGame.id),
@@ -146,7 +151,8 @@ void main() {
       await tester.pumpWidget(buildApp());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Clocks'));
+      await tester.ensureVisible(find.text('Clocks'));
+      await tester.tap(find.text('Clocks'), warnIfMissed: false);
       await tester.pumpAndSettle();
 
       expect(find.text('Corp Alert'), findsOneWidget);

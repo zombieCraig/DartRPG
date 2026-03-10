@@ -1,4 +1,3 @@
-import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
@@ -8,20 +7,20 @@ import 'journal_screen.dart';
 import 'character_screen.dart';
 import 'location_screen.dart';
 import 'quests_screen.dart';
-import 'moves_screen.dart';
-import 'oracles_screen.dart';
-import 'assets_screen.dart';
+import 'reference_screen.dart';
 import 'settings_screen.dart';
 import 'game_settings_screen.dart';
 
 class GameScreen extends StatefulWidget {
   final String gameId;
   final int initialTabIndex;
+  final int initialSubTabIndex;
 
   const GameScreen({
-    super.key, 
-    required this.gameId, 
+    super.key,
+    required this.gameId,
     this.initialTabIndex = 1, // Default to Character tab
+    this.initialSubTabIndex = 0,
   });
 
   @override
@@ -41,14 +40,12 @@ class _GameScreenState extends State<GameScreen> {
       // Delay to ensure the game provider is initialized
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final gameProvider = Provider.of<GameProvider>(context, listen: false);
-        final game = gameProvider.games.firstWhereOrNull(
-          (g) => g.id == widget.gameId,
-        );
+        final game = gameProvider.currentGame;
         if (game == null) return;
-        
+
         // Check if there's a main character
         final hasMainCharacter = game.mainCharacter != null;
-        
+
         // If there's a main character, go to Journal tab, otherwise stay on Character tab
         if (hasMainCharacter) {
           setState(() {
@@ -61,18 +58,18 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GameProvider>(
-      builder: (context, gameProvider, _) {
-        final game = gameProvider.games.firstWhereOrNull(
-          (g) => g.id == widget.gameId,
-        );
-        if (game == null) {
+    return Selector<GameProvider, String?>(
+      selector: (_, gp) => gp.currentGame?.name,
+      builder: (context, gameName, _) {
+        if (gameName == null) {
           return const Center(child: Text('Game not found'));
         }
+        final gameProvider = context.read<GameProvider>();
+        final game = gameProvider.currentGame!;
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(game.name),
+            title: Text(gameName),
             actions: [
               IconButton(
                 icon: const Icon(Icons.save_alt),
@@ -148,16 +145,8 @@ class _GameScreenState extends State<GameScreen> {
                 label: 'Quests',
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.sports_martial_arts),
-                label: 'Moves',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.casino),
-                label: 'Oracles',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.card_membership),
-                label: 'Assets',
+                icon: Icon(Icons.menu_book),
+                label: 'Reference',
               ),
             ],
           ),
@@ -177,11 +166,7 @@ class _GameScreenState extends State<GameScreen> {
       case 3:
         return QuestsScreen(gameId: game.id);
       case 4:
-        return MovesScreen();
-      case 5:
-        return OraclesScreen();
-      case 6:
-        return AssetsScreen();
+        return ReferenceScreen(initialSubTabIndex: widget.initialSubTabIndex);
       default:
         return const Center(child: Text('Unknown screen'));
     }

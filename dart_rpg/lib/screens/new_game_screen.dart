@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/ai_config_provider.dart';
 import '../providers/game_provider.dart';
 import '../providers/datasworn_provider.dart';
 import '../transitions/navigation_service.dart';
 import '../models/game.dart';
 import '../widgets/sentient_ai_settings_widget.dart';
 import '../widgets/ai_image_generation_settings_widget.dart';
+import 'setup_wizard_screen.dart';
 
 class NewGameScreen extends StatefulWidget {
   const NewGameScreen({super.key});
@@ -146,7 +148,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
                   // Sentient AI Settings
                   SentientAiSettingsWidget(
                     game: tempGame,
-                    gameProvider: gameProvider,
+                    aiConfigProvider: Provider.of<AiConfigProvider>(context, listen: false),
                     dataswornProvider: dataswornProvider,
                     initiallyExpanded: false,
                     showDividers: true,
@@ -159,7 +161,7 @@ class _NewGameScreenState extends State<NewGameScreen> {
                   // AI Image Generation Settings
                   AiImageGenerationSettingsWidget(
                     game: tempGame,
-                    gameProvider: gameProvider,
+                    aiConfigProvider: Provider.of<AiConfigProvider>(context, listen: false),
                     initiallyExpanded: false,
                     showDividers: true,
                     showHelpText: true,
@@ -208,48 +210,29 @@ class _NewGameScreenState extends State<NewGameScreen> {
           sentientAiImagePath: _sentientAiImagePath,
         );
         
-        // Set AI Image Generation settings
+        // Set AI Image Generation settings in a single batch call
         if (_aiImageGenerationEnabled) {
-          await gameProvider.updateAiImageGenerationEnabled(_aiImageGenerationEnabled);
-          
-          if (_aiImageProvider != null) {
-            await gameProvider.updateAiImageProvider(_aiImageProvider);
-            
-            // Set OpenAI model if OpenAI is selected
-            if (_aiImageProvider == 'openai' && _openaiModel != null) {
-              await gameProvider.updateOpenAiModel(_openaiModel!);
-            }
-            
-            // Set API keys
-            for (final entry in _aiApiKeys.entries) {
-              await gameProvider.updateAiApiKey(entry.key, entry.value);
-            }
-            
-            // Set artistic directions
-            for (final entry in _aiArtisticDirections.entries) {
-              await gameProvider.updateAiArtisticDirection(entry.key, entry.value);
-            }
-          }
+          final aiConfigProvider = Provider.of<AiConfigProvider>(context, listen: false);
+          await aiConfigProvider.updateAiConfig(
+            aiImageGenerationEnabled: _aiImageGenerationEnabled,
+            aiImageProvider: _aiImageProvider,
+            openaiModel: (_aiImageProvider == 'openai') ? _openaiModel : null,
+            apiKeys: _aiApiKeys.isNotEmpty ? _aiApiKeys : null,
+            artisticDirections: _aiArtisticDirections.isNotEmpty ? _aiArtisticDirections : null,
+          );
         }
         
-        // Explicitly save the game
-        await gameProvider.saveGame();
-        
-        // Load the datasworn source
+        // Load the datasworn source and custom oracles
         await dataswornProvider.loadDatasworn('assets/data/fe_runners.json');
+        await dataswornProvider.loadCustomOracles();
         
         if (!mounted) return;
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Game "${_nameController.text}" created successfully'),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-          ),
-        );
-
-        // Return to the game selection screen
+        // Navigate to setup wizard
         final navigationService = NavigationService();
-        navigationService.goBack(context);
+        navigationService.replaceWith(
+          context,
+          const SetupWizardScreen(),
+        );
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(

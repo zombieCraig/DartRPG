@@ -69,8 +69,6 @@ class _AssetsScreenState extends State<AssetsScreen> {
   }
   
   Widget _buildAssetGrid(List<Asset> assets, GameProvider gameProvider) {
-    final sortedAssets = List<Asset>.from(assets)..sort((a, b) => a.name.compareTo(b.name));
-    
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -79,9 +77,9 @@ class _AssetsScreenState extends State<AssetsScreen> {
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
       ),
-      itemCount: sortedAssets.length,
+      itemCount: assets.length,
       itemBuilder: (context, index) {
-        final asset = sortedAssets[index];
+        final asset = assets[index];
         
         return Card(
           clipBehavior: Clip.antiAlias,

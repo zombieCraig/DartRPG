@@ -24,9 +24,10 @@ class SentientAiUtils {
     double? height,
     bool useResponsiveHeight = true,
   }) {
-    final imageHeight = height ?? 
+    final imageHeight = height ??
         (useResponsiveHeight && MediaQuery.of(context).size.width < 600 ? 100.0 : 150.0);
-    
+    final int cacheH = (imageHeight * MediaQuery.devicePixelRatioOf(context)).toInt();
+
     // First try custom image
     if (imagePath != null && File(imagePath).existsSync()) {
       return ClipRRect(
@@ -35,10 +36,11 @@ class SentientAiUtils {
           File(imagePath),
           height: imageHeight,
           fit: BoxFit.cover,
+          cacheHeight: cacheH,
         ),
       );
     }
-    
+
     // Fall back to default image based on persona
     final defaultAsset = getDefaultImageAsset(personaText);
     if (defaultAsset != null) {
@@ -48,6 +50,7 @@ class SentientAiUtils {
           defaultAsset,
           height: imageHeight,
           fit: BoxFit.cover,
+          cacheHeight: cacheH,
         ),
       );
     }

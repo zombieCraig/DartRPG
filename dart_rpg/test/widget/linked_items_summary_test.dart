@@ -10,6 +10,7 @@ import 'package:dart_rpg/models/session.dart';
 import 'package:dart_rpg/models/quest.dart';
 import 'package:dart_rpg/providers/game_provider.dart';
 import 'package:dart_rpg/providers/datasworn_provider.dart';
+import 'package:dart_rpg/models/game_summary.dart';
 import 'package:dart_rpg/widgets/journal/linked_items_summary.dart';
 
 // Mock GameProvider for testing
@@ -22,13 +23,16 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   // Other required overrides with minimal implementations
   @override
   List<Game> get games => [];
-  
+
+  @override
+  List<GameSummary> get gameSummaries => [];
+
   @override
   bool get isLoading => false;
-  
+
   @override
   String? get error => null;
-  
+
   @override
   Session? get currentSession => null;
 
@@ -42,6 +46,7 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   Session? get questSession => null;
   @override
   Future<void> persistAndNotify() async {}
+  Future<void> updateAiConfig({bool? aiImageGenerationEnabled, String? aiImageProvider, String? openaiModel, Map<String, String>? apiKeys, Map<String, String>? artisticDirections}) async {}
 
   // Set the current game for testing
   void setCurrentGameForTest(Game game) {
@@ -195,24 +200,18 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   Future<void> advanceAllClocksOfType(ClockType type) async {}
   
   // Sentient AI-related methods
-  @override
   Future<void> updateSentientAiEnabled(bool enabled) async {}
-  
-  @override
+
   Future<void> updateSentientAiName(String? name) async {}
-  
-  @override
+
   Future<void> updateSentientAiPersona(String? persona) async {}
-  
-  @override
+
   Future<void> updateSentientAiImagePath(String? imagePath) async {}
-  
-  @override
+
   List<Map<String, String>> getAiPersonas(DataswornProvider dataswornProvider) {
     return [];
   }
-  
-  @override
+
   String? getRandomAiPersona(DataswornProvider dataswornProvider) {
     return null;
   }
@@ -225,28 +224,24 @@ class MockGameProvider extends ChangeNotifier implements GameProvider {
   void setImageManagerProvider(dynamic provider) {}
   
   // AI Image Generation methods
-  @override
   Future<void> updateAiImageGenerationEnabled(bool enabled) async {}
-  
-  @override
+
   Future<void> updateAiImageProvider(String? provider) async {}
-  
-  @override
+
   Future<void> updateAiApiKey(String provider, String apiKey) async {}
-  
-  @override
+
   Future<void> removeAiApiKey(String provider) async {}
-  
-  @override
+
   bool isAiImageGenerationAvailable() {
     return false;
   }
-  
-  @override
+
   Future<void> updateAiArtisticDirection(String provider, String artisticDirection) async {}
-  
-  @override
+
   Future<void> updateOpenAiModel(String model) async {}
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {

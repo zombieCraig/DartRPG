@@ -3,14 +3,15 @@ import 'package:uuid/uuid.dart';
 class MoveRoll {
   final String id;
   String moveName;
-  String? moveDescription;
+  String? moveId; // ID for looking up move description from DataswornProvider
+  String? moveDescription; // Kept for backward compat with old saved data
   String? stat;
   int? statValue;
   int actionDie;
   List<int> challengeDice;
   String outcome; // "strong hit", "weak hit", or "miss"
   DateTime timestamp;
-  
+
   // New properties for enhanced move functionality
   String rollType; // "action_roll", "progress_roll", or "no_roll"
   int? progressValue; // For progress rolls
@@ -22,6 +23,7 @@ class MoveRoll {
   MoveRoll({
     String? id,
     required this.moveName,
+    this.moveId,
     this.moveDescription,
     this.stat,
     this.statValue,
@@ -43,7 +45,7 @@ class MoveRoll {
     return {
       'id': id,
       'moveName': moveName,
-      'moveDescription': moveDescription,
+      'moveId': moveId,
       'stat': stat,
       'statValue': statValue,
       'actionDie': actionDie,
@@ -60,10 +62,15 @@ class MoveRoll {
   }
 
   factory MoveRoll.fromJson(Map<String, dynamic> json) {
+    // Extract moveId: prefer top-level, fall back to moveData['moveId'] for old data
+    final moveId = json['moveId'] as String? ??
+        (json['moveData'] as Map<String, dynamic>?)?['moveId'] as String?;
+
     return MoveRoll(
       id: json['id'],
       moveName: json['moveName'],
-      moveDescription: json['moveDescription'],
+      moveId: moveId,
+      moveDescription: json['moveDescription'], // backward compat
       stat: json['stat'],
       statValue: json['statValue'],
       actionDie: json['actionDie'],
@@ -78,6 +85,10 @@ class MoveRoll {
       momentumBurned: json['momentumBurned'] ?? false,
     );
   }
+
+  /// Resolves the move description: prefers the live Move object's description,
+  /// falls back to the stored moveDescription for old data without a moveId.
+  String? resolveDescription(dynamic move) => move?.description ?? moveDescription;
   
   // Helper method to get formatted text for journal entry
   String getFormattedText() {

@@ -180,6 +180,7 @@ class HomeScreen extends StatelessWidget {
                           if (summary.dataswornSource != null && context.mounted) {
                             final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
                             await dataswornProvider.loadDatasworn(summary.dataswornSource!);
+                            await dataswornProvider.loadCustomOracles();
                           }
 
                           if (context.mounted) {
@@ -253,6 +254,7 @@ class HomeScreen extends StatelessWidget {
                                             if (summary.dataswornSource != null && context.mounted) {
                                               final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
                                               await dataswornProvider.loadDatasworn(summary.dataswornSource!);
+                                              await dataswornProvider.loadCustomOracles();
                                             }
 
                                             if (context.mounted) {

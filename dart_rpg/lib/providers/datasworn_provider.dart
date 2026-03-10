@@ -34,6 +34,7 @@ class DataswornProvider extends ChangeNotifier {
     
     _isLoading = true;
     _error = null;
+    _customOraclesLoaded = false;
     notifyListeners();
 
     try {

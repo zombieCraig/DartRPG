@@ -169,6 +169,7 @@ class JournalEntry {
   DateTime updatedAt;
   List<String> linkedCharacterIds;
   List<String> linkedLocationIds;
+  List<String> linkedFactionIds;
   List<MoveRoll> moveRolls; // Changed from single moveRoll to list
   List<OracleRoll> oracleRolls; // Changed from single oracleRoll to list
   List<String> embeddedImages; // URLs of embedded images
@@ -183,6 +184,7 @@ class JournalEntry {
     DateTime? updatedAt,
     List<String>? linkedCharacterIds,
     List<String>? linkedLocationIds,
+    List<String>? linkedFactionIds,
     List<MoveRoll>? moveRolls,
     List<OracleRoll>? oracleRolls,
     List<String>? embeddedImages,
@@ -193,6 +195,7 @@ class JournalEntry {
         updatedAt = updatedAt ?? DateTime.now(),
         linkedCharacterIds = linkedCharacterIds ?? [],
         linkedLocationIds = linkedLocationIds ?? [],
+        linkedFactionIds = linkedFactionIds ?? [],
         moveRolls = moveRolls ?? [],
         oracleRolls = oracleRolls ?? [],
         embeddedImages = embeddedImages ?? [],
@@ -207,6 +210,7 @@ class JournalEntry {
       'updatedAt': updatedAt.toIso8601String(),
       'linkedCharacterIds': linkedCharacterIds,
       'linkedLocationIds': linkedLocationIds,
+      'linkedFactionIds': linkedFactionIds,
       'moveRolls': moveRolls.map((roll) => roll.toJson()).toList(),
       'oracleRolls': oracleRolls.map((roll) => roll.toJson()).toList(),
       'embeddedImages': embeddedImages,
@@ -252,6 +256,7 @@ class JournalEntry {
       updatedAt: DateTime.parse(json['updatedAt']),
       linkedCharacterIds: (json['linkedCharacterIds'] as List?)?.cast<String>() ?? [],
       linkedLocationIds: (json['linkedLocationIds'] as List?)?.cast<String>() ?? [],
+      linkedFactionIds: (json['linkedFactionIds'] as List?)?.cast<String>() ?? [],
       moveRolls: moveRollsList,
       oracleRolls: oracleRollsList,
       embeddedImages: (json['embeddedImages'] as List?)?.cast<String>() ?? [],
@@ -283,6 +288,16 @@ class JournalEntry {
 
   void unlinkLocation(String locationId) {
     linkedLocationIds.remove(locationId);
+  }
+
+  void linkFaction(String factionId) {
+    if (!linkedFactionIds.contains(factionId)) {
+      linkedFactionIds.add(factionId);
+    }
+  }
+
+  void unlinkFaction(String factionId) {
+    linkedFactionIds.remove(factionId);
   }
 
   // Backward compatibility getters and setters for single moveRoll/oracleRoll

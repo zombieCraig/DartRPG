@@ -22,7 +22,10 @@ class EditorToolbar extends StatelessWidget {
   
   /// Callback for when the location button is pressed.
   final VoidCallback onLocationPressed;
-  
+
+  /// Callback for when the faction button is pressed.
+  final VoidCallback onFactionPressed;
+
   /// Callback for when the image button is pressed.
   final VoidCallback onImagePressed;
   
@@ -48,6 +51,7 @@ class EditorToolbar extends StatelessWidget {
     required this.onNumberedListPressed,
     required this.onCharacterPressed,
     required this.onLocationPressed,
+    required this.onFactionPressed,
     required this.onImagePressed,
     this.onMovePressed,
     this.onOraclePressed,
@@ -139,7 +143,16 @@ class EditorToolbar extends StatelessWidget {
                   onPressed: onLocationPressed,
                 ),
               ),
-              
+
+              // Faction button
+              Tooltip(
+                message: 'Add Faction (\$)',
+                child: IconButton(
+                  icon: const Icon(Icons.groups),
+                  onPressed: onFactionPressed,
+                ),
+              ),
+
               // Image button
               Tooltip(
                 message: 'Add Image',

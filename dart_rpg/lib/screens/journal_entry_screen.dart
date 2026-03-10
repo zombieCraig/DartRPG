@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
 import '../models/journal_entry.dart';
 import '../models/character.dart';
+import '../models/faction.dart';
 import '../models/location.dart';
 import '../utils/logging_service.dart';
 import '../widgets/journal/journal_entry_editor.dart';
@@ -55,6 +56,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
   String? _richContent;
   List<String> _linkedCharacterIds = [];
   List<String> _linkedLocationIds = [];
+  List<String> _linkedFactionIds = [];
   List<MoveRoll> _moveRolls = [];
   List<OracleRoll> _oracleRolls = [];
   List<String> _embeddedImages = [];
@@ -85,11 +87,12 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     _linkedItemsManager = LinkedItemsManager(
       linkedCharacterIds: _linkedCharacterIds,
       linkedLocationIds: _linkedLocationIds,
+      linkedFactionIds: _linkedFactionIds,
       moveRolls: _moveRolls,
       oracleRolls: _oracleRolls,
       embeddedImages: _embeddedImages,
     );
-    
+
     // Initialize the autocomplete system
     _autocompleteSystem = AutocompleteSystem();
     
@@ -128,6 +131,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         entry.richContent = _richContent;
         entry.linkedCharacterIds = _linkedCharacterIds;
         entry.linkedLocationIds = _linkedLocationIds;
+        entry.linkedFactionIds = _linkedFactionIds;
         entry.moveRolls = _moveRolls;
         entry.oracleRolls = _oracleRolls;
         entry.embeddedImages = _embeddedImages;
@@ -141,6 +145,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         entry.richContent = _richContent;
         entry.linkedCharacterIds = _linkedCharacterIds;
         entry.linkedLocationIds = _linkedLocationIds;
+        entry.linkedFactionIds = _linkedFactionIds;
         entry.moveRolls = _moveRolls;
         entry.oracleRolls = _oracleRolls;
         entry.embeddedImages = _embeddedImages;
@@ -151,6 +156,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
           entry.richContent = _richContent;
           entry.linkedCharacterIds = _linkedCharacterIds;
           entry.linkedLocationIds = _linkedLocationIds;
+          entry.linkedFactionIds = _linkedFactionIds;
           entry.moveRolls = _moveRolls;
           entry.oracleRolls = _oracleRolls;
           entry.embeddedImages = _embeddedImages;
@@ -195,6 +201,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         entry.richContent = _richContent;
         entry.linkedCharacterIds = _linkedCharacterIds;
         entry.linkedLocationIds = _linkedLocationIds;
+        entry.linkedFactionIds = _linkedFactionIds;
         entry.moveRolls = _moveRolls;
         entry.oracleRolls = _oracleRolls;
         entry.embeddedImages = _embeddedImages;
@@ -208,6 +215,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         entry.richContent = _richContent;
         entry.linkedCharacterIds = _linkedCharacterIds;
         entry.linkedLocationIds = _linkedLocationIds;
+        entry.linkedFactionIds = _linkedFactionIds;
         entry.moveRolls = _moveRolls;
         entry.oracleRolls = _oracleRolls;
         entry.embeddedImages = _embeddedImages;
@@ -218,6 +226,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         entry.richContent = _richContent;
         entry.linkedCharacterIds = _linkedCharacterIds;
         entry.linkedLocationIds = _linkedLocationIds;
+        entry.linkedFactionIds = _linkedFactionIds;
         entry.moveRolls = _moveRolls;
         entry.oracleRolls = _oracleRolls;
         entry.embeddedImages = _embeddedImages;
@@ -304,7 +313,8 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         // Update linked entities
         entry.linkedCharacterIds = _linkedCharacterIds;
         entry.linkedLocationIds = _linkedLocationIds;
-        
+        entry.linkedFactionIds = _linkedFactionIds;
+
         // Update rolls
         entry.moveRolls = _moveRolls;
         entry.oracleRolls = _oracleRolls;
@@ -325,6 +335,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
           entry.richContent = _richContent;
           entry.linkedCharacterIds = _linkedCharacterIds;
           entry.linkedLocationIds = _linkedLocationIds;
+          entry.linkedFactionIds = _linkedFactionIds;
           entry.moveRolls = _moveRolls;
           entry.oracleRolls = _oracleRolls;
           entry.embeddedImages = _embeddedImages;
@@ -348,7 +359,8 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
           // Update linked entities
           entry.linkedCharacterIds = _linkedCharacterIds;
           entry.linkedLocationIds = _linkedLocationIds;
-          
+          entry.linkedFactionIds = _linkedFactionIds;
+
           // Update rolls
           entry.moveRolls = _moveRolls;
           entry.oracleRolls = _oracleRolls;
@@ -396,6 +408,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
             _richContent = entry.richContent;
             _linkedCharacterIds = List.from(entry.linkedCharacterIds);
             _linkedLocationIds = List.from(entry.linkedLocationIds);
+            _linkedFactionIds = List.from(entry.linkedFactionIds);
             _moveRolls = List.from(entry.moveRolls);
             _oracleRolls = List.from(entry.oracleRolls);
             _embeddedImages = List.from(entry.embeddedImages);
@@ -404,11 +417,12 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
             _linkedItemsManager = LinkedItemsManager(
               linkedCharacterIds: _linkedCharacterIds,
               linkedLocationIds: _linkedLocationIds,
+              linkedFactionIds: _linkedFactionIds,
               moveRolls: _moveRolls,
               oracleRolls: _oracleRolls,
               embeddedImages: _embeddedImages,
             );
-            
+
             // Update the editor controller with the loaded content
             _editorController.text = entry.content;
           });
@@ -451,6 +465,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         entry.richContent = _richContent;
         entry.linkedCharacterIds = _linkedCharacterIds;
         entry.linkedLocationIds = _linkedLocationIds;
+        entry.linkedFactionIds = _linkedFactionIds;
         entry.moveRolls = _moveRolls;
         entry.oracleRolls = _oracleRolls;
         entry.embeddedImages = _embeddedImages;
@@ -482,7 +497,8 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         // Update linked entities
         entry.linkedCharacterIds = _linkedCharacterIds;
         entry.linkedLocationIds = _linkedLocationIds;
-        
+        entry.linkedFactionIds = _linkedFactionIds;
+
         // Update rolls
         entry.moveRolls = _moveRolls;
         entry.oracleRolls = _oracleRolls;
@@ -509,6 +525,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         entry.richContent = _richContent;
         entry.linkedCharacterIds = _linkedCharacterIds;
         entry.linkedLocationIds = _linkedLocationIds;
+        entry.linkedFactionIds = _linkedFactionIds;
         entry.moveRolls = _moveRolls;
         entry.oracleRolls = _oracleRolls;
         entry.embeddedImages = _embeddedImages;
@@ -547,6 +564,49 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
 
   void _showLocationDetailsDialog(BuildContext context, Location location) =>
       JournalDetailDialogs.showLocationDetails(context, location);
+
+  void _showFactionDetailsDialog(BuildContext context, Faction faction) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(faction.name),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Icon(faction.type.icon, size: 16),
+                    const SizedBox(width: 4),
+                    Text(faction.type.displayName),
+                    const SizedBox(width: 16),
+                    Text('Influence: ${faction.influence.displayName}'),
+                  ],
+                ),
+                if (faction.description.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Description:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(faction.description),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
   
   void _showQuickAddCharacterDialog(BuildContext context) {
     QuickAddDialogs.showAddCharacter(
@@ -674,6 +734,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         entry.richContent = _richContent;
         entry.linkedCharacterIds = _linkedCharacterIds;
         entry.linkedLocationIds = _linkedLocationIds;
+        entry.linkedFactionIds = _linkedFactionIds;
         entry.moveRolls = _moveRolls;
         entry.oracleRolls = _oracleRolls;
         entry.embeddedImages = _embeddedImages;
@@ -693,7 +754,8 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         // Update linked entities
         entry.linkedCharacterIds = _linkedCharacterIds;
         entry.linkedLocationIds = _linkedLocationIds;
-        
+        entry.linkedFactionIds = _linkedFactionIds;
+
         // Update rolls
         entry.moveRolls = _moveRolls;
         entry.oracleRolls = _oracleRolls;
@@ -712,6 +774,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         entry.richContent = _richContent;
         entry.linkedCharacterIds = _linkedCharacterIds;
         entry.linkedLocationIds = _linkedLocationIds;
+        entry.linkedFactionIds = _linkedFactionIds;
         entry.moveRolls = _moveRolls;
         entry.oracleRolls = _oracleRolls;
         entry.embeddedImages = _embeddedImages;
@@ -730,18 +793,20 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
         _richContent = null;
         _linkedCharacterIds = [];
         _linkedLocationIds = [];
+        _linkedFactionIds = [];
         _moveRolls = [];
         _oracleRolls = [];
         _embeddedImages = [];
         _createdEntryId = null;
-        
+
         // Reset the editor controller
         _editorController.clear();
-        
+
         // Update the linked items manager
         _linkedItemsManager = LinkedItemsManager(
           linkedCharacterIds: _linkedCharacterIds,
           linkedLocationIds: _linkedLocationIds,
+          linkedFactionIds: _linkedFactionIds,
           moveRolls: _moveRolls,
           oracleRolls: _oracleRolls,
           embeddedImages: _embeddedImages,
@@ -936,6 +1001,13 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                                           }
                                         });
                                       },
+                                      onFactionLinked: (factionId) {
+                                        setState(() {
+                                          if (!_linkedFactionIds.contains(factionId)) {
+                                            _linkedFactionIds.add(factionId);
+                                          }
+                                        });
+                                      },
                                       onImageAdded: (imageUrl) {
                                         setState(() {
                                           if (!_embeddedImages.contains(imageUrl)) {
@@ -968,6 +1040,9 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                                       onLocationTap: (location) {
                                         _showLocationDetailsDialog(context, location);
                                       },
+                                      onFactionTap: (faction) {
+                                        _showFactionDetailsDialog(context, faction);
+                                      },
                                       onMoveRollTap: (moveRoll) {
                                         _showMoveRollDetailsDialog(context, moveRoll);
                                       },
@@ -982,6 +1057,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                             if (!_isEditing && (
                                 _linkedCharacterIds.isNotEmpty ||
                                 _linkedLocationIds.isNotEmpty ||
+                                _linkedFactionIds.isNotEmpty ||
                                 _moveRolls.isNotEmpty ||
                                 _oracleRolls.isNotEmpty
                               ))
@@ -997,6 +1073,7 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                                         richContent: _richContent,
                                         linkedCharacterIds: _linkedCharacterIds,
                                         linkedLocationIds: _linkedLocationIds,
+                                        linkedFactionIds: _linkedFactionIds,
                                         moveRolls: _moveRolls,
                                         oracleRolls: _oracleRolls,
                                         embeddedImages: _embeddedImages,
@@ -1012,6 +1089,12 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                                         final location = gameProvider.currentGame!.locations
                                             .firstWhere((l) => l.id == locationId);
                                         _showLocationDetailsDialog(context, location);
+                                      },
+                                      onFactionTap: (factionId) {
+                                        final gameProvider = Provider.of<GameProvider>(context, listen: false);
+                                        final faction = gameProvider.currentGame!.factions
+                                            .firstWhere((f) => f.id == factionId);
+                                        _showFactionDetailsDialog(context, faction);
                                       },
                                       onMoveRollTap: (moveRoll) {
                                         _showMoveRollDetailsDialog(context, moveRoll);

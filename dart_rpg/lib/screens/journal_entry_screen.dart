@@ -33,6 +33,10 @@ class NewEntryIntent extends Intent {
   const NewEntryIntent();
 }
 
+class CombatIntent extends Intent {
+  const CombatIntent();
+}
+
 class JournalEntryScreen extends StatefulWidget {
   final String? entryId;
   final String? sourceScreen;
@@ -242,6 +246,15 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
     }
   }
   
+  // Open the Quick Roll panel with combat section visible
+  void _openCombatInQuickRoll() {
+    if (_isEditing) {
+      setState(() {
+        _quickRollPanelOpen = true;
+      });
+    }
+  }
+
   // Show the Quests screen as an overlay so the journal state is preserved
   void _navigateToQuests(BuildContext context) {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
@@ -879,8 +892,10 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
             const QuestsIntent(),
         LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyM): 
             const MovesIntent(),
-        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN): 
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyN):
             const NewEntryIntent(),
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyB):
+            const CombatIntent(),
       },
       actions: {
         QuestsIntent: CallbackAction<QuestsIntent>(
@@ -904,6 +919,12 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
             if (_isEditing) {
               _saveAndCreateNew();
             }
+            return null;
+          },
+        ),
+        CombatIntent: CallbackAction<CombatIntent>(
+          onInvoke: (CombatIntent intent) {
+            _openCombatInQuickRoll();
             return null;
           },
         ),
@@ -1025,6 +1046,9 @@ class _JournalEntryScreenState extends State<JournalEntryScreen> {
                                       onQuestRequested: widget.sourceScreen != 'quests' ? () {
                                         _navigateToQuests(context);
                                       } : null,
+                                      onCombatRequested: () {
+                                        _openCombatInQuickRoll();
+                                      },
                                       onNewEntryRequested: _saveAndCreateNew,
                                       onLinkedItemsPressed: () {
                                         // This is handled internally by the JournalEntryEditor

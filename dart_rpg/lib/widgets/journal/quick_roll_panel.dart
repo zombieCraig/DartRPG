@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/character.dart';
+import '../../models/combat.dart';
 import '../../models/move.dart';
 import '../../models/journal_entry.dart';
 import '../../models/quest.dart';
@@ -11,6 +12,8 @@ import '../../providers/game_provider.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../services/roll_service.dart';
 import '../character/panels/character_key_stats_panel.dart';
+import '../combat/combat_create_dialog.dart';
+import '../combat/combat_tracker_panel.dart';
 import '../sentient_ai_dialog.dart';
 import '../moves/roll_result_view.dart';
 import '../common/search_text_field.dart';
@@ -41,6 +44,7 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _showHeaderStats = false;
+  bool _showCombatSection = true;
 
   // Snapshot for header stat changes
   int _snapMomentum = 0;
@@ -169,6 +173,9 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
                     ),
                   ),
 
+                // Combat section
+                _buildCombatSection(context, currentGame, mainCharacter, gameProvider),
+
                 // Search bar
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -250,6 +257,10 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
   }
 
   Widget _buildHeader(BuildContext context, Character? mainCharacter) {
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final activeCombats = gameProvider.currentGame?.activeCombats ?? [];
+    final latestCombat = activeCombats.isNotEmpty ? activeCombats.last : null;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
@@ -262,6 +273,39 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
               fontWeight: FontWeight.bold,
             ),
           ),
+          // In Control toggle (only when active combats exist)
+          if (latestCombat != null) ...[
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () async {
+                await gameProvider.toggleCombatControl(latestCombat.id);
+                final newState = latestCombat.isInControl ? 'In Control' : 'In a Bad Spot';
+                widget.onInsertText('\n*[Combat: $newState]*');
+                setState(() {});
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: latestCombat.isInControl
+                      ? Colors.green.withAlpha(40)
+                      : Colors.red.withAlpha(40),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: latestCombat.isInControl ? Colors.green : Colors.red,
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  latestCombat.isInControl ? 'In Control' : 'Bad Spot',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    color: latestCombat.isInControl ? Colors.green : Colors.red,
+                  ),
+                ),
+              ),
+            ),
+          ],
           const Spacer(),
           if (mainCharacter != null)
             IconButton(
@@ -503,6 +547,11 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
       _lastRollResult = rollResult;
     });
 
+    // Auto-update combat state based on combat move outcomes
+    if (_isCombatMove(move.id)) {
+      _applyCombatAutoUpdate(move.id, moveRoll.outcome, gameProvider);
+    }
+
     // Save game (persists recent moves + any momentum changes)
     gameProvider.saveGame();
 
@@ -578,13 +627,16 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
     final game = gameProvider.currentGame;
     if (game == null) return;
 
-    // For quest-related progress moves, show quest picker
     final quests = game.quests.where((q) => q.status == QuestStatus.ongoing).toList();
+    final isCombatMove = move.id == 'move:fe_runners/combat/take_decisive_action';
+    final activeCombats = isCombatMove ? game.activeCombats : <Combat>[];
 
-    if (quests.isEmpty) {
+    if (quests.isEmpty && activeCombats.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No active quests to make a progress roll against'),
+        SnackBar(
+          content: Text(isCombatMove
+              ? 'No active quests or combats to make a progress roll against'
+              : 'No active quests to make a progress roll against'),
         ),
       );
       return;
@@ -600,12 +652,24 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
               const Padding(
                 padding: EdgeInsets.all(16),
                 child: Text(
-                  'Select quest for progress roll',
+                  'Select target for progress roll',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
+              // Combats first (only shown for Take Decisive Action)
+              ...activeCombats.map((combat) => ListTile(
+                leading: const Icon(Icons.sports_martial_arts, size: 20, color: Colors.red),
+                title: Text('Combat: ${combat.title}'),
+                subtitle: Text('Progress: ${combat.progress}/10'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _rollCombatProgressMove(combat);
+                },
+              )),
+              // Quests (shown for all progress moves)
               ...quests.map((quest) => ListTile(
-                title: Text(quest.title),
+                leading: const Icon(Icons.task_alt, size: 20),
+                title: Text('Quest: ${quest.title}'),
                 subtitle: Text('Progress: ${quest.progress}/10'),
                 onTap: () {
                   Navigator.pop(context);
@@ -794,6 +858,276 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
         Navigator.pop(context);
       },
     );
+  }
+
+  // --- Combat ---
+
+  /// Map of combat move IDs to their auto-update rules
+  static const _combatMoveIds = {
+    'move:fe_runners/combat/enter_the_fray',
+    'move:fe_runners/combat/gain_ground',
+    'move:fe_runners/combat/strike',
+    'move:fe_runners/combat/clash',
+    'move:fe_runners/combat/react_under_fire',
+    'move:fe_runners/combat/take_decisive_action',
+  };
+
+  bool _isCombatMove(String moveId) => _combatMoveIds.contains(moveId);
+
+  void _applyCombatAutoUpdate(String moveId, String outcome, GameProvider gameProvider) {
+    final game = gameProvider.currentGame;
+    if (game == null) return;
+
+    final activeCombats = game.activeCombats;
+    if (activeCombats.isEmpty) return;
+
+    final combat = activeCombats.last;
+    final combatId = combat.id;
+
+    final isStrongHit = outcome == 'strong hit';
+    final isWeakHit = outcome == 'weak hit';
+    final isMiss = outcome == 'miss';
+
+    switch (moveId) {
+      case 'move:fe_runners/combat/enter_the_fray':
+        if (isStrongHit) {
+          gameProvider.setCombatControl(combatId, true);
+          widget.onInsertText('\n*[Combat: In Control]*');
+        } else if (isMiss) {
+          gameProvider.setCombatControl(combatId, false);
+          widget.onInsertText('\n*[Combat: In a Bad Spot]*');
+        }
+        break;
+
+      case 'move:fe_runners/combat/gain_ground':
+        if (isStrongHit || isWeakHit) {
+          gameProvider.setCombatControl(combatId, true);
+          widget.onInsertText('\n*[Combat: In Control]*');
+        } else if (isMiss) {
+          gameProvider.setCombatControl(combatId, false);
+          widget.onInsertText('\n*[Combat: In a Bad Spot]*');
+        }
+        break;
+
+      case 'move:fe_runners/combat/strike':
+        if (isStrongHit) {
+          gameProvider.setCombatControl(combatId, true);
+          gameProvider.addCombatTicksForRankDouble(combatId);
+          widget.onInsertText('\n*[Combat "${combat.title}": In Control, +progress x2 (${combat.progress}/10)]*');
+        } else if (isWeakHit) {
+          gameProvider.setCombatControl(combatId, false);
+          gameProvider.addCombatTicksForRankDouble(combatId);
+          widget.onInsertText('\n*[Combat "${combat.title}": In a Bad Spot, +progress x2 (${combat.progress}/10)]*');
+        } else if (isMiss) {
+          gameProvider.setCombatControl(combatId, false);
+          widget.onInsertText('\n*[Combat: In a Bad Spot]*');
+        }
+        break;
+
+      case 'move:fe_runners/combat/clash':
+        if (isStrongHit) {
+          gameProvider.setCombatControl(combatId, true);
+          gameProvider.addCombatTicksForRankDouble(combatId);
+          widget.onInsertText('\n*[Combat "${combat.title}": In Control, +progress x2 (${combat.progress}/10)]*');
+        } else if (isWeakHit) {
+          gameProvider.setCombatControl(combatId, false);
+          gameProvider.addCombatTicksForRank(combatId);
+          widget.onInsertText('\n*[Combat "${combat.title}": In a Bad Spot, +progress (${combat.progress}/10)]*');
+        } else if (isMiss) {
+          gameProvider.setCombatControl(combatId, false);
+          widget.onInsertText('\n*[Combat: In a Bad Spot]*');
+        }
+        break;
+
+      case 'move:fe_runners/combat/react_under_fire':
+        if (isStrongHit) {
+          gameProvider.setCombatControl(combatId, true);
+          widget.onInsertText('\n*[Combat: In Control]*');
+        }
+        // weak hit/miss: stay in bad spot (no change needed)
+        break;
+    }
+
+    setState(() {});
+  }
+
+  Widget _buildCombatSection(BuildContext context, dynamic currentGame, Character mainCharacter, GameProvider gameProvider) {
+    final activeCombats = currentGame.activeCombats as List<Combat>;
+
+    if (activeCombats.isEmpty && !_showCombatSection) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section header with toggle and new combat button
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 4, 8, 0),
+          child: Row(
+            children: [
+              GestureDetector(
+                onTap: () => setState(() => _showCombatSection = !_showCombatSection),
+                child: Row(
+                  children: [
+                    Icon(
+                      _showCombatSection ? Icons.expand_more : Icons.chevron_right,
+                      size: 16,
+                      color: Colors.grey[600],
+                    ),
+                    const SizedBox(width: 2),
+                    Text(
+                      'Combat',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[600],
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    if (activeCombats.isNotEmpty) ...[
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withAlpha(30),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${activeCombats.length}',
+                          style: const TextStyle(fontSize: 9, color: Colors.red, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.add, size: 16),
+                onPressed: () {
+                  CombatCreateDialog.show(
+                    context,
+                    onCreate: (title, rank) async {
+                      await gameProvider.createCombat(
+                        title,
+                        mainCharacter.id,
+                        rank,
+                      );
+                      widget.onInsertText('\n*[Combat Started: $title (${rank.displayName})]*');
+                      setState(() => _showCombatSection = true);
+                    },
+                  );
+                },
+                visualDensity: VisualDensity.compact,
+                tooltip: 'New Combat',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+              ),
+            ],
+          ),
+        ),
+
+        // Active combat trackers
+        if (_showCombatSection)
+          ...activeCombats.map((combat) => CombatTrackerPanel(
+            combat: combat,
+            onMarkProgress: () async {
+              await gameProvider.addCombatTicksForRank(combat.id);
+              widget.onInsertText('\n*[Combat "${combat.title}": +progress (${combat.progress}/10)]*');
+              setState(() {});
+            },
+            onMarkProgressDouble: () async {
+              await gameProvider.addCombatTicksForRankDouble(combat.id);
+              widget.onInsertText('\n*[Combat "${combat.title}": +progress x2 (${combat.progress}/10)]*');
+              setState(() {});
+            },
+            onDecrease: () async {
+              await gameProvider.removeCombatTicksForRank(combat.id);
+              widget.onInsertText('\n*[Combat "${combat.title}": -progress (${combat.progress}/10)]*');
+              setState(() {});
+            },
+            onProgressRoll: () => _rollCombatProgressMove(combat),
+            onToggleControl: () async {
+              await gameProvider.toggleCombatControl(combat.id);
+              final newState = combat.isInControl ? 'In Control' : 'In a Bad Spot';
+              widget.onInsertText('\n*[Combat: $newState]*');
+              setState(() {});
+            },
+            onEnd: (status) async {
+              await gameProvider.endCombat(combat.id, status);
+              widget.onInsertText('\n*[Combat "${combat.title}" ended: ${status.displayName}]*');
+              setState(() {});
+            },
+            onTickChanged: (ticks) async {
+              await gameProvider.updateCombatProgressTicks(combat.id, ticks);
+              setState(() {});
+            },
+          )),
+
+        if (activeCombats.isNotEmpty || _showCombatSection)
+          const Divider(height: 8),
+      ],
+    );
+  }
+
+  Future<void> _rollCombatProgressMove(Combat combat) async {
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final dataswornProvider = Provider.of<DataswornProvider>(context, listen: false);
+
+    try {
+      final result = await gameProvider.makeCombatProgressRoll(combat.id);
+
+      // Find the Take Decisive Action move
+      final move = dataswornProvider.moves.firstWhereOrNull(
+        (m) => m.id == 'move:fe_runners/combat/take_decisive_action',
+      );
+
+      final moveName = move?.name ?? 'Take Decisive Action';
+      final moveId = move?.id ?? 'take_decisive_action';
+
+      final moveRoll = MoveRoll(
+        moveName: moveName,
+        moveId: moveId,
+        rollType: 'progress_roll',
+        progressValue: combat.progress,
+        challengeDice: result['challengeDice'] as List<int>,
+        outcome: result['outcome'] as String,
+        actionDie: 0,
+        isMatch: (result['challengeDice'] as List<int>)[0] == (result['challengeDice'] as List<int>)[1],
+        moveData: {
+          'combatId': combat.id,
+          'combatTitle': combat.title,
+          'combatProgress': combat.progress,
+        },
+      );
+
+      widget.onMoveRollAdded(moveRoll);
+
+      final formattedText = moveRoll.getFormattedText();
+      final combatInfo = '\n**Combat:** ${combat.title} (Progress: ${combat.progress}/10)\n';
+      widget.onInsertText(formattedText + combatInfo);
+
+      setState(() {
+        _lastRolledMove = move;
+        _lastMoveRoll = moveRoll;
+        _lastRollResult = {
+          'outcome': result['outcome'],
+          'challengeDice': result['challengeDice'],
+          'progressValue': combat.progress,
+        };
+      });
+
+      gameProvider.saveGame();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   // --- Helpers ---

@@ -37,7 +37,10 @@ class EditorToolbar extends StatelessWidget {
   
   /// Callback for when the quest button is pressed.
   final VoidCallback? onQuestPressed;
-  
+
+  /// Callback for when the combat button is pressed.
+  final VoidCallback? onCombatPressed;
+
   /// Callback for when the linked items button is pressed.
   final VoidCallback? onLinkedItemsPressed;
   
@@ -56,6 +59,7 @@ class EditorToolbar extends StatelessWidget {
     this.onMovePressed,
     this.onOraclePressed,
     this.onQuestPressed,
+    this.onCombatPressed,
     this.onLinkedItemsPressed,
   });
   
@@ -191,7 +195,17 @@ class EditorToolbar extends StatelessWidget {
                     onPressed: onQuestPressed,
                   ),
                 ),
-                
+
+              // Combat button
+              if (onCombatPressed != null)
+                Tooltip(
+                  message: 'Combat (Ctrl+B)',
+                  child: IconButton(
+                    icon: const Icon(Icons.sports_martial_arts),
+                    onPressed: onCombatPressed,
+                  ),
+                ),
+
               // Linked Items button
               if (onLinkedItemsPressed != null)
                 Tooltip(

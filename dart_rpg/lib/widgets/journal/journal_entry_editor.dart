@@ -50,7 +50,10 @@ class JournalEntryEditor extends StatefulWidget {
   
   /// Callback for when a quest is requested.
   final Function()? onQuestRequested;
-  
+
+  /// Callback for when combat is requested.
+  final Function()? onCombatRequested;
+
   /// Callback for when a new entry is requested.
   final Function()? onNewEntryRequested;
   
@@ -83,6 +86,7 @@ class JournalEntryEditor extends StatefulWidget {
     this.onMoveRequested,
     this.onOracleRequested,
     this.onQuestRequested,
+    this.onCombatRequested,
     this.onNewEntryRequested,
     this.onLinkedItemsPressed,
     this.controller,
@@ -875,6 +879,7 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
         onMovePressed: widget.onMoveRequested,
         onOraclePressed: widget.onOracleRequested,
         onQuestPressed: widget.onQuestRequested,
+        onCombatPressed: widget.onCombatRequested,
         onLinkedItemsPressed: _toggleLinkedItems,
       ) : null;
     

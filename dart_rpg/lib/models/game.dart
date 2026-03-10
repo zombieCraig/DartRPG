@@ -5,6 +5,7 @@ import '../utils/logging_service.dart';
 import 'ai_config.dart';
 import 'character.dart';
 import 'clock.dart';
+import 'combat.dart';
 import 'location.dart';
 import 'recent_move_entry.dart';
 import 'session.dart';
@@ -24,6 +25,7 @@ class Game {
   List<Quest> quests;
   List<Connection> connections;
   List<Clock> clocks;
+  List<Combat> combats;
   List<Faction> factions;
   List<NetworkRoute> routes;
   Character? mainCharacter;
@@ -52,6 +54,7 @@ class Game {
     List<Quest>? quests,
     List<Connection>? connections,
     List<Clock>? clocks,
+    List<Combat>? combats,
     List<Faction>? factions,
     List<NetworkRoute>? routes,
     this.mainCharacter,
@@ -81,6 +84,7 @@ class Game {
         quests = quests ?? [],
         connections = connections ?? [],
         clocks = clocks ?? [],
+        combats = combats ?? [],
         factions = factions ?? [],
         routes = routes ?? [],
         recentMoves = recentMoves ?? [],
@@ -130,6 +134,7 @@ class Game {
       'quests': quests.map((q) => q.toJson()).toList(),
       'connections': connections.map((c) => c.toJson()).toList(),
       'clocks': clocks.map((c) => c.toJson()).toList(),
+      'combats': combats.map((c) => c.toJson()).toList(),
       'factions': factions.map((f) => f.toJson()).toList(),
       'routes': routes.map((r) => r.toJson()).toList(),
       'tutorialsEnabled': tutorialsEnabled,
@@ -190,6 +195,9 @@ class Game {
           .toList() ?? [],
       clocks: (json['clocks'] as List?)
           ?.map((c) => Clock.fromJson(c))
+          .toList() ?? [],
+      combats: (json['combats'] as List?)
+          ?.map((c) => Combat.fromJson(c))
           .toList() ?? [],
       factions: (json['factions'] as List?)
           ?.map((f) => Faction.fromJson(f))
@@ -329,6 +337,18 @@ class Game {
 
   List<Clock> getAllClocks() {
     return List.from(clocks);
+  }
+
+  void addCombat(Combat combat) {
+    combats.add(combat);
+  }
+
+  List<Combat> getCombatsForCharacter(String characterId) {
+    return combats.where((c) => c.characterId == characterId).toList();
+  }
+
+  List<Combat> get activeCombats {
+    return combats.where((c) => c.status == CombatStatus.active).toList();
   }
 
   List<Quest> getQuestsForCharacter(String characterId) {

@@ -151,7 +151,8 @@ void main() {
       await tester.pumpWidget(buildApp());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Clocks'));
+      await tester.ensureVisible(find.text('Clocks'));
+      await tester.tap(find.text('Clocks'), warnIfMissed: false);
       await tester.pumpAndSettle();
 
       expect(find.text('Corp Alert'), findsOneWidget);

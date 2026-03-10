@@ -3,13 +3,14 @@ import 'package:provider/provider.dart';
 import '../../models/move.dart';
 import '../../models/quest.dart';
 import '../../models/connection.dart';
+import '../../models/network_route.dart';
 import '../../providers/game_provider.dart';
 
 /// A panel for handling progress rolls.
 ///
 /// This panel allows users to either:
 /// 1. Select an existing quest and use its progress value
-/// 2. Select a connection and use its progress value (Forge a Bond)
+/// 2. Select a connection/route and use its progress value
 /// 3. Manually set a progress value using a slider
 class ProgressRollPanel extends StatefulWidget {
   final Move move;
@@ -27,17 +28,22 @@ class ProgressRollPanel extends StatefulWidget {
   State<ProgressRollPanel> createState() => _ProgressRollPanelState();
 }
 
-enum _ProgressMode { quest, connection, manual }
+enum _ProgressMode { quest, connection, route, manual }
 
 class _ProgressRollPanelState extends State<ProgressRollPanel> {
   int _progressValue = 5;
   _ProgressMode _mode = _ProgressMode.quest;
   String? _selectedQuestId;
   String? _selectedConnectionId;
+  String? _selectedRouteId;
   List<Quest> _quests = [];
   List<Connection> _connections = [];
+  List<NetworkRoute> _routes = [];
   final FocusNode _rollButtonFocusNode = FocusNode();
   final GlobalKey _rollButtonKey = GlobalKey();
+
+  /// Whether this move should show routes instead of connections
+  bool get _isRouteMove => widget.move.id.contains('infiltrate_segment');
 
   @override
   void initState() {
@@ -62,16 +68,33 @@ class _ProgressRollPanelState extends State<ProgressRollPanel> {
       _connections = game.connections
           .where((c) => c.status == ConnectionStatus.active)
           .toList();
+      _routes = game.routes
+          .where((r) => r.status == RouteStatus.active)
+          .toList();
 
-      if (_quests.isNotEmpty) {
-        _selectedQuestId = _quests.first.id;
-        _progressValue = _quests.first.progress;
-      } else if (_connections.isNotEmpty) {
-        _mode = _ProgressMode.connection;
-        _selectedConnectionId = _connections.first.id;
-        _progressValue = _connections.first.progress;
+      if (_isRouteMove) {
+        // For Infiltrate Segment, default to routes tab
+        if (_routes.isNotEmpty) {
+          _mode = _ProgressMode.route;
+          _selectedRouteId = _routes.first.id;
+          _progressValue = _routes.first.progress;
+        } else if (_quests.isNotEmpty) {
+          _selectedQuestId = _quests.first.id;
+          _progressValue = _quests.first.progress;
+        } else {
+          _mode = _ProgressMode.manual;
+        }
       } else {
-        _mode = _ProgressMode.manual;
+        if (_quests.isNotEmpty) {
+          _selectedQuestId = _quests.first.id;
+          _progressValue = _quests.first.progress;
+        } else if (_connections.isNotEmpty) {
+          _mode = _ProgressMode.connection;
+          _selectedConnectionId = _connections.first.id;
+          _progressValue = _connections.first.progress;
+        } else {
+          _mode = _ProgressMode.manual;
+        }
       }
     });
   }
@@ -93,6 +116,17 @@ class _ProgressRollPanelState extends State<ProgressRollPanel> {
       setState(() {
         _selectedConnectionId = connectionId;
         _progressValue = connection.progress;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _focusRollButton());
+    }
+  }
+
+  void _onRouteSelected(String? routeId) {
+    if (routeId != null) {
+      final route = _routes.firstWhere((r) => r.id == routeId);
+      setState(() {
+        _selectedRouteId = routeId;
+        _progressValue = route.progress;
       });
       WidgetsBinding.instance.addPostFrameCallback((_) => _focusRollButton());
     }
@@ -126,7 +160,10 @@ class _ProgressRollPanelState extends State<ProgressRollPanel> {
         Row(
           children: [
             _buildModeTab('Quest', _ProgressMode.quest),
-            _buildModeTab('Connection', _ProgressMode.connection),
+            if (_isRouteMove)
+              _buildModeTab('Routes', _ProgressMode.route)
+            else
+              _buildModeTab('Connection', _ProgressMode.connection),
             _buildModeTab('Manual', _ProgressMode.manual),
           ],
         ),
@@ -138,6 +175,8 @@ class _ProgressRollPanelState extends State<ProgressRollPanel> {
           _buildQuestSection(),
         ] else if (_mode == _ProgressMode.connection) ...[
           _buildConnectionSection(),
+        ] else if (_mode == _ProgressMode.route) ...[
+          _buildRouteSection(),
         ] else ...[
           _buildManualSection(),
         ],
@@ -241,6 +280,35 @@ class _ProgressRollPanelState extends State<ProgressRollPanel> {
             onChanged: _onConnectionSelected,
           ),
         if (_selectedConnectionId != null) ...[
+          const SizedBox(height: 16),
+          _buildProgressBar(),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildRouteSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Select Route:', style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        if (_routes.isEmpty)
+          const Text('No active routes available')
+        else
+          DropdownButtonFormField<String>(
+            value: _selectedRouteId,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+            items: _routes.map((route) => DropdownMenuItem<String>(
+              value: route.id,
+              child: Text('${route.name} — ${route.routeLabel} (Progress: ${route.progress}/10)'),
+            )).toList(),
+            onChanged: _onRouteSelected,
+          ),
+        if (_selectedRouteId != null) ...[
           const SizedBox(height: 16),
           _buildProgressBar(),
         ],

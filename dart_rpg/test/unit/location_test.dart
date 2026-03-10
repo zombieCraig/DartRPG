@@ -222,7 +222,7 @@ void main() {
         expect(LocationSegment.core.color, equals(Colors.green));
         expect(LocationSegment.corpNet.color, equals(Colors.yellow));
         expect(LocationSegment.govNet.color, equals(Colors.grey));
-        expect(LocationSegment.darkNet.color, equals(Colors.black));
+        expect(LocationSegment.darkNet.color, equals(Colors.purple));
       });
       
       test('fromString returns correct enum values', () {

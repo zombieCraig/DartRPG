@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/game.dart';
@@ -66,6 +67,9 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
   final List<Map<String, String>> _supportedProviders = [
     {'id': 'minimax', 'name': 'Minimax'},
     {'id': 'openai', 'name': 'OpenAI'},
+    {'id': 'stability', 'name': 'Stability AI'},
+    {'id': 'google_imagen', 'name': 'Google Imagen'},
+    {'id': 'fal', 'name': 'FAL.ai (FLUX)'},
   ];
   
   // List of supported OpenAI models
@@ -138,10 +142,57 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
   
   @override
   Widget build(BuildContext context) {
+    // AI image generation is not available on web due to CORS restrictions
+    if (kIsWeb) {
+      return Column(
+        children: [
+          if (widget.showDividers) const Divider(),
+          ExpansionTile(
+            title: const Text(
+              'AI Image Generation',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            subtitle: const Text(
+              'Not available on web',
+              style: TextStyle(color: Colors.grey),
+            ),
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Container(
+                  padding: const EdgeInsets.all(12.0),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8.0),
+                    border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.orange),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'AI image generation is only available on desktop builds. '
+                          'Web browsers block direct API calls to external services due to CORS restrictions. '
+                          'Please use the desktop app to generate AI images.',
+                          style: TextStyle(fontSize: 14.0),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (widget.showDividers) const Divider(),
+        ],
+      );
+    }
+
     // Use either the game's values or the local values depending on mode
-    final aiImageGenerationEnabled = widget.isNewGame ? 
+    final aiImageGenerationEnabled = widget.isNewGame ?
         _aiImageGenerationEnabled : widget.game.aiConfig.aiImageGenerationEnabled;
-    final aiImageProvider = widget.isNewGame ? 
+    final aiImageProvider = widget.isNewGame ?
         _aiImageProvider : widget.game.aiConfig.aiImageProvider;
     return Column(
       children: [
@@ -571,6 +622,189 @@ class _AiImageGenerationSettingsWidgetState extends State<AiImageGenerationSetti
                               const SizedBox(height: 8.0),
                               const Text(
                                 'Note: You need to have credits in your OpenAI account to generate images. Pricing varies by model.',
+                                style: TextStyle(
+                                  fontSize: 14.0,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      if (aiImageProvider == 'stability')
+                        Container(
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Stability AI API',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16.0,
+                                ),
+                              ),
+                              const SizedBox(height: 8.0),
+                              const Text(
+                                'Uses Stable Diffusion 3.5 Large for high-quality image generation. Generates 1 image per request with per-image pricing.',
+                                style: TextStyle(fontSize: 14.0),
+                              ),
+                              const SizedBox(height: 8.0),
+                              Row(
+                                children: [
+                                  InkWell(
+                                    onTap: () async {
+                                      final Uri url = Uri.parse('https://platform.stability.ai/account/keys');
+                                      if (!await launchUrl(url)) {
+                                        if (!context.mounted) return;
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Could not open the URL'),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    child: const Text(
+                                      'Get your API key here',
+                                      style: TextStyle(
+                                        fontSize: 14.0,
+                                        color: Colors.blue,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8.0),
+                              const Text(
+                                'Note: Only 1 image is generated per request. Credits are consumed per image generated.',
+                                style: TextStyle(
+                                  fontSize: 14.0,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      if (aiImageProvider == 'google_imagen')
+                        Container(
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Google Imagen API',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16.0,
+                                ),
+                              ),
+                              const SizedBox(height: 8.0),
+                              const Text(
+                                'Uses Imagen 3 via the Gemini API for high-quality image generation. Supports up to 4 images per request.',
+                                style: TextStyle(fontSize: 14.0),
+                              ),
+                              const SizedBox(height: 8.0),
+                              Row(
+                                children: [
+                                  InkWell(
+                                    onTap: () async {
+                                      final Uri url = Uri.parse('https://aistudio.google.com/apikey');
+                                      if (!await launchUrl(url)) {
+                                        if (!context.mounted) return;
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Could not open the URL'),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    child: const Text(
+                                      'Get your API key here',
+                                      style: TextStyle(
+                                        fontSize: 14.0,
+                                        color: Colors.blue,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8.0),
+                              const Text(
+                                'Note: Uses Google AI Studio API key. Free tier available with usage limits.',
+                                style: TextStyle(
+                                  fontSize: 14.0,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      if (aiImageProvider == 'fal')
+                        Container(
+                          padding: const EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'FAL.ai (FLUX) API',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16.0,
+                                ),
+                              ),
+                              const SizedBox(height: 8.0),
+                              const Text(
+                                'Uses FLUX models for fast, high-quality image generation. Generally the most affordable option with good quality results.',
+                                style: TextStyle(fontSize: 14.0),
+                              ),
+                              const SizedBox(height: 8.0),
+                              Row(
+                                children: [
+                                  InkWell(
+                                    onTap: () async {
+                                      final Uri url = Uri.parse('https://fal.ai/dashboard/keys');
+                                      if (!await launchUrl(url)) {
+                                        if (!context.mounted) return;
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Could not open the URL'),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    child: const Text(
+                                      'Get your API key here',
+                                      style: TextStyle(
+                                        fontSize: 14.0,
+                                        color: Colors.blue,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8.0),
+                              const Text(
+                                'Note: Uses FLUX dev model. One of the cheapest options for AI image generation.',
                                 style: TextStyle(
                                   fontSize: 14.0,
                                   fontStyle: FontStyle.italic,

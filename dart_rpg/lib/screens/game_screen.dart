@@ -158,7 +158,10 @@ class _GameScreenState extends State<GameScreen> {
   Widget _buildBody(BuildContext context, Game game, GameProvider gameProvider) {
     switch (_selectedIndex) {
       case 0:
-        return JournalScreen(gameId: game.id);
+        return JournalScreen(
+          gameId: game.id,
+          onNavigateToQuests: () => setState(() { _selectedIndex = 3; }),
+        );
       case 1:
         return CharacterScreen(gameId: game.id);
       case 2:

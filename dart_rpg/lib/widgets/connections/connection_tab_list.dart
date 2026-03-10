@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import '../../models/character.dart';
 import '../../models/connection.dart';
@@ -51,10 +52,10 @@ class ConnectionTabList extends StatelessWidget {
       itemCount: connections.length,
       itemBuilder: (context, index) {
         final connection = connections[index];
-        final character = characters.firstWhere(
+        final character = characters.firstWhereOrNull(
           (c) => c.id == connection.characterId,
-          orElse: () => throw Exception('Character not found'),
         );
+        if (character == null) return const SizedBox.shrink();
 
         return ConnectionCard(
           connection: connection,

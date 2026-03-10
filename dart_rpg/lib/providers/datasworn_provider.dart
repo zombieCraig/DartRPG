@@ -66,6 +66,7 @@ class DataswornProvider extends ChangeNotifier {
         }
       }
       
+      _cachedAssetsByCategory = null;
       _assets = DataswornParser.parseAssets(datasworn);
       loggingService.debug('Parsed ${_assets.length} assets', tag: 'DataswornProvider');
       

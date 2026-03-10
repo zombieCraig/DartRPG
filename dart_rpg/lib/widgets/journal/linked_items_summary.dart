@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/datasworn_provider.dart';
+import '../../models/character.dart';
+import '../../models/location.dart';
 import '../../models/journal_entry.dart';
 import '../../utils/outcome_utils.dart';
 import '../../widgets/common/app_image_widget.dart';
@@ -29,8 +31,8 @@ class LinkedItemsSummary extends StatefulWidget {
 
 class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
   bool _isExpanded = false;
-  List<dynamic> _linkedCharacters = [];
-  List<dynamic> _linkedLocations = [];
+  List<Character> _linkedCharacters = [];
+  List<Location> _linkedLocations = [];
 
   @override
   void didChangeDependencies() {

@@ -11,6 +11,7 @@ import 'session.dart';
 import 'quest.dart';
 import 'connection.dart';
 import 'faction.dart';
+import 'network_route.dart';
 
 class Game {
   final String id;
@@ -24,10 +25,12 @@ class Game {
   List<Connection> connections;
   List<Clock> clocks;
   List<Faction> factions;
+  List<NetworkRoute> routes;
   Character? mainCharacter;
   String? dataswornSource;
   Location? rigLocation;
   bool tutorialsEnabled;
+  bool setupWizardCompleted;
 
   // AI configuration (sentient AI + image generation)
   AiConfig aiConfig;
@@ -50,10 +53,12 @@ class Game {
     List<Connection>? connections,
     List<Clock>? clocks,
     List<Faction>? factions,
+    List<NetworkRoute>? routes,
     this.mainCharacter,
     this.dataswornSource,
     this.rigLocation,
     this.tutorialsEnabled = true,
+    this.setupWizardCompleted = false,
     List<RecentMoveEntry>? recentMoves,
     // AI config fields (passed through to AiConfig)
     bool sentientAiEnabled = false,
@@ -77,6 +82,7 @@ class Game {
         connections = connections ?? [],
         clocks = clocks ?? [],
         factions = factions ?? [],
+        routes = routes ?? [],
         recentMoves = recentMoves ?? [],
         aiConfig = aiConfig ?? AiConfig(
           sentientAiEnabled: sentientAiEnabled,
@@ -125,7 +131,9 @@ class Game {
       'connections': connections.map((c) => c.toJson()).toList(),
       'clocks': clocks.map((c) => c.toJson()).toList(),
       'factions': factions.map((f) => f.toJson()).toList(),
+      'routes': routes.map((r) => r.toJson()).toList(),
       'tutorialsEnabled': tutorialsEnabled,
+      'setupWizardCompleted': setupWizardCompleted,
       'recentMoves': recentMoves.map((r) => r.toJson()).toList(),
       'selectedTruths': selectedTruths,
     };
@@ -186,10 +194,14 @@ class Game {
       factions: (json['factions'] as List?)
           ?.map((f) => Faction.fromJson(f))
           .toList() ?? [],
+      routes: (json['routes'] as List?)
+          ?.map((r) => NetworkRoute.fromJson(r))
+          .toList() ?? [],
       mainCharacter: mainChar,
       dataswornSource: json['dataswornSource'],
       rigLocation: rigLoc,
       tutorialsEnabled: json['tutorialsEnabled'] ?? true,
+      setupWizardCompleted: json['setupWizardCompleted'] ?? false,
       recentMoves: (json['recentMoves'] as List?)
           ?.map((r) => RecentMoveEntry.fromJson(r))
           .toList() ?? [],
@@ -325,6 +337,14 @@ class Game {
 
   List<Connection> getConnectionsForCharacter(String characterId) {
     return connections.where((c) => c.characterId == characterId).toList();
+  }
+
+  void addRoute(NetworkRoute route) {
+    routes.add(route);
+  }
+
+  List<NetworkRoute> getRoutesForCharacter(String characterId) {
+    return routes.where((r) => r.characterId == characterId).toList();
   }
 
   List<Character> getCharactersWithStats() {

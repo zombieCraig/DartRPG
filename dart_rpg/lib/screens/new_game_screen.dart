@@ -7,6 +7,7 @@ import '../transitions/navigation_service.dart';
 import '../models/game.dart';
 import '../widgets/sentient_ai_settings_widget.dart';
 import '../widgets/ai_image_generation_settings_widget.dart';
+import 'setup_wizard_screen.dart';
 
 class NewGameScreen extends StatefulWidget {
   const NewGameScreen({super.key});
@@ -221,21 +222,17 @@ class _NewGameScreenState extends State<NewGameScreen> {
           );
         }
         
-        // Load the datasworn source
+        // Load the datasworn source and custom oracles
         await dataswornProvider.loadDatasworn('assets/data/fe_runners.json');
+        await dataswornProvider.loadCustomOracles();
         
         if (!mounted) return;
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Game "${_nameController.text}" created successfully'),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-          ),
-        );
-
-        // Return to the game selection screen
+        // Navigate to setup wizard
         final navigationService = NavigationService();
-        navigationService.goBack(context);
+        navigationService.replaceWith(
+          context,
+          const SetupWizardScreen(),
+        );
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(

@@ -815,18 +815,22 @@ class MoveDialog {
 
   /// Performs a move that doesn't require a roll.
   static void _performNoRollMove(
-    BuildContext context, 
-    Move move, 
+    BuildContext context,
+    Move move,
     Function(MoveRoll moveRoll) onMoveRollAdded,
     Function(String text) onInsertText,
     bool isEditing,
   ) {
+    // If move has embedded oracles (e.g. Ask the Oracle), don't close —
+    // let the user use the MoveOraclePanel already shown in MoveDetails.
+    if (move.hasEmbeddedOracles) return;
+
     // Use the RollService to perform the move
     final moveRoll = RollService.performNoRollMove(move: move);
-    
+
     // Add the move roll to the journal entry
     onMoveRollAdded(moveRoll);
-    
+
     // Show the result
     showDialog(
       context: context,

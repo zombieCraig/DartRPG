@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../../models/character.dart';
 import '../../models/combat.dart';
 import '../../models/move.dart';
+import '../../models/move_oracle.dart';
 import '../../models/journal_entry.dart';
+import '../../utils/dice_roller.dart';
 import '../../models/quest.dart';
 import '../../models/recent_move_entry.dart';
 import '../../providers/ai_config_provider.dart';
@@ -563,6 +565,12 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
   }
 
   void _performNoRoll(Move move) {
+    // If the move has embedded oracles (e.g. Ask the Oracle), show likelihood picker
+    if (move.hasEmbeddedOracles) {
+      _showOracleLikelihoodPicker(move);
+      return;
+    }
+
     final moveRoll = RollService.performNoRollMove(move: move);
 
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
@@ -581,6 +589,97 @@ class _QuickRollPanelState extends State<QuickRollPanel> {
     });
 
     gameProvider.saveGame();
+  }
+
+  void _showOracleLikelihoodPicker(Move move) {
+    final oracles = move.oracles;
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Choose likelihood for ${move.name}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              ...oracles.entries.map((entry) {
+                final oracle = entry.value;
+                // Build odds subtitle from rows (e.g. "1-75 Yes, 76-100 No")
+                final odds = oracle.rows
+                    .map((r) => '${r.minRoll}-${r.maxRoll} ${r.result}')
+                    .join(', ');
+                return ListTile(
+                  title: Text(oracle.name),
+                  subtitle: Text(odds, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _rollAskTheOracle(move, entry.key, oracle);
+                  },
+                );
+              }),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _rollAskTheOracle(Move move, String oracleKey, MoveOracle oracle) {
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final game = gameProvider.currentGame;
+
+    // Roll the dice
+    final rollResult = DiceRoller.rollOracle(oracle.dice);
+    final total = rollResult['total'] as int;
+
+    // Find matching row
+    String result = 'Unknown';
+    for (final row in oracle.rows) {
+      if (total >= row.minRoll && total <= row.maxRoll) {
+        result = row.result;
+        break;
+      }
+    }
+
+    // Detect d100 match (doubles: 11, 22, 33, ..., 99, 00)
+    final isMatch = oracle.dice == '1d100' && total >= 11 && total % 11 == 0;
+
+    // Create a MoveRoll for the move usage
+    final moveRoll = RollService.performNoRollMove(move: move);
+    widget.onMoveRollAdded(moveRoll);
+
+    // Create an OracleRoll
+    final oracleName = '${move.name} (${oracle.name})';
+    final oracleRoll = OracleRoll(
+      oracleName: oracleName,
+      dice: [total],
+      result: isMatch ? '$result - Match!' : result,
+    );
+    widget.onOracleRollAdded?.call(oracleRoll);
+
+    // Format journal text
+    final matchSuffix = isMatch ? ' - Match!' : '';
+    final journalText = '[${move.name} (${oracle.name}) $total: $result$matchSuffix]';
+    widget.onInsertText(journalText);
+
+    // Record usage
+    if (game != null) {
+      game.recordMoveUse(move.id, move.name, null);
+      gameProvider.saveGame();
+    }
+
+    setState(() {
+      _lastRolledMove = move;
+      _lastMoveRoll = moveRoll;
+      _lastRollResult = {};
+    });
   }
 
   void _showStatPicker(Move move, dynamic character) {

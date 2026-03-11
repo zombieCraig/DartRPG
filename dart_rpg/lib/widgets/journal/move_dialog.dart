@@ -270,8 +270,10 @@ class MoveDialog {
     bool isEditing,
   ) async {
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    gameProvider.currentGame?.recordMoveUse(move.id, move.name, stat);
+    gameProvider.saveGame();
     final character = gameProvider.currentGame?.mainCharacter;
-    
+
     if (character == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -519,8 +521,10 @@ class MoveDialog {
   ) async {
     // Get the current game
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    gameProvider.currentGame?.recordMoveUse(move.id, move.name, null);
+    gameProvider.saveGame();
     final game = gameProvider.currentGame;
-    
+
     // Use the RollService to perform the roll
     final result = RollService.performProgressRoll(
       move: move,
@@ -693,7 +697,9 @@ class MoveDialog {
   ) async {
     // Get the current game provider
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
-    
+    gameProvider.currentGame?.recordMoveUse(move.id, move.name, null);
+    gameProvider.saveGame();
+
     try {
       // Use the existing makeQuestProgressRoll method
       final result = await gameProvider.makeQuestProgressRoll(questId);
@@ -824,6 +830,10 @@ class MoveDialog {
     // If move has embedded oracles (e.g. Ask the Oracle), don't close —
     // let the user use the MoveOraclePanel already shown in MoveDetails.
     if (move.hasEmbeddedOracles) return;
+
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    gameProvider.currentGame?.recordMoveUse(move.id, move.name, null);
+    gameProvider.saveGame();
 
     // Use the RollService to perform the move
     final moveRoll = RollService.performNoRollMove(move: move);

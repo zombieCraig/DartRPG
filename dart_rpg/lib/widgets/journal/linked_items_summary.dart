@@ -4,6 +4,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../models/character.dart';
+import '../../models/faction.dart';
 import '../../models/location.dart';
 import '../../models/journal_entry.dart';
 import '../../utils/outcome_utils.dart';
@@ -13,6 +14,7 @@ class LinkedItemsSummary extends StatefulWidget {
   final JournalEntry journalEntry;
   final Function(String characterId)? onCharacterTap;
   final Function(String locationId)? onLocationTap;
+  final Function(String factionId)? onFactionTap;
   final Function(MoveRoll moveRoll)? onMoveRollTap;
   final Function(OracleRoll oracleRoll)? onOracleRollTap;
 
@@ -21,6 +23,7 @@ class LinkedItemsSummary extends StatefulWidget {
     required this.journalEntry,
     this.onCharacterTap,
     this.onLocationTap,
+    this.onFactionTap,
     this.onMoveRollTap,
     this.onOracleRollTap,
   });
@@ -33,6 +36,7 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
   bool _isExpanded = false;
   List<Character> _linkedCharacters = [];
   List<Location> _linkedLocations = [];
+  List<Faction> _linkedFactions = [];
 
   @override
   void didChangeDependencies() {
@@ -54,6 +58,7 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
     if (currentGame == null) {
       _linkedCharacters = [];
       _linkedLocations = [];
+      _linkedFactions = [];
       return;
     }
     _linkedCharacters = currentGame.characters
@@ -61,6 +66,9 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
         .toList();
     _linkedLocations = currentGame.locations
         .where((l) => widget.journalEntry.linkedLocationIds.contains(l.id))
+        .toList();
+    _linkedFactions = currentGame.factions
+        .where((f) => widget.journalEntry.linkedFactionIds.contains(f.id))
         .toList();
   }
 
@@ -75,6 +83,7 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
 
     final linkedCharacters = _linkedCharacters;
     final linkedLocations = _linkedLocations;
+    final linkedFactions = _linkedFactions;
     
     // Get move rolls
     final moveRolls = widget.journalEntry.moveRolls;
@@ -87,9 +96,10 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                              widget.journalEntry.embeddedImageIds.isNotEmpty;
     
     // Check if there are any linked items
-    final hasLinkedItems = linkedCharacters.isNotEmpty || 
-                          linkedLocations.isNotEmpty || 
-                          moveRolls.isNotEmpty || 
+    final hasLinkedItems = linkedCharacters.isNotEmpty ||
+                          linkedLocations.isNotEmpty ||
+                          linkedFactions.isNotEmpty ||
+                          moveRolls.isNotEmpty ||
                           oracleRolls.isNotEmpty ||
                           hasEmbeddedImages;
     
@@ -124,7 +134,7 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                   ),
                   const Spacer(),
                   Text(
-                    '${linkedCharacters.length + linkedLocations.length + moveRolls.length + oracleRolls.length + widget.journalEntry.embeddedImages.length + widget.journalEntry.embeddedImageIds.length} items',
+                    '${linkedCharacters.length + linkedLocations.length + linkedFactions.length + moveRolls.length + oracleRolls.length + widget.journalEntry.embeddedImages.length + widget.journalEntry.embeddedImageIds.length} items',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 14,
@@ -201,6 +211,34 @@ class _LinkedItemsSummaryState extends State<LinkedItemsSummary> {
                     ),
                   ],
                   
+                  // Factions
+                  if (linkedFactions.isNotEmpty) ...[
+                    const Divider(),
+                    const Text(
+                      'Factions',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: linkedFactions.map((faction) {
+                        return ActionChip(
+                          avatar: const Icon(Icons.groups, size: 16),
+                          label: Text(faction.name),
+                          onPressed: () {
+                            if (widget.onFactionTap != null) {
+                              widget.onFactionTap!(faction.id);
+                            }
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ],
+
                   // Move Rolls
                   if (moveRolls.isNotEmpty) ...[
                     const Divider(),

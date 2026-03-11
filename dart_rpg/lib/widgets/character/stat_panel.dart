@@ -7,6 +7,14 @@ class StatPanel extends StatelessWidget {
   final bool isEditable;
   final Function(int, int)? onStatChanged;
 
+  static const Map<String, String> _statDescriptions = {
+    'Edge': 'Quickness, agility, and prowess when fighting at range',
+    'Heart': 'Courage, willpower, empathy, and loyalty',
+    'Iron': 'Physical strength, endurance, and fighting at close quarters',
+    'Shadow': 'Stealth, deception, and cunning',
+    'Wits': 'Expertise, knowledge, and observation',
+  };
+
   const StatPanel({
     super.key,
     required this.stats,
@@ -33,7 +41,10 @@ class StatPanel extends StatelessWidget {
             children: [
               Expanded(
                 flex: 2,
-                child: Text(stat.name),
+                child: Tooltip(
+                  message: _statDescriptions[stat.name] ?? '',
+                  child: Text(stat.name),
+                ),
               ),
               Expanded(
                 flex: 3,

@@ -35,7 +35,10 @@ class JournalEntryEditor extends StatefulWidget {
   
   /// Callback for when a location is linked.
   final Function(String locationId)? onLocationLinked;
-  
+
+  /// Callback for when a faction is linked.
+  final Function(String factionId)? onFactionLinked;
+
   /// Callback for when an image is added.
   final Function(String imageUrl)? onImageAdded;
   
@@ -47,7 +50,10 @@ class JournalEntryEditor extends StatefulWidget {
   
   /// Callback for when a quest is requested.
   final Function()? onQuestRequested;
-  
+
+  /// Callback for when combat is requested.
+  final Function()? onCombatRequested;
+
   /// Callback for when a new entry is requested.
   final Function()? onNewEntryRequested;
   
@@ -75,10 +81,12 @@ class JournalEntryEditor extends StatefulWidget {
     required this.onChanged,
     this.onCharacterLinked,
     this.onLocationLinked,
+    this.onFactionLinked,
     this.onImageAdded,
     this.onMoveRequested,
     this.onOracleRequested,
     this.onQuestRequested,
+    this.onCombatRequested,
     this.onNewEntryRequested,
     this.onLinkedItemsPressed,
     this.controller,
@@ -229,14 +237,17 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
         widget.onChanged(_controller.text, _controller.text);
         
         // Notify parent about linked entity
-        if (result['isCharacter'] && widget.onCharacterLinked != null) {
+        if (result['isCharacter'] == true && widget.onCharacterLinked != null) {
           widget.onCharacterLinked!(result['entityId']);
           _linkedItemsManager.addCharacter(result['entityId']);
-        } else if (!result['isCharacter'] && widget.onLocationLinked != null) {
+        } else if (result['isFaction'] == true && widget.onFactionLinked != null) {
+          widget.onFactionLinked!(result['entityId']);
+          _linkedItemsManager.addFaction(result['entityId']);
+        } else if (result['isCharacter'] == false && result['isFaction'] == false && widget.onLocationLinked != null) {
           widget.onLocationLinked!(result['entityId']);
           _linkedItemsManager.addLocation(result['entityId']);
         }
-        
+
         return KeyEventResult.handled;
       }
     }
@@ -372,6 +383,55 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
     );
   }
   
+  // Show dialog to select a faction
+  void _showFactionSelectionDialog() {
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    final currentGame = gameProvider.currentGame;
+
+    if (currentGame == null || currentGame.factions.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No factions available'),
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Select Faction'),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 300,
+            child: ListView.builder(
+              itemCount: currentGame.factions.length,
+              itemBuilder: (context, index) {
+                final faction = currentGame.factions[index];
+
+                return ListTile(
+                  leading: Icon(faction.type.icon),
+                  title: Text(faction.name),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _insertMention(faction);
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // Insert a mention at the current cursor position
   void _insertMention(dynamic entity) {
     final result = _autocompleteSystem.insertMention(
@@ -390,10 +450,13 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
     widget.onChanged(_controller.text, _controller.text);
     
     // Notify parent about linked entity
-    if (result['isCharacter'] && widget.onCharacterLinked != null) {
+    if (result['isCharacter'] == true && widget.onCharacterLinked != null) {
       widget.onCharacterLinked!(result['entityId']);
       _linkedItemsManager.addCharacter(result['entityId']);
-    } else if (!result['isCharacter'] && widget.onLocationLinked != null) {
+    } else if (result['isFaction'] == true && widget.onFactionLinked != null) {
+      widget.onFactionLinked!(result['entityId']);
+      _linkedItemsManager.addFaction(result['entityId']);
+    } else if (result['isCharacter'] == false && result['isFaction'] == false && widget.onLocationLinked != null) {
       widget.onLocationLinked!(result['entityId']);
       _linkedItemsManager.addLocation(result['entityId']);
     }
@@ -811,10 +874,12 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
         onNumberedListPressed: () => _insertFormatting('1. ', ''),
         onCharacterPressed: _showCharacterSelectionDialog,
         onLocationPressed: _showLocationSelectionDialog,
+        onFactionPressed: _showFactionSelectionDialog,
         onImagePressed: _addImage,
         onMovePressed: widget.onMoveRequested,
         onOraclePressed: widget.onOracleRequested,
         onQuestPressed: widget.onQuestRequested,
+        onCombatPressed: widget.onCombatRequested,
         onLinkedItemsPressed: _toggleLinkedItems,
       ) : null;
     
@@ -825,8 +890,9 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
         cursorPosition: _controller.selection.baseOffset,
         characters: currentGame.characters,
         locations: currentGame.locations,
+        factions: currentGame.factions,
       );
-      
+
       _shouldCheckMentions = false;
     }
     
@@ -868,6 +934,7 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
                 content: _controller.text,
                 linkedCharacterIds: _linkedItemsManager.linkedCharacterIds,
                 linkedLocationIds: _linkedItemsManager.linkedLocationIds,
+                linkedFactionIds: _linkedItemsManager.linkedFactionIds,
                 moveRolls: _linkedItemsManager.moveRolls,
                 oracleRolls: _linkedItemsManager.oracleRolls,
                 embeddedImages: _linkedItemsManager.embeddedImages,
@@ -889,6 +956,47 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
                         final location = gp.currentGame!.locations
                             .firstWhereOrNull((l) => l.id == locationId);
                         if (location != null) _showLocationDetailsDialog(context, location);
+                      },
+                      onFactionTap: (factionId) {
+                        final faction = gp.currentGame!.factions
+                            .firstWhereOrNull((f) => f.id == factionId);
+                        if (faction != null) {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: Text(faction.name),
+                              content: SingleChildScrollView(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(faction.type.icon, size: 16),
+                                        const SizedBox(width: 4),
+                                        Text(faction.type.displayName),
+                                        const SizedBox(width: 16),
+                                        Text('Influence: ${faction.influence.displayName}'),
+                                      ],
+                                    ),
+                                    if (faction.description.isNotEmpty) ...[
+                                      const SizedBox(height: 16),
+                                      const Text('Description:', style: TextStyle(fontWeight: FontWeight.bold)),
+                                      const SizedBox(height: 4),
+                                      Text(faction.description),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Close'),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
                       },
                       onMoveRollTap: (moveRoll) {
                         _showMoveRollDetailsDialog(context, moveRoll);
@@ -942,13 +1050,14 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
                       // Always check if we just typed @ or #
                       if (cursorPosition > 0) {
                         final charBeforeCursor = value[cursorPosition - 1];
-                        if (charBeforeCursor == '@' || charBeforeCursor == '#') {
-                          // Immediately check for mentions when @ or # is typed
+                        if (charBeforeCursor == '@' || charBeforeCursor == '#' || charBeforeCursor == '\$') {
+                          // Immediately check for mentions when @, # or $ is typed
                           _autocompleteSystem.checkForMentions(
                             text: value,
                             cursorPosition: cursorPosition,
                             characters: currentGame.characters,
                             locations: currentGame.locations,
+                            factions: currentGame.factions,
                           );
                           
                           setState(() {});
@@ -957,8 +1066,9 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
                       }
                       
                       // Continue checking if we're already in a mention context
-                      if (_autocompleteSystem.showCharacterSuggestions || 
-                          _autocompleteSystem.showLocationSuggestions) {
+                      if (_autocompleteSystem.showCharacterSuggestions ||
+                          _autocompleteSystem.showLocationSuggestions ||
+                          _autocompleteSystem.showFactionSuggestions) {
                         _shouldCheckMentions = true;
                         setState(() {});
                       }
@@ -975,12 +1085,13 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
                         
                         if (wordStart < textBeforeCursor.length) {
                           final currentWord = textBeforeCursor.substring(wordStart);
-                          if (currentWord.startsWith('@') || currentWord.startsWith('#')) {
+                          if (currentWord.startsWith('@') || currentWord.startsWith('#') || currentWord.startsWith('\$')) {
                             _autocompleteSystem.checkForMentions(
                               text: _controller.text,
                               cursorPosition: cursorPosition,
                               characters: currentGame.characters,
                               locations: currentGame.locations,
+                              factions: currentGame.factions,
                             );
                             setState(() {});
                           }
@@ -991,10 +1102,11 @@ class _JournalEntryEditorState extends State<JournalEntryEditor> {
                 ),
                 
                 // Optimized inline suggestion overlay
-                if ((_autocompleteSystem.inlineSuggestion != null && 
+                if ((_autocompleteSystem.inlineSuggestion != null &&
                     _autocompleteSystem.suggestionStartPosition != null) ||
                     _autocompleteSystem.showCharacterSuggestions ||
-                    _autocompleteSystem.showLocationSuggestions)
+                    _autocompleteSystem.showLocationSuggestions ||
+                    _autocompleteSystem.showFactionSuggestions)
                   Builder(
                     builder: (context) {
                       // Handle the case where we just typed @ or # without any additional characters

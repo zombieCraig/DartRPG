@@ -144,7 +144,7 @@ class _QuestCardState extends State<QuestCard> {
                     const Icon(Icons.person, size: 16),
                     const SizedBox(width: 4),
                     Text(
-                      'Character: ${widget.character.name}',
+                      'Character: ${widget.character.name}${widget.character.handle != null && widget.character.handle!.isNotEmpty ? ' (${widget.character.handle})' : ''}',
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: 14,

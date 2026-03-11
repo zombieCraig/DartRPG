@@ -6,6 +6,7 @@ import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import '../../providers/game_provider.dart';
 import '../../providers/datasworn_provider.dart';
 import '../../models/character.dart';
+import '../../models/faction.dart';
 import '../../models/location.dart';
 import '../../models/journal_entry.dart';
 import '../../models/game.dart';
@@ -15,6 +16,7 @@ import '../../widgets/common/app_image_widget.dart';
 class JournalEntryViewer extends StatelessWidget {
   static final _characterRegex = RegExp(r'@(\w+)');
   static final _locationRegex = RegExp(r'#([^\s\[\]]+)');
+  static final _factionRegex = RegExp(r'\$([^\s\[\]]+)');
   static final _moveRegex = RegExp(r'\[(.*?) - (.*?)\]');
   static final _oracleRegex = RegExp(r'\[(.*?): (.*?)\]');
   static final _imageRegex = RegExp(r'!\[(?:.*?)\]\((.*?)\)');
@@ -28,6 +30,7 @@ class JournalEntryViewer extends StatelessWidget {
   final String content;
   final Function(Character character)? onCharacterTap;
   final Function(Location location)? onLocationTap;
+  final Function(Faction faction)? onFactionTap;
   final Function(MoveRoll moveRoll)? onMoveRollTap;
   final Function(OracleRoll oracleRoll)? onOracleRollTap;
   final List<MoveRoll> moveRolls;
@@ -38,6 +41,7 @@ class JournalEntryViewer extends StatelessWidget {
     required this.content,
     this.onCharacterTap,
     this.onLocationTap,
+    this.onFactionTap,
     this.onMoveRollTap,
     this.onOracleRollTap,
     this.moveRolls = const [],
@@ -82,7 +86,7 @@ class JournalEntryViewer extends StatelessWidget {
     for (final match in _locationRegex.allMatches(content)) {
       final name = match.group(1)!;
       final location = _findLocationByName(currentGame, name);
-      
+
       if (location != null) {
         allMatches.add(_TextMatch(
           start: match.start,
@@ -92,7 +96,22 @@ class JournalEntryViewer extends StatelessWidget {
         ));
       }
     }
-    
+
+    // Find faction references
+    for (final match in _factionRegex.allMatches(content)) {
+      final name = match.group(1)!;
+      final faction = _findFactionByName(currentGame, name);
+
+      if (faction != null) {
+        allMatches.add(_TextMatch(
+          start: match.start,
+          end: match.end,
+          type: _MatchType.faction,
+          data: faction,
+        ));
+      }
+    }
+
     // Find move references
     for (final match in _moveRegex.allMatches(content)) {
       final moveName = match.group(1)!;
@@ -290,6 +309,9 @@ class JournalEntryViewer extends StatelessWidget {
       case _MatchType.location:
         color = Colors.green;
         break;
+      case _MatchType.faction:
+        color = Colors.orange;
+        break;
       case _MatchType.move:
         final moveRoll = data as MoveRoll;
         color = getOutcomeColor(moveRoll.outcome);
@@ -328,8 +350,14 @@ class JournalEntryViewer extends StatelessWidget {
         if (onLocationTap != null) {
           onLocationTap!(data as Location);
         } else {
-          // Show a default dialog if no callback is provided
           _showDefaultLocationDialog(context, data as Location);
+        }
+        break;
+      case _MatchType.faction:
+        if (onFactionTap != null) {
+          onFactionTap!(data as Faction);
+        } else {
+          _showDefaultFactionDialog(context, data as Faction);
         }
         break;
       case _MatchType.move:
@@ -586,6 +614,51 @@ class JournalEntryViewer extends StatelessWidget {
     );
   }
   
+  void _showDefaultFactionDialog(BuildContext context, Faction faction) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(faction.name),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Icon(faction.type.icon, size: 16),
+                    const SizedBox(width: 4),
+                    Text(faction.type.displayName),
+                    const SizedBox(width: 16),
+                    Text('Influence: ${faction.influence.displayName}'),
+                  ],
+                ),
+                if (faction.description.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Description:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(faction.description),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showDefaultOracleRollDialog(BuildContext context, OracleRoll oracleRoll) {
     showDialog(
       context: context,
@@ -634,6 +707,14 @@ class JournalEntryViewer extends StatelessWidget {
   Location? _findLocationByName(Game game, String name) {
     return game.locations.firstWhereOrNull(
       (l) => l.name.toLowerCase() == name.toLowerCase(),
+    );
+  }
+
+  Faction? _findFactionByName(Game game, String name) {
+    // Convert underscores back to spaces for lookup
+    final lookupName = name.replaceAll('_', ' ');
+    return game.factions.firstWhereOrNull(
+      (f) => f.name.toLowerCase() == lookupName.toLowerCase(),
     );
   }
 
@@ -716,6 +797,7 @@ class JournalEntryViewer extends StatelessWidget {
 enum _MatchType {
   character,
   location,
+  faction,
   move,
   oracle,
   image,

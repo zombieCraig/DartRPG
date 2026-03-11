@@ -16,12 +16,13 @@ import '../utils/logging_service.dart';
 import 'datasworn_provider.dart';
 import 'image_manager_provider.dart';
 import 'clock_operations_mixin.dart';
+import 'combat_operations_mixin.dart';
 import 'quest_operations_mixin.dart';
 import 'connection_operations_mixin.dart';
 import 'faction_operations_mixin.dart';
 import 'route_operations_mixin.dart';
 
-class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperationsMixin, ConnectionOperationsMixin, FactionOperationsMixin, RouteOperationsMixin {
+class GameProvider extends ChangeNotifier with ClockOperationsMixin, CombatOperationsMixin, QuestOperationsMixin, ConnectionOperationsMixin, FactionOperationsMixin, RouteOperationsMixin {
 
   List<GameSummary> _gameSummaries = [];
   Game? _currentGame;
@@ -44,11 +45,15 @@ class GameProvider extends ChangeNotifier with ClockOperationsMixin, QuestOperat
     await _saveCurrentGame();
   }
 
-  // Mixin interface for ClockOperationsMixin and QuestOperationsMixin
+  // Mixin interface for ClockOperationsMixin, CombatOperationsMixin, and QuestOperationsMixin
   @override
   Game? get clockGame => _currentGame;
   @override
   Session? get clockSession => _currentSession;
+  @override
+  Game? get combatGame => _currentGame;
+  @override
+  Session? get combatSession => _currentSession;
   @override
   Game? get questGame => _currentGame;
   @override

@@ -61,6 +61,8 @@ class TutorialService {
     required String title,
     required String message,
     required bool condition,
+    String? actionLabel,
+    VoidCallback? onAction,
   }) async {
     final settings = Provider.of<SettingsProvider>(context, listen: false);
     final gameProvider = Provider.of<GameProvider>(context, listen: false);
@@ -86,11 +88,19 @@ class TutorialService {
     if (context.mounted) {
       await showDialog(
         context: context,
-        builder: (context) => TutorialPopup(
+        builder: (dialogContext) => TutorialPopup(
           title: title,
           message: message,
+          actionLabel: actionLabel,
+          onAction: onAction != null
+              ? () {
+                  Navigator.pop(dialogContext);
+                  markTutorialAsShown(tutorialId);
+                  onAction();
+                }
+              : null,
           onClose: () {
-            Navigator.pop(context);
+            Navigator.pop(dialogContext);
             markTutorialAsShown(tutorialId);
           },
         ),

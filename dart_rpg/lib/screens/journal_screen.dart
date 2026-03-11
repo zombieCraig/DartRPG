@@ -18,8 +18,9 @@ import '../widgets/journal/end_session_dialog.dart';
 
 class JournalScreen extends StatefulWidget {
   final String gameId;
+  final VoidCallback? onNavigateToQuests;
 
-  const JournalScreen({super.key, required this.gameId});
+  const JournalScreen({super.key, required this.gameId, this.onNavigateToQuests});
 
   @override
   State<JournalScreen> createState() => _JournalScreenState();
@@ -71,6 +72,27 @@ class _JournalScreenState extends State<JournalScreen> {
             'Group them how you like but often it is best to keep each entry short, '
             'perhaps a paragraph or two.',
         condition: true,
+      );
+    }
+
+    // Post-wizard quest guidance
+    if (currentGame.sessions.length == 1 &&
+        currentSession != null &&
+        currentSession.entries.length == 1 &&
+        currentGame.quests.isEmpty) {
+      if (!mounted) return;
+      await TutorialService.showTutorialIfNeeded(
+        context: context,
+        tutorialId: 'post_wizard_quest_guidance',
+        title: 'Create Your First Quests',
+        message: 'Your story has begun! Consider creating quests to track your objectives.\n\n'
+            'Start with a quest for the situation in your opening scene. '
+            'Then create an Extreme or Epic rank quest for your character\'s '
+            'overarching life objective \u2014 this long-term goal will drive your '
+            'story forward across many sessions.',
+        condition: true,
+        actionLabel: 'Go to Quests',
+        onAction: widget.onNavigateToQuests,
       );
     }
   }

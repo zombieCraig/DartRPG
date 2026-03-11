@@ -156,7 +156,7 @@ class MoveDetails extends StatelessWidget {
               onRoll: onProgressRoll,
               onQuestRoll: onQuestRoll,
             ),
-          ] else if (move.rollType == 'no_roll') ...[
+          ] else if (move.rollType == 'no_roll' && !move.hasEmbeddedOracles) ...[
             NoRollPanel(
               move: move,
               onPerform: onNoRoll,

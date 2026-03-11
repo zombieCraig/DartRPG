@@ -91,7 +91,9 @@ class _QuestFormState extends State<QuestForm> {
             items: widget.characters.map((character) {
               return DropdownMenuItem<String>(
                 value: character.id,
-                child: Text(character.name),
+                child: Text(character.handle != null && character.handle!.isNotEmpty
+                    ? '${character.name} (${character.handle})'
+                    : character.name),
               );
             }).toList(),
             onChanged: (value) {

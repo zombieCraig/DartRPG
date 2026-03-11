@@ -198,8 +198,8 @@ void main() {
       // Verify the Oracle button is rendered
       expect(find.byIcon(Icons.casino), findsOneWidget);
       
-      // Verify the Move button is rendered
-      expect(find.byIcon(Icons.sports_martial_arts), findsOneWidget);
+      // Verify the Move button and Combat button are rendered (both use sports_martial_arts icon)
+      expect(find.byIcon(Icons.sports_martial_arts), findsNWidgets(2));
     });
     
     testWidgets('Move button shows snackbar when clicked in view mode', (WidgetTester tester) async {

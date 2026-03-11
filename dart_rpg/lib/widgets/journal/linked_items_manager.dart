@@ -1,5 +1,6 @@
 import '../../models/journal_entry.dart';
 import '../../models/character.dart';
+import '../../models/faction.dart';
 import '../../models/location.dart';
 
 /// A class for managing linked items in a journal entry.
@@ -9,7 +10,10 @@ class LinkedItemsManager {
   
   /// The list of linked location IDs.
   List<String> _linkedLocationIds = [];
-  
+
+  /// The list of linked faction IDs.
+  List<String> _linkedFactionIds = [];
+
   /// The list of move rolls.
   List<MoveRoll> _moveRolls = [];
   
@@ -26,6 +30,7 @@ class LinkedItemsManager {
   LinkedItemsManager({
     List<String>? linkedCharacterIds,
     List<String>? linkedLocationIds,
+    List<String>? linkedFactionIds,
     List<MoveRoll>? moveRolls,
     List<OracleRoll>? oracleRolls,
     List<String>? embeddedImages,
@@ -33,6 +38,7 @@ class LinkedItemsManager {
   }) {
     _linkedCharacterIds = linkedCharacterIds ?? [];
     _linkedLocationIds = linkedLocationIds ?? [];
+    _linkedFactionIds = linkedFactionIds ?? [];
     _moveRolls = moveRolls ?? [];
     _oracleRolls = oracleRolls ?? [];
     _embeddedImages = embeddedImages ?? [];
@@ -44,6 +50,7 @@ class LinkedItemsManager {
     return LinkedItemsManager(
       linkedCharacterIds: List.from(entry.linkedCharacterIds),
       linkedLocationIds: List.from(entry.linkedLocationIds),
+      linkedFactionIds: List.from(entry.linkedFactionIds),
       moveRolls: List.from(entry.moveRolls),
       oracleRolls: List.from(entry.oracleRolls),
       embeddedImages: List.from(entry.embeddedImages),
@@ -74,7 +81,19 @@ class LinkedItemsManager {
   void removeLocation(String locationId) {
     _linkedLocationIds.remove(locationId);
   }
-  
+
+  /// Adds a faction to the linked factions list.
+  void addFaction(String factionId) {
+    if (!_linkedFactionIds.contains(factionId)) {
+      _linkedFactionIds.add(factionId);
+    }
+  }
+
+  /// Removes a faction from the linked factions list.
+  void removeFaction(String factionId) {
+    _linkedFactionIds.remove(factionId);
+  }
+
   /// Adds a move roll to the move rolls list.
   void addMoveRoll(MoveRoll moveRoll) {
     _moveRolls.add(moveRoll);
@@ -123,6 +142,7 @@ class LinkedItemsManager {
   void updateJournalEntry(JournalEntry entry) {
     entry.linkedCharacterIds = List.from(_linkedCharacterIds);
     entry.linkedLocationIds = List.from(_linkedLocationIds);
+    entry.linkedFactionIds = List.from(_linkedFactionIds);
     entry.moveRolls = List.from(_moveRolls);
     entry.oracleRolls = List.from(_oracleRolls);
     entry.embeddedImages = List.from(_embeddedImages);
@@ -134,7 +154,10 @@ class LinkedItemsManager {
   
   /// Gets the list of linked location IDs.
   List<String> get linkedLocationIds => List.unmodifiable(_linkedLocationIds);
-  
+
+  /// Gets the list of linked faction IDs.
+  List<String> get linkedFactionIds => List.unmodifiable(_linkedFactionIds);
+
   /// Gets the list of move rolls.
   List<MoveRoll> get moveRolls => List.unmodifiable(_moveRolls);
   
@@ -156,17 +179,26 @@ class LinkedItemsManager {
   }
   
   /// Validates location references in the linked locations list.
-  /// 
+  ///
   /// Removes any location IDs that don't exist in the provided list of locations.
   void validateLocationReferences(List<Location> locations) {
     final validLocationIds = locations.map((l) => l.id).toSet();
     _linkedLocationIds.removeWhere((id) => !validLocationIds.contains(id));
   }
-  
+
+  /// Validates faction references in the linked factions list.
+  ///
+  /// Removes any faction IDs that don't exist in the provided list of factions.
+  void validateFactionReferences(List<Faction> factions) {
+    final validFactionIds = factions.map((f) => f.id).toSet();
+    _linkedFactionIds.removeWhere((id) => !validFactionIds.contains(id));
+  }
+
   /// Clears all linked items.
   void clear() {
     _linkedCharacterIds.clear();
     _linkedLocationIds.clear();
+    _linkedFactionIds.clear();
     _moveRolls.clear();
     _oracleRolls.clear();
     _embeddedImages.clear();

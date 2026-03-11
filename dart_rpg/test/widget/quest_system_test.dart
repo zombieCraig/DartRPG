@@ -67,8 +67,8 @@ void main() {
       // Verify that the quest title is displayed
       expect(find.text('Test Quest'), findsOneWidget);
       
-      // Verify that the character name is displayed
-      expect(find.text('Character: Test Character'), findsOneWidget);
+      // Verify that the character name is displayed (handle is auto-generated from first name)
+      expect(find.text('Character: Test Character (Test)'), findsOneWidget);
       
       // Verify that the rank is displayed
       expect(find.text('Rank: Troublesome'), findsOneWidget);

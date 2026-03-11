@@ -45,7 +45,7 @@ class _GameSettingsScreenState extends State<GameSettingsScreen> {
                 game: game,
                 gameProvider: gameProvider,
                 truths: dataswornProvider.truths,
-                initiallyExpanded: true,
+                initiallyExpanded: game.selectedTruths.isEmpty,
                 showDividers: true,
                 showHelpText: true,
               ),
